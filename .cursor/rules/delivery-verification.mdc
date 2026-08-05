@@ -29,13 +29,24 @@ Replace `@jx3/api` with the package you touched (`@jx3/ui`, `@jx3/db`, etc.).
 
 - After implementing or modifying code
 - Before saying work is done, tests pass, or a PR/commit is ready
+- **Before every git commit** (see Commit workflow below)
 - After fixing lint, format, or type errors reported by the user or CI
+
+## Commit workflow
+
+When the user asks to commit:
+
+1. Run `bun run check` and `bun run typecheck` (or package-scoped equivalents).
+2. If check fails, run `bun run fix` in the affected package(s), then re-run `check`.
+3. If errors remain after fix, **stop — do not commit**. Report the failures and fix them first.
+4. Only when both commands pass, stage and commit (including any auto-formatted changes from fix).
 
 ## On failure
 
 - Fix Biome/format issues (`bun run fix` in the affected package, then re-run `check`)
 - Fix TypeScript errors before delivery
 - Do not claim completion without command output showing success
+- Do not commit while check or typecheck is failing
 
 ## Optional (when relevant)
 
