@@ -25,7 +25,9 @@ export function LoginComponent() {
       });
 
       if (error) {
-        throw new Error(error.message ?? '登录失败');
+        const errorMessage =
+          error.status === 401 ? '邮箱或密码错误' : error.message;
+        throw new Error(errorMessage);
       }
 
       return data;
@@ -37,7 +39,7 @@ export function LoginComponent() {
       navigate({ to: '/' });
     },
     onError: (error: Error) => {
-      setServerError(error.message || '登录失败');
+      setServerError(error.message);
     },
   });
 
@@ -60,7 +62,7 @@ export function LoginComponent() {
         className="pointer-events-none absolute top-0 right-0 size-72 translate-x-1/3 -translate-y-1/3 rounded-full bg-[oklch(0.35_0.06_265)] opacity-25 blur-[90px]"
       />
 
-      <div className="relative w-full max-w-[400px] animate-in duration-700 fade-in slide-in-from-bottom-3">
+      <div className="relative w-full max-w-100 animate-in duration-700 fade-in slide-in-from-bottom-3">
         <div className="mb-10 flex flex-col items-center gap-4">
           <div
             aria-hidden
@@ -71,10 +73,10 @@ export function LoginComponent() {
           </h1>
         </div>
 
-        <div className="relative overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.025] p-8 shadow-[0_32px_64px_-24px_rgba(0,0,0,0.75)] backdrop-blur-2xl">
+        <div className="relative overflow-hidden rounded-2xl border border-white/[0.07] bg-white/2.5 p-8 shadow-[0_32px_64px_-24px_rgba(0,0,0,0.75)] backdrop-blur-2xl">
           <div
             aria-hidden
-            className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.58_0.17_28/0.55)] to-transparent"
+            className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-[oklch(0.58_0.17_28/0.55)] to-transparent"
           />
           <AuthCredentialsFormComponent
             isPending={loginMutation.isPending}
