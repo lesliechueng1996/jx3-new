@@ -36,3 +36,6 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+*.local.md
+.cursor/rules/local-preferences.mdc

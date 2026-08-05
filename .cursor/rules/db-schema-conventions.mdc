@@ -1,0 +1,38 @@
+---
+description: Database schema conventions for non-auth tables
+globs: packages/db/src/schema/**
+alwaysApply: false
+---
+
+## Table Naming
+
+- Table names must use at least 2 words (e.g., `game_server`, not `server`)
+- Database column/table names use snake_case
+- TypeScript variable names use camelCase
+
+## Required Columns
+
+Every table must include:
+
+1. **`id`** — UUID primary key, auto-generated via `gen_random_uuid()`
+2. **`created_at`** — timestamp with timezone, defaults to `now()`
+3. **`updated_at`** — timestamp with timezone, defaults to `now()`, updated on modification via `.$onUpdate()`
+
+## Foreign Keys
+
+- Never use physical foreign keys (no `.references()` constraints at the database level).
+- Model relationships with plain columns (e.g., a `uuid` column named `<entity>_id`) and enforce referential integrity in the application layer.
+
+## Example
+
+```typescript
+import * as t from 'drizzle-orm/pg-core';
+import { pgTable } from 'drizzle-orm/pg-core';
+
+export const gameServer = pgTable('game_server', {
+  id: t.uuid('id').primaryKey().defaultRandom(),
+  // ... business columns ...
+  createdAt: t.timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: t.timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+});
+```

@@ -1,0 +1,58 @@
+---
+description: Use Conventional Commits format for all git commits
+alwaysApply: true
+---
+
+# Conventional Commits
+
+All commit messages must follow the [Conventional Commits](https://www.conventionalcommits.org/) specification.
+
+## Format
+
+```
+<type>(<optional scope>): <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+- **type**: what kind of change (required)
+- **scope**: affected package or area, e.g. `ui`, `api`, `db` (optional)
+- **description**: imperative mood, lowercase, no trailing period (required)
+- **body**: explain motivation and contrast with previous behavior (optional)
+- **footer**: breaking changes, issue refs, e.g. `BREAKING CHANGE:`, `Closes #123` (optional)
+
+## Common Types
+
+| Type | Use when |
+|------|----------|
+| `feat` | New feature or user-facing capability |
+| `fix` | Bug fix |
+| `docs` | Documentation only |
+| `style` | Formatting, whitespace; no logic change |
+| `refactor` | Code change that is neither feat nor fix |
+| `test` | Adding or updating tests |
+| `chore` | Build, CI, deps, tooling |
+| `perf` | Performance improvement |
+
+## Examples
+
+```
+feat(ui): add character search page
+fix(api): handle null guild id in roster query
+docs: update local setup instructions
+chore(deps): bump vite to 6.0
+refactor(db): extract migration helpers
+
+fix(auth)!: require email verification on signup
+
+BREAKING CHANGE: unverified accounts can no longer log in
+```
+
+## Rules
+
+- Write commit messages in **English** (see local-preferences).
+- Use imperative mood: `add`, `fix`, `remove` — not `added`, `fixes`, `removed`.
+- Keep the subject line ≤ 72 characters.
+- Do not mix unrelated changes in one commit.
