@@ -1,24 +1,25 @@
+import { account, session, user, verification } from '@jx3/db';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { admin, openAPI } from 'better-auth/plugins';
+import { env } from '@/infrastructure/config/env';
 import { db } from './db';
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: 'pg',
+    schema: { user, session, account, verification },
   }),
+  trustedOrigins: [env.FRONTEND_URL],
   emailAndPassword: { enabled: true },
   session: {
+    expiresIn: 60 * 60 * 24 * 7,
+    updateAge: 60 * 60 * 24,
     cookieCache: {
       enabled: true,
-      maxAge: 7 * 24 * 60 * 60,
+      maxAge: 60 * 60 * 24,
       strategy: 'jwt',
-      refreshCache: true,
     },
-  },
-  account: {
-    storeStateStrategy: 'cookie',
-    storeAccountCookie: true,
   },
   plugins: [openAPI(), admin()],
 });

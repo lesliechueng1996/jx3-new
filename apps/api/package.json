@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@elysia/openapi": "^1.4.15",
+    "@elysiajs/cors": "^1.4.2",
     "@jx3/db": "workspace:*",
     "better-auth": "^1.6.26",
     "elysia": "latest"
