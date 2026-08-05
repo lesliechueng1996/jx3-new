@@ -12,6 +12,9 @@
     "test:cov": "bun test --isolate --coverage --coverage-reporter=text --coverage-reporter=lcov"
   },
   "dependencies": {
+    "@elysia/openapi": "^1.4.15",
+    "@jx3/db": "workspace:*",
+    "better-auth": "^1.6.26",
     "elysia": "latest"
   },
   "devDependencies": {

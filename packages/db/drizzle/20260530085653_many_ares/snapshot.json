@@ -1,8 +1,6 @@
 {
   "id": "6df9ac5f-0236-4a8e-93b6-d5f20d9b40dc",
-  "prevIds": [
-    "7aacf890-a3f7-49f6-bf04-50929f5364f1"
-  ],
+  "prevIds": ["7aacf890-a3f7-49f6-bf04-50929f5364f1"],
   "version": "8",
   "dialect": "postgres",
   "ddl": [
@@ -13,9 +11,7 @@
       "entityType": "tables"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "account_pkey",
       "schema": "public",
@@ -193,14 +189,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "account_user_id_user_id_fk",
@@ -215,9 +207,7 @@
       "entityType": "tables"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "session_pkey",
       "schema": "public",
@@ -343,9 +333,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "token"
-      ],
+      "columns": ["token"],
       "nullsNotDistinct": false,
       "name": "session_token_unique",
       "schema": "public",
@@ -354,14 +342,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "schemaTo": "public",
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "name": "session_user_id_user_id_fk",
@@ -376,9 +360,7 @@
       "entityType": "tables"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_pkey",
       "schema": "public",
@@ -530,9 +512,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "email"
-      ],
+      "columns": ["email"],
       "nullsNotDistinct": false,
       "name": "user_email_unique",
       "schema": "public",
@@ -546,9 +526,7 @@
       "entityType": "tables"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "verification_pkey",
       "schema": "public",
@@ -640,9 +618,7 @@
       "entityType": "tables"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "game_character_pkey",
       "schema": "public",
@@ -794,10 +770,7 @@
     },
     {
       "nameExplicit": true,
-      "columns": [
-        "server_id",
-        "name"
-      ],
+      "columns": ["server_id", "name"],
       "nullsNotDistinct": false,
       "name": "game_character_server_name_unique",
       "schema": "public",
@@ -811,9 +784,7 @@
       "entityType": "tables"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "game_dungeon_pkey",
       "schema": "public",
@@ -957,9 +928,7 @@
       "entityType": "tables"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "game_expansion_pkey",
       "schema": "public",
@@ -1051,9 +1020,7 @@
       "entityType": "tables"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "game_item_pkey",
       "schema": "public",
@@ -1197,9 +1164,7 @@
       "entityType": "tables"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "game_kungfu_pkey",
       "schema": "public",
@@ -1390,14 +1355,10 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "school_id"
-      ],
+      "columns": ["school_id"],
       "schemaTo": "public",
       "tableTo": "game_school",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "name": "game_kungfu_school_id_game_school_id_fk",
@@ -1412,9 +1373,7 @@
       "entityType": "tables"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "raid_loot_pkey",
       "schema": "public",
@@ -1621,9 +1580,7 @@
       "entityType": "tables"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "raid_run_pkey",
       "schema": "public",
@@ -1884,9 +1841,7 @@
       "entityType": "tables"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "raid_signup_pkey",
       "schema": "public",
@@ -2168,9 +2123,7 @@
       "entityType": "tables"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "game_school_pkey",
       "schema": "public",
@@ -2275,9 +2228,7 @@
       "entityType": "tables"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "game_server_pkey",
       "schema": "public",
@@ -2377,9 +2328,7 @@
     },
     {
       "nameExplicit": false,
-      "columns": [
-        "server_id"
-      ],
+      "columns": ["server_id"],
       "nullsNotDistinct": false,
       "name": "game_server_server_id_unique",
       "schema": "public",
@@ -2387,115 +2336,67 @@
       "entityType": "uniques"
     },
     {
-      "values": [
-        "male",
-        "female",
-        "boy",
-        "girl"
-      ],
+      "values": ["male", "female", "boy", "girl"],
       "name": "body_type",
       "schema": "public",
       "entityType": "enums"
     },
     {
-      "values": [
-        "normal",
-        "heroic",
-        "challenge"
-      ],
+      "values": ["normal", "heroic", "challenge"],
       "name": "dungeon_difficulty",
       "schema": "public",
       "entityType": "enums"
     },
     {
-      "values": [
-        "white",
-        "green",
-        "blue",
-        "purple",
-        "orange"
-      ],
+      "values": ["white", "green", "blue", "purple", "orange"],
       "name": "item_quality",
       "schema": "public",
       "entityType": "enums"
     },
     {
-      "values": [
-        "equipment",
-        "special"
-      ],
+      "values": ["equipment", "special"],
       "name": "item_type",
       "schema": "public",
       "entityType": "enums"
     },
     {
-      "values": [
-        "melee",
-        "ranged"
-      ],
+      "values": ["melee", "ranged"],
       "name": "attack_method",
       "schema": "public",
       "entityType": "enums"
     },
     {
-      "values": [
-        "internal",
-        "external"
-      ],
+      "values": ["internal", "external"],
       "name": "attack_type",
       "schema": "public",
       "entityType": "enums"
     },
     {
-      "values": [
-        "defense",
-        "heal",
-        "attack"
-      ],
+      "values": ["defense", "heal", "attack"],
       "name": "kungfu_type",
       "schema": "public",
       "entityType": "enums"
     },
     {
-      "values": [
-        "pending",
-        "recruiting",
-        "ongoing",
-        "completed",
-        "cancelled"
-      ],
+      "values": ["pending", "recruiting", "ongoing", "completed", "cancelled"],
       "name": "raid_run_status",
       "schema": "public",
       "entityType": "enums"
     },
     {
-      "values": [
-        "pending",
-        "tank",
-        "healer",
-        "dps",
-        "boss"
-      ],
+      "values": ["pending", "tank", "healer", "dps", "boss"],
       "name": "raid_signup_role",
       "schema": "public",
       "entityType": "enums"
     },
     {
-      "values": [
-        "pending",
-        "confirmed",
-        "waitlist",
-        "rejected"
-      ],
+      "values": ["pending", "confirmed", "waitlist", "rejected"],
       "name": "raid_signup_status",
       "schema": "public",
       "entityType": "enums"
     },
     {
-      "values": [
-        "school",
-        "genre"
-      ],
+      "values": ["school", "genre"],
       "name": "school_type",
       "schema": "public",
       "entityType": "enums"
