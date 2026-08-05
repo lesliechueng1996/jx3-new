@@ -1,0 +1,1 @@
+ALTER TABLE "raid_run" ADD COLUMN "subsidy_amount" numeric(12, 2) DEFAULT '0' NOT NULL;
