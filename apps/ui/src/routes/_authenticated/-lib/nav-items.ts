@@ -1,0 +1,60 @@
+import type { LucideIcon } from 'lucide-react';
+import {
+  BookOpenTextIcon,
+  Gamepad2Icon,
+  LayoutDashboardIcon,
+} from 'lucide-react';
+
+export type NavLeaf = {
+  title: string;
+  to: string;
+};
+
+export type NavItem = {
+  title: string;
+  icon: LucideIcon;
+  to?: string;
+  children?: NavLeaf[];
+};
+
+export const navItems: NavItem[] = [
+  {
+    title: '概览',
+    icon: LayoutDashboardIcon,
+    to: '/',
+  },
+  {
+    title: '成语管理',
+    icon: BookOpenTextIcon,
+    to: '/idioms',
+  },
+  {
+    title: '游戏辅助',
+    icon: Gamepad2Icon,
+    children: [{ title: '猜成语', to: '/game-assist/guess-idiom' }],
+  },
+];
+
+function normalizePath(path: string): string {
+  if (path.length > 1 && path.endsWith('/')) {
+    return path.slice(0, -1);
+  }
+
+  return path;
+}
+
+export function isNavPathActive(pathname: string, to: string): boolean {
+  return normalizePath(pathname) === normalizePath(to);
+}
+
+export function isNavItemActive(pathname: string, item: NavItem): boolean {
+  if (item.children?.length) {
+    return item.children.some((child) => isNavPathActive(pathname, child.to));
+  }
+
+  if (!item.to) {
+    return false;
+  }
+
+  return isNavPathActive(pathname, item.to);
+}

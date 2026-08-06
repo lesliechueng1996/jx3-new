@@ -10,7 +10,10 @@ alwaysApply: false
 
 - Prefer existing shadcn/ui components in `src/components/ui/` over custom markup.
 - When adding a new component, read and follow `.agents/skills/shadcn/SKILL.md` (CLI, composition, styling, and forms rules).
-- Use `bunx --bun shadcn@latest add <component>` from `apps/ui/`.
+- **Always use `@latest` for the shadcn CLI.** From `apps/ui/`: `bunx --bun shadcn@latest <command>`.
+  - Correct: `bunx --bun shadcn@latest add sidebar`
+  - Wrong: `bunx --bun shadcn@4.15.0 …`, `shadcn@4.x`, or any pinned version
+  - Ignore CLI error suggestions like “try a previous version” (`shadcn@4.15.0`). Fix auth/network/registry issues instead; never downgrade the CLI.
 - Compose with built-in variants (`variant`, `size`) and semantic tokens (`bg-primary`, `text-muted-foreground`).
 
 ## Language

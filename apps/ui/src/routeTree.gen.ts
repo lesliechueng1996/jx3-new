@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as LoginIndexRouteImport } from './routes/login/index'
+import { Route as AuthenticatedIdiomsIndexRouteImport } from './routes/_authenticated/idioms/index'
+import { Route as AuthenticatedGameAssistGuessIdiomIndexRouteImport } from './routes/_authenticated/game-assist/guess-idiom/index'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -27,27 +29,51 @@ const LoginIndexRoute = LoginIndexRouteImport.update({
   path: '/login/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedIdiomsIndexRoute =
+  AuthenticatedIdiomsIndexRouteImport.update({
+    id: '/idioms/',
+    path: '/idioms/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedGameAssistGuessIdiomIndexRoute =
+  AuthenticatedGameAssistGuessIdiomIndexRouteImport.update({
+    id: '/game-assist/guess-idiom/',
+    path: '/game-assist/guess-idiom/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login/': typeof LoginIndexRoute
+  '/idioms/': typeof AuthenticatedIdiomsIndexRoute
+  '/game-assist/guess-idiom/': typeof AuthenticatedGameAssistGuessIdiomIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginIndexRoute
+  '/idioms': typeof AuthenticatedIdiomsIndexRoute
+  '/game-assist/guess-idiom': typeof AuthenticatedGameAssistGuessIdiomIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/login/': typeof LoginIndexRoute
+  '/_authenticated/idioms/': typeof AuthenticatedIdiomsIndexRoute
+  '/_authenticated/game-assist/guess-idiom/': typeof AuthenticatedGameAssistGuessIdiomIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login/'
+  fullPaths: '/' | '/login/' | '/idioms/' | '/game-assist/guess-idiom/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login'
-  id: '__root__' | '/_authenticated' | '/_authenticated/' | '/login/'
+  to: '/' | '/login' | '/idioms' | '/game-assist/guess-idiom'
+  id:
+    | '__root__'
+    | '/_authenticated'
+    | '/_authenticated/'
+    | '/login/'
+    | '/_authenticated/idioms/'
+    | '/_authenticated/game-assist/guess-idiom/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -78,15 +104,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/idioms/': {
+      id: '/_authenticated/idioms/'
+      path: '/idioms'
+      fullPath: '/idioms/'
+      preLoaderRoute: typeof AuthenticatedIdiomsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/game-assist/guess-idiom/': {
+      id: '/_authenticated/game-assist/guess-idiom/'
+      path: '/game-assist/guess-idiom'
+      fullPath: '/game-assist/guess-idiom/'
+      preLoaderRoute: typeof AuthenticatedGameAssistGuessIdiomIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedIdiomsIndexRoute: typeof AuthenticatedIdiomsIndexRoute
+  AuthenticatedGameAssistGuessIdiomIndexRoute: typeof AuthenticatedGameAssistGuessIdiomIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedIdiomsIndexRoute: AuthenticatedIdiomsIndexRoute,
+  AuthenticatedGameAssistGuessIdiomIndexRoute:
+    AuthenticatedGameAssistGuessIdiomIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
