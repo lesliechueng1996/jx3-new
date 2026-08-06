@@ -28,32 +28,34 @@ alwaysApply: false
 
 | Kind | Convention | Example |
 |------|------------|---------|
-| Page / route components | PascalCase file + export | `LoginComponent.tsx` |
+| Route page component | Defined in the route file | `login/index.tsx` → `LoginComponent` |
+| Route child components | PascalCase file + export | `AuthCredentialsFormComponent.tsx` |
 | shadcn/ui primitives | lowercase (shadcn default) | `src/components/ui/button.tsx` |
 | Routes | directory = URL path | `src/routes/login/index.tsx` → `/login` |
 | Hooks, utils, API helpers | kebab-case | `use-user-query.ts`, `auth-client.ts` |
 
 ## Component Placement
 
-Three tiers — pick the shallowest tier that fits:
+**Route page component stays in the route file** (`index.tsx` / `route.tsx`): define the route and the page component together. Extract children into `-components/` only when they are separate UI pieces used by that page (or shared by sibling routes).
 
 | Tier | Location | When |
 |------|----------|------|
-| **Route-local** | `src/routes/<path>/-components/` | Used only by that route's page |
+| **Route page** | Same file as the route (`index.tsx` / `route.tsx`) | The route's own page / layout component |
+| **Route-local children** | `src/routes/<path>/-components/` | Subcomponents used only by that route's page |
 | **Shared among siblings** | Common parent route's `-components/` | Reused by multiple child routes under the same parent |
 | **App-wide base** | `src/components/` (non-`ui/`) | Reusable across unrelated routes |
 | **Primitives** | `src/components/ui/` | shadcn/ui and other design-system building blocks |
 
-The `-components` prefix (leading `-`) excludes the folder from the URL. Colocate schemas and hooks with the components that use them inside the same `-components/` directory when they are not shared.
+The leading `-` prefix excludes a folder from the URL. Put route-private non-UI modules (zod schemas, hooks, helpers) in a sibling `-lib/` directory when they are not shared across unrelated routes.
 
 Example — login page with private form pieces:
 
 ```
 src/routes/login/
-  index.tsx                              # route entry, thin
+  index.tsx                              # route + LoginComponent (container)
   -components/
-    LoginComponent.tsx                   # container (API / mutations)
-    AuthCredentialsFormComponent.tsx     # presentational form
+    AuthCredentialsFormComponent.tsx     # presentational form (child)
+  -lib/
     auth-credentials-schema.ts           # zod schema
 ```
 
@@ -62,21 +64,21 @@ Example — settings area shared by child routes:
 ```
 src/routes/settings/
   -components/
-    SettingsLayoutComponent.tsx          # shared by /settings/* children
+    SettingsNavComponent.tsx             # shared by /settings/* children
   profile/
-    index.tsx
+    index.tsx                            # route + ProfileComponent
   security/
-    index.tsx
+    index.tsx                            # route + SecurityComponent
 ```
 
 Do **not** put route-specific components in `src/features/` or top-level `src/components/`.
 
 ## Forms: Two-Layer Pattern
 
-Every form feature splits into **container** (API) and **presentational** (render + validation) components. Both live in the route's `-components/` directory (or a shared parent `-components/` when reused).
+Every form feature splits into **container** (API) and **presentational** (render + validation) components.
 
-- **Inner (`*FormComponent`)**: renders fields, runs client-side validation (zod), exposes `onSubmit` with validated data. No API calls.
-- **Outer (`*Component`, e.g. `LoginComponent`)**: wires React Query mutations/queries, handles loading/error/success, passes callbacks and initial values to the form component.
+- **Outer (route page component, e.g. `LoginComponent` in `index.tsx`)**: wires React Query mutations/queries, handles loading/error/success, passes callbacks and initial values to the form component.
+- **Inner (`*FormComponent` in `-components/`)**: renders fields, runs client-side validation (zod), exposes `onSubmit` with validated data. No API calls.
 
 Do not mix API logic and form rendering in a single component.
 
@@ -90,9 +92,9 @@ Do not mix API logic and form rendering in a single component.
 - **Root `/` exception:** the home URL has no path segment, so use a single `routes/index.tsx` file (not `routes/index/index.tsx`, which would map to `/index/`).
 - Route entry file: `index.tsx` inside the route folder for non-root routes.
 - Do **not** use flat route files like `routes/login.tsx` when a directory route is intended.
-- Keep route `index.tsx` thin: define the route, optionally a loader, then render a PascalCase page component from `-components/`.
-- Pathless / non-URL folders use a leading `-` prefix (e.g. `-components/`).
-- Use `@/*` path alias for cross-cutting imports (`@/lib/...`); prefer relative imports within the same route's `-components/`.
+- Define the route and its page component in the same file (`index.tsx` / `route.tsx`). Put only child/subcomponents in `-components/`.
+- Pathless / non-URL folders use a leading `-` prefix (e.g. `-components/`, `-lib/`).
+- Use `@/*` path alias for cross-cutting imports (`@/lib/...`); prefer relative imports within the same route (`-components/`, `-lib/`).
 
 ## Structure
 
@@ -110,7 +112,8 @@ src/
     __root.tsx
     index.tsx              # / (root — no directory segment in URL)
     login/
-      index.tsx            # /login
-      -components/         # login-only components
+      index.tsx            # /login — route + page component
+      -components/         # login-only child components
+      -lib/                # login-only schemas, hooks, helpers
     api/                   # server / proxy routes
 ```

@@ -13,13 +13,12 @@ import { cn } from '@/lib/utils';
 import {
   type AuthCredentials,
   authCredentialsSchema,
-} from './auth-credentials-schema';
+} from '../-lib/auth-credentials-schema';
 
 type FieldErrors = Partial<Record<keyof AuthCredentials, string>>;
 
 type AuthCredentialsFormComponentProps = {
   isPending: boolean;
-  serverError?: string;
   onSubmit: (credentials: AuthCredentials) => void;
 };
 
@@ -36,7 +35,6 @@ const labelClassName =
 
 export function AuthCredentialsFormComponent({
   isPending,
-  serverError,
   onSubmit,
 }: AuthCredentialsFormComponentProps) {
   const [email, setEmail] = useState('');
@@ -126,12 +124,6 @@ export function AuthCredentialsFormComponent({
             </FieldError>
           ) : null}
         </Field>
-
-        {serverError ? (
-          <Field data-invalid>
-            <FieldError className="text-red-300/90">{serverError}</FieldError>
-          </Field>
-        ) : null}
       </FieldGroup>
 
       <Button
