@@ -1,4 +1,5 @@
 import { type Static, t } from 'elysia';
+import { paginationQuerySchema, paginationResponseSchema } from './common';
 
 export const createIdiomBodySchema = t.Object({
   text: t.String({
@@ -75,3 +76,30 @@ export const deleteIdiomParamsSchema = t.Object({
     error: () => 'ID格式不正确',
   }),
 });
+
+export const listIdiomsQuerySchema = t.Composite([
+  paginationQuerySchema,
+  t.Object({
+    text: t.Optional(t.String()),
+  }),
+]);
+
+export type ListIdiomsQuery = Static<typeof listIdiomsQuerySchema>;
+
+export const listIdiomsResponseSchema = t.Composite([
+  paginationResponseSchema,
+  t.Object({
+    items: t.Array(
+      t.Object({
+        id: t.String(),
+        text: t.String(),
+        charCount: t.Integer(),
+        pinyin: t.String(),
+        tonePattern: t.String(),
+        meaning: t.Nullable(t.String()),
+        createdAt: t.String(),
+        updatedAt: t.String(),
+      }),
+    ),
+  }),
+]);

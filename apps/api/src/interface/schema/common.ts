@@ -55,3 +55,21 @@ export const errorResponseSchema = t.Object({
   message: t.String(),
   data: t.Null(),
 });
+
+export const paginationQuerySchema = t.Object({
+  page: t.Integer({
+    minimum: 1,
+    default: 1,
+  }),
+  pageSize: t.Integer({
+    minimum: 1,
+    maximum: 100,
+    default: 20,
+  }),
+});
+
+export const paginationResponseSchema = t.Object({
+  total: t.Integer(),
+  page: t.Integer(),
+  pageSize: t.Integer(),
+});

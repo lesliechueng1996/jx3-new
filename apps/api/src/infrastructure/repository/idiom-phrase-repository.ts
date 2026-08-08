@@ -1,6 +1,14 @@
 import type { Idiom } from '@/domain/idiom/idiom';
 import { ERROR_CODES, InternalServerErrorException } from '@/shared/exception';
-import { db, eq, idiomChar, idiomPhrase } from '@/shared/util/db';
+import {
+  count,
+  db,
+  desc,
+  eq,
+  idiomChar,
+  idiomPhrase,
+  ilike,
+} from '@/shared/util/db';
 
 type IdiomPhrase = typeof idiomPhrase.$inferSelect;
 type IdiomChar = typeof idiomChar.$inferSelect;
@@ -85,5 +93,38 @@ export class IdiomPhraseRepository {
       await tx.delete(idiomPhrase).where(eq(idiomPhrase.id, id));
       await tx.delete(idiomChar).where(eq(idiomChar.idiomId, id));
     });
+  }
+
+  #buildListIdiomWhere(text: string) {
+    if (!text) {
+      return undefined;
+    }
+
+    return ilike(idiomPhrase.text, `%${text}%`);
+  }
+
+  async listPagination(text: string, limit: number, offset: number) {
+    const where = this.#buildListIdiomWhere(text);
+
+    const items = await db
+      .select()
+      .from(idiomPhrase)
+      .where(where)
+      .orderBy(desc(idiomPhrase.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    return items;
+  }
+
+  async count(text: string) {
+    const where = this.#buildListIdiomWhere(text);
+
+    const [result] = await db
+      .select({ total: count() })
+      .from(idiomPhrase)
+      .where(where);
+
+    return result?.total ?? 0;
   }
 }

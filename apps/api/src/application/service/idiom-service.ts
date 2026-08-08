@@ -5,6 +5,7 @@ import { IdiomPhraseRepository } from '@/infrastructure/repository/idiom-phrase-
 import type {
   CreateIdiomResponse,
   GetIdiomResponse,
+  ListIdiomsQuery,
 } from '@/interface/schema/idiom-schema';
 import {
   ConflictException,
@@ -99,4 +100,30 @@ export const getIdiom = async (id: string): Promise<GetIdiomResponse> => {
 
 export const deleteIdiom = async (id: string): Promise<void> => {
   await idiomPhraseRepository.deleteById(id);
+};
+
+export const listIdiomsPagination = async (query: ListIdiomsQuery) => {
+  const { text, page, pageSize } = query;
+  const offset = (page - 1) * pageSize;
+
+  const [rows, total] = await Promise.all([
+    idiomPhraseRepository.listPagination(text ?? '', pageSize, offset),
+    idiomPhraseRepository.count(text ?? ''),
+  ]);
+
+  return {
+    items: rows.map((item) => ({
+      id: item.id,
+      text: item.text,
+      charCount: item.charCount,
+      pinyin: item.pinyin,
+      tonePattern: item.tonePattern,
+      meaning: item.meaning,
+      createdAt: formatDateTime(item.createdAt),
+      updatedAt: formatDateTime(item.updatedAt),
+    })),
+    total,
+    page,
+    pageSize,
+  };
 };

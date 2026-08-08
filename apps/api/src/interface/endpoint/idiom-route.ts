@@ -2,7 +2,9 @@ import {
   createIdiom,
   deleteIdiom,
   getIdiom,
+  listIdiomsPagination,
 } from '@/application/service/idiom-service';
+import { roleAdmin } from '@/shared/util/auth';
 import {
   AppResponse,
   createSuccessResponseSchema,
@@ -14,6 +16,8 @@ import {
   deleteIdiomParamsSchema,
   getIdiomParamsSchema,
   getIdiomResponseSchema,
+  listIdiomsQuerySchema,
+  listIdiomsResponseSchema,
 } from '../schema/idiom-schema';
 import { apiRoute } from './api-route';
 
@@ -32,7 +36,7 @@ export const createIdiomRoute = apiRoute.group('/idiom', (app) =>
         return status(201, AppResponse.success(result).toJson());
       },
       {
-        auth: 'admin',
+        auth: roleAdmin,
         body: createIdiomBodySchema,
         response: {
           201: createSuccessResponseSchema(createIdiomResponseSchema),
@@ -55,7 +59,7 @@ export const createIdiomRoute = apiRoute.group('/idiom', (app) =>
         return status(200, AppResponse.success(idiom).toJson());
       },
       {
-        auth: 'admin',
+        auth: roleAdmin,
         params: getIdiomParamsSchema,
         response: {
           200: createSuccessResponseSchema(getIdiomResponseSchema),
@@ -78,7 +82,7 @@ export const createIdiomRoute = apiRoute.group('/idiom', (app) =>
         return status(200, AppResponse.success().toJson());
       },
       {
-        auth: 'admin',
+        // auth: roleAdmin,
         params: deleteIdiomParamsSchema,
         response: {
           200: createSuccessResponseSchema(),
@@ -91,6 +95,28 @@ export const createIdiomRoute = apiRoute.group('/idiom', (app) =>
           summary: 'Delete an idiom',
           description:
             'Deletes an idiom and its character records. Requires admin role.',
+        },
+      },
+    )
+    .get(
+      '',
+      async ({ query, status }) => {
+        const result = await listIdiomsPagination(query);
+        return status(200, AppResponse.success(result).toJson());
+      },
+      {
+        // auth: roleAdmin,
+        query: listIdiomsQuerySchema,
+        response: {
+          200: createSuccessResponseSchema(listIdiomsResponseSchema),
+          400: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [idiomTag.name],
+          summary: 'List idioms with pagination and filters',
+          description:
+            'Returns a paginated list of idioms. Requires admin role.',
         },
       },
     ),
