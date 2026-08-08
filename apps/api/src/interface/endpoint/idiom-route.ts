@@ -82,7 +82,7 @@ export const createIdiomRoute = apiRoute.group('/idiom', (app) =>
         return status(200, AppResponse.success().toJson());
       },
       {
-        // auth: roleAdmin,
+        auth: roleAdmin,
         params: deleteIdiomParamsSchema,
         response: {
           200: createSuccessResponseSchema(),
@@ -105,7 +105,7 @@ export const createIdiomRoute = apiRoute.group('/idiom', (app) =>
         return status(200, AppResponse.success(result).toJson());
       },
       {
-        // auth: roleAdmin,
+        auth: roleAdmin,
         query: listIdiomsQuerySchema,
         response: {
           200: createSuccessResponseSchema(listIdiomsResponseSchema),
