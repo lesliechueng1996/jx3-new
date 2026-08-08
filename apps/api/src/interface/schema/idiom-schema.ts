@@ -34,3 +34,34 @@ export const createIdiomResponseSchema = t.Object({
 });
 
 export type CreateIdiomResponse = Static<typeof createIdiomResponseSchema>;
+
+export const getIdiomParamsSchema = t.Object({
+  id: t.String(),
+});
+
+export const getIdiomResponseSchema = t.Object({
+  id: t.String(),
+  text: t.String(),
+  charCount: t.Integer(),
+  pinyin: t.String(),
+  tonePattern: t.String(),
+  meaning: t.Nullable(t.String()),
+  chars: t.Array(
+    t.Object({
+      id: t.String(),
+      idiomId: t.String(),
+      position: t.Integer(),
+      char: t.String(),
+      pinyin: t.String(),
+      initial: t.String(),
+      final: t.String(),
+      tone: t.Integer(),
+      createdAt: t.String(),
+      updatedAt: t.String(),
+    }),
+  ),
+  createdAt: t.String(),
+  updatedAt: t.String(),
+});
+
+export type GetIdiomResponse = Static<typeof getIdiomResponseSchema>;

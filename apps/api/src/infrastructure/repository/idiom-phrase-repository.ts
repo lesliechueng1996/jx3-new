@@ -5,7 +5,7 @@ import { db, eq, idiomChar, idiomPhrase } from '@/shared/util/db';
 type IdiomPhrase = typeof idiomPhrase.$inferSelect;
 type IdiomChar = typeof idiomChar.$inferSelect;
 
-export class IdiomRepository {
+export class IdiomPhraseRepository {
   async create(
     idiom: Idiom,
   ): Promise<{ idiom: IdiomPhrase; chars: IdiomChar[] }> {
@@ -56,7 +56,23 @@ export class IdiomRepository {
     const result = await db
       .select()
       .from(idiomPhrase)
-      .where(eq(idiomPhrase.text, text));
+      .where(eq(idiomPhrase.text, text))
+      .limit(1);
+
+    if (result.length === 0) {
+      return null;
+    }
+
+    return result[0];
+  }
+
+  async findById(id: string): Promise<IdiomPhrase | null> {
+    const result = await db
+      .select()
+      .from(idiomPhrase)
+      .where(eq(idiomPhrase.id, id))
+      .limit(1);
+
     if (result.length === 0) {
       return null;
     }
