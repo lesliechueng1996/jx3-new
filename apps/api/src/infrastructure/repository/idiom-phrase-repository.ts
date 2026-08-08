@@ -79,4 +79,11 @@ export class IdiomPhraseRepository {
 
     return result[0];
   }
+
+  async deleteById(id: string): Promise<void> {
+    await db.transaction(async (tx) => {
+      await tx.delete(idiomPhrase).where(eq(idiomPhrase.id, id));
+      await tx.delete(idiomChar).where(eq(idiomChar.idiomId, id));
+    });
+  }
 }

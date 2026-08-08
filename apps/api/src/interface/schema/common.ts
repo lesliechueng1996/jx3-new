@@ -20,8 +20,8 @@ export class AppResponse<T> {
     return new AppResponse(null, '系统异常', ERROR_CODES.INTERNAL_SERVER_ERROR);
   }
 
-  static success<T>(data: T): AppResponse<T> {
-    return new AppResponse(data, 'OK', ERROR_CODES.SUCCESS);
+  static success<T>(data?: T): AppResponse<T | null> {
+    return new AppResponse(data ?? null, 'OK', ERROR_CODES.SUCCESS);
   }
 
   static error({
@@ -43,11 +43,11 @@ export class AppResponse<T> {
   }
 }
 
-export const createSuccessResponseSchema = (data: TSchema) =>
+export const createSuccessResponseSchema = (data?: TSchema) =>
   t.Object({
     code: t.Literal(ERROR_CODES.SUCCESS),
     message: t.String(),
-    data,
+    data: data ?? t.Null(),
   });
 
 export const errorResponseSchema = t.Object({

@@ -1,4 +1,8 @@
-import { createIdiom, getIdiom } from '@/application/service/idiom-service';
+import {
+  createIdiom,
+  deleteIdiom,
+  getIdiom,
+} from '@/application/service/idiom-service';
 import {
   AppResponse,
   createSuccessResponseSchema,
@@ -7,6 +11,7 @@ import {
 import {
   createIdiomBodySchema,
   createIdiomResponseSchema,
+  deleteIdiomParamsSchema,
   getIdiomParamsSchema,
   getIdiomResponseSchema,
 } from '../schema/idiom-schema';
@@ -39,7 +44,7 @@ export const createIdiomRoute = apiRoute.group('/idiom', (app) =>
           tags: [idiomTag.name],
           summary: 'Create an idiom',
           description:
-            'Creates an idiom and derives pinyin from text via pinyin-pro. Requires super_admin role.',
+            'Creates an idiom and derives pinyin from text via pinyin-pro. Requires admin role.',
         },
       },
     )
@@ -50,7 +55,7 @@ export const createIdiomRoute = apiRoute.group('/idiom', (app) =>
         return status(200, AppResponse.success(idiom).toJson());
       },
       {
-        auth: 'user',
+        auth: 'admin',
         params: getIdiomParamsSchema,
         response: {
           200: createSuccessResponseSchema(getIdiomResponseSchema),
@@ -60,8 +65,32 @@ export const createIdiomRoute = apiRoute.group('/idiom', (app) =>
         },
         detail: {
           tags: [idiomTag.name],
-          summary: 'Get idiom detail with characters',
-          description: 'Returns an idiom and its character phonetics.',
+          summary: 'Get an idiom detail with characters',
+          description:
+            'Returns an idiom and its character phonetics. Requires admin role.',
+        },
+      },
+    )
+    .delete(
+      '/:id',
+      async ({ params, status }) => {
+        await deleteIdiom(params.id);
+        return status(200, AppResponse.success().toJson());
+      },
+      {
+        auth: 'admin',
+        params: deleteIdiomParamsSchema,
+        response: {
+          200: createSuccessResponseSchema(),
+          400: errorResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [idiomTag.name],
+          summary: 'Delete an idiom',
+          description:
+            'Deletes an idiom and its character records. Requires admin role.',
         },
       },
     ),

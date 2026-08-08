@@ -68,3 +68,10 @@ export const getIdiomResponseSchema = t.Object({
 });
 
 export type GetIdiomResponse = Static<typeof getIdiomResponseSchema>;
+
+export const deleteIdiomParamsSchema = t.Object({
+  id: t.String({
+    format: 'uuid',
+    error: () => 'ID格式不正确',
+  }),
+});

@@ -96,3 +96,7 @@ export const getIdiom = async (id: string): Promise<GetIdiomResponse> => {
     updatedAt: formatDateTime(idiom.updatedAt),
   };
 };
+
+export const deleteIdiom = async (id: string): Promise<void> => {
+  await idiomPhraseRepository.deleteById(id);
+};
