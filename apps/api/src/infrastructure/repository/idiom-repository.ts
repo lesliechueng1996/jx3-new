@@ -1,6 +1,6 @@
 import type { Idiom } from '@/domain/idiom/idiom';
 import { ERROR_CODES, InternalServerErrorException } from '@/shared/exception';
-import { db, idiomChar, idiomPhrase } from '@/shared/util/db';
+import { db, eq, idiomChar, idiomPhrase } from '@/shared/util/db';
 
 type IdiomPhrase = typeof idiomPhrase.$inferSelect;
 type IdiomChar = typeof idiomChar.$inferSelect;
@@ -50,5 +50,17 @@ export class IdiomRepository {
     });
 
     return result;
+  }
+
+  async findByText(text: string): Promise<IdiomPhrase | null> {
+    const result = await db
+      .select()
+      .from(idiomPhrase)
+      .where(eq(idiomPhrase.text, text));
+    if (result.length === 0) {
+      return null;
+    }
+
+    return result[0];
   }
 }

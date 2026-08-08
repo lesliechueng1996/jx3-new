@@ -8,4 +8,5 @@ if (!DATABASE_URL) {
 
 export const db = drizzle(DATABASE_URL);
 
+export * from 'drizzle-orm';
 export * from './schema';

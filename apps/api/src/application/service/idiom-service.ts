@@ -10,8 +10,14 @@ export const createIdiom = async (
   text: string,
   meaning: string = '',
 ): Promise<CreateIdiomResponse> => {
-  const idiom = new Idiom(text, meaning);
   const idiomRepository = new IdiomRepository();
+
+  const existingIdiom = await idiomRepository.findByText(text);
+  if (existingIdiom) {
+    throw new ConflictException('成语已存在', ERROR_CODES.IDIOM_ALREADY_EXISTS);
+  }
+
+  const idiom = new Idiom(text, meaning);
   try {
     const result = await idiomRepository.create(idiom);
 
