@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "bun",
+      "request": "launch",
+      "name": "Debug API (dev)",
+      "program": "${workspaceFolder}/apps/api/src/index.ts",
+      "cwd": "${workspaceFolder}/apps/api",
+      "watchMode": true,
+      "runtime": "bun",
+      "strictEnv": false,
+      "stopOnEntry": false
+    }
+  ]
+}
