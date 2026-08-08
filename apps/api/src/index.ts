@@ -3,6 +3,7 @@ import { cors } from '@elysiajs/cors';
 import { Elysia } from 'elysia';
 import { env } from './infrastructure/config/env';
 import { initializeLogger, logger } from './infrastructure/logger';
+import { requestId } from './interface/plugins/request-id';
 import { auth, OpenAPI } from './shared/util/auth';
 
 await initializeLogger();
@@ -24,6 +25,7 @@ const app = new Elysia()
       },
     }),
   )
+  .use(requestId())
   .mount(auth.handler)
   .listen(3001);
 
