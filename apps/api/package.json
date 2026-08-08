@@ -15,7 +15,10 @@
     "@elysia/openapi": "^1.4.15",
     "@elysiajs/cors": "^1.4.2",
     "@jx3/db": "workspace:*",
+    "@logtape/file": "^2.3.0",
+    "@logtape/logtape": "^2.3.0",
     "better-auth": "^1.6.26",
+    "date-fns": "^4.4.0",
     "elysia": "latest"
   },
   "devDependencies": {

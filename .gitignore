@@ -39,3 +39,6 @@ yarn-error.log*
 
 *.local.md
 .cursor/rules/local-preferences.mdc
+
+# Agent skills from npm packages (managed by skills-npm)
+**/skills/npm-*

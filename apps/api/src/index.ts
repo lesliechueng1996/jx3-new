@@ -2,7 +2,10 @@ import { openapi } from '@elysia/openapi';
 import { cors } from '@elysiajs/cors';
 import { Elysia } from 'elysia';
 import { env } from './infrastructure/config/env';
+import { initializeLogger, logger } from './infrastructure/logger';
 import { auth, OpenAPI } from './shared/util/auth';
+
+await initializeLogger();
 
 const app = new Elysia()
   .use(
@@ -24,6 +27,6 @@ const app = new Elysia()
   .mount(auth.handler)
   .listen(3001);
 
-console.log(
+logger.info(
   `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`,
 );
