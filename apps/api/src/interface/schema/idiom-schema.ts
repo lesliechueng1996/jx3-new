@@ -36,7 +36,10 @@ export const createIdiomResponseSchema = t.Object({
 export type CreateIdiomResponse = Static<typeof createIdiomResponseSchema>;
 
 export const getIdiomParamsSchema = t.Object({
-  id: t.String(),
+  id: t.String({
+    format: 'uuid',
+    error: () => 'ID格式不正确',
+  }),
 });
 
 export const getIdiomResponseSchema = t.Object({

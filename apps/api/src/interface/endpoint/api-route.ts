@@ -1,10 +1,11 @@
 import { Elysia } from 'elysia';
 import { logger } from '@/infrastructure/logger';
 import { AppException, ERROR_CODES } from '@/shared/exception';
+import { authMacro } from '../plugins/auth-macro';
 import { AppResponse } from '../schema/common';
 
-export const apiRoute = new Elysia({ prefix: '/api/v1' }).onError(
-  ({ code, error, status }) => {
+export const apiRoute = new Elysia({ prefix: '/api/v1' })
+  .onError(({ code, error, status }) => {
     logger.error('API error, {error}', { error });
 
     if (code === 'VALIDATION') {
@@ -31,5 +32,5 @@ export const apiRoute = new Elysia({ prefix: '/api/v1' }).onError(
         message: 'Internal server error',
       }).toJson(),
     );
-  },
-);
+  })
+  .use(authMacro);

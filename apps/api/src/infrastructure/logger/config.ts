@@ -4,16 +4,22 @@ import {
   configure,
   getAnsiColorFormatter,
   getConsoleSink,
+  getTextFormatter,
+  type TextFormatterOptions,
 } from '@logtape/logtape';
 import { formatDate } from '@/shared/util/date';
 
 export const APP_LOGGER_CATEGORY = 'app';
 
-const ansiColorFormatter = getAnsiColorFormatter({
+const formatterOptions: TextFormatterOptions = {
   timestamp: (timestamp) => formatDate(new Date(timestamp)),
   format: ({ timestamp, level, category, message, record }) =>
     `${timestamp ? `${timestamp} ` : ''}[${level}] ${category}: ${record.properties.requestId ? `[${record.properties.requestId}] ` : ''}- ${message}`,
-});
+};
+
+const ansiColorFormatter = getAnsiColorFormatter(formatterOptions);
+
+const textFormatter = getTextFormatter(formatterOptions);
 
 export const initializeLogger = async () => {
   await configure({
@@ -25,7 +31,7 @@ export const initializeLogger = async () => {
         directory: './logs',
         interval: 'daily',
         maxAgeMs: 7 * 24 * 60 * 60 * 1000,
-        formatter: ansiColorFormatter,
+        formatter: textFormatter,
       }),
     },
     loggers: [

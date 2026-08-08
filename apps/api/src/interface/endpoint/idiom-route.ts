@@ -27,9 +27,11 @@ export const createIdiomRoute = apiRoute.group('/idiom', (app) =>
         return status(201, AppResponse.success(result).toJson());
       },
       {
+        auth: 'admin',
         body: createIdiomBodySchema,
         response: {
           201: createSuccessResponseSchema(createIdiomResponseSchema),
+          400: errorResponseSchema,
           409: errorResponseSchema,
           500: errorResponseSchema,
         },
@@ -48,9 +50,11 @@ export const createIdiomRoute = apiRoute.group('/idiom', (app) =>
         return status(200, AppResponse.success(idiom).toJson());
       },
       {
+        auth: 'user',
         params: getIdiomParamsSchema,
         response: {
           200: createSuccessResponseSchema(getIdiomResponseSchema),
+          400: errorResponseSchema,
           404: errorResponseSchema,
           500: errorResponseSchema,
         },
