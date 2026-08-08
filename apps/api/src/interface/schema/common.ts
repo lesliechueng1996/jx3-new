@@ -1,3 +1,4 @@
+import { type TSchema, t } from 'elysia';
 import { AppException, ERROR_CODES } from '@/shared/exception';
 
 export class AppResponse<T> {
@@ -33,3 +34,16 @@ export class AppResponse<T> {
     return new AppResponse(null, message, code);
   }
 }
+
+export const createSuccessResponseSchema = (data: TSchema) =>
+  t.Object({
+    code: t.Literal(ERROR_CODES.SUCCESS),
+    message: t.String(),
+    data,
+  });
+
+export const errorResponseSchema = t.Object({
+  code: t.String(),
+  message: t.String(),
+  data: t.Null(),
+});

@@ -19,6 +19,7 @@
         "@elysia/openapi": "^1.4.15",
         "@elysiajs/cors": "^1.4.2",
         "@jx3/db": "workspace:*",
+        "@logtape/elysia": "^2.3.0",
         "@logtape/file": "^2.3.0",
         "@logtape/logtape": "^2.3.0",
         "better-auth": "^1.6.26",
@@ -285,6 +286,8 @@
     "@jx3/db": ["@jx3/db@workspace:packages/db"],
 
     "@jx3/ui": ["@jx3/ui@workspace:apps/ui"],
+
+    "@logtape/elysia": ["@logtape/elysia@2.3.0", "", { "peerDependencies": { "@logtape/logtape": "^2.3.0", "elysia": "^1.4.0" } }, "sha512-A002K04xH9YbgqYrXeDyti50ElD27KlJGePOmRc5It+Gj+S210NMtEr4SRM0Lm/jfsFyJQf+u6GPo7IiiWtpHA=="],
 
     "@logtape/file": ["@logtape/file@2.3.0", "", { "peerDependencies": { "@logtape/logtape": "^2.3.0" } }, "sha512-IO1IV+WSmEjf6RpdS7EnbcytrV4EUbDngeZhSeTrXQjremGZPljwqQsgjTXaK845jwIUhV2852ezAA7UBfMyXQ=="],
 

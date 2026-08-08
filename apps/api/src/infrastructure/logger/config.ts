@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { getTimeRotatingFileSink } from '@logtape/file';
 import {
   configure,
@@ -11,7 +12,7 @@ export const APP_LOGGER_CATEGORY = 'app';
 const ansiColorFormatter = getAnsiColorFormatter({
   timestamp: (timestamp) => formatDate(new Date(timestamp)),
   format: ({ timestamp, level, category, message, record }) =>
-    `${timestamp ? `${timestamp} ` : ''}[${level}] ${category}: ${record.properties['request-id']} - ${message}`,
+    `${timestamp ? `${timestamp} ` : ''}[${level}] ${category}: ${record.properties.requestId ?? '-'} - ${message}`,
 });
 
 export const initializeLogger = async () => {
@@ -39,5 +40,6 @@ export const initializeLogger = async () => {
         sinks: ['console', 'file'],
       },
     ],
+    contextLocalStorage: new AsyncLocalStorage(),
   });
 };
