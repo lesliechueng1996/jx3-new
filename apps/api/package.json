@@ -20,7 +20,8 @@
     "@logtape/logtape": "^2.3.0",
     "better-auth": "^1.6.26",
     "date-fns": "^4.4.0",
-    "elysia": "latest"
+    "elysia": "latest",
+    "pinyin-pro": "^3.28.2"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.7",

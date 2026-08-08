@@ -50,6 +50,15 @@ export class NotFoundException extends AppException {
   }
 }
 
+export class ConflictException extends AppException {
+  constructor(
+    message: string = '资源冲突',
+    code: string = ERROR_CODES.CONFLICT,
+  ) {
+    super(message, 409, code);
+  }
+}
+
 export class TooManyRequestsException extends AppException {
   constructor(
     message: string = '请求过多',

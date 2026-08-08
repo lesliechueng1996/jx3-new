@@ -1,4 +1,8 @@
-import { errorResponseSchema } from '../schema/common';
+import { createIdiom } from '@/application/service/idiom-service';
+import {
+  createSuccessResponseSchema,
+  errorResponseSchema,
+} from '../schema/common';
 import {
   createIdiomBodySchema,
   createIdiomResponseSchema,
@@ -11,12 +15,21 @@ export const idiomTag = {
 };
 
 export const createIdiomRoute = apiRoute.group('/idiom', (app) =>
-  app.post('', async () => {}, {
-    body: createIdiomBodySchema,
-    response: {
-      201: createIdiomResponseSchema,
-      500: errorResponseSchema,
+  app.post(
+    '',
+    async ({ body }) => {
+      const { text, meaning } = body;
+      const result = await createIdiom(text, meaning);
+      return result;
     },
-    tags: [idiomTag.name],
-  }),
+    {
+      body: createIdiomBodySchema,
+      response: {
+        201: createSuccessResponseSchema(createIdiomResponseSchema),
+        409: errorResponseSchema,
+        500: errorResponseSchema,
+      },
+      tags: [idiomTag.name],
+    },
+  ),
 );
