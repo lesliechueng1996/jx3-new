@@ -1,4 +1,5 @@
 import { Idiom } from '@/domain/idiom/idiom';
+import { logger } from '@/infrastructure/logger';
 import { IdiomRepository } from '@/infrastructure/repository/idiom-repository';
 import type { CreateIdiomResponse } from '@/interface/schema/idiom-schema';
 import { ConflictException, ERROR_CODES } from '@/shared/exception';
@@ -37,9 +38,11 @@ export const createIdiom = async (
       updatedAt: formatDateTime(result.idiom.updatedAt),
     };
   } catch (error) {
+    logger.error('Create idiom failed, {error}', { error });
+
     if (isUniqueViolationError(error, 'idiom_phrase_text_unique')) {
       throw new ConflictException(
-        'Idiom already exists',
+        '成语已存在',
         ERROR_CODES.IDIOM_ALREADY_EXISTS,
       );
     }

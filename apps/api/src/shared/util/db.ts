@@ -4,9 +4,15 @@ export const isUniqueViolationError = (
   error: unknown,
   constraint?: string,
 ): boolean => {
-  if (!error || typeof error !== 'object') return false;
-  const e = error as { code?: string; constraint?: string };
-  if (e.code !== '23505') return false;
-  if (constraint && e.constraint !== constraint) return false;
+  if (!error || typeof error !== 'object' || !('cause' in error)) {
+    return false;
+  }
+  const cause = error.cause as { code?: string; constraint?: string };
+  if (cause.code !== '23505') {
+    return false;
+  }
+  if (constraint && cause.constraint !== constraint) {
+    return false;
+  }
   return true;
 };

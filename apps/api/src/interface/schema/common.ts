@@ -33,6 +33,14 @@ export class AppResponse<T> {
   } = {}): AppResponse<null> {
     return new AppResponse(null, message, code);
   }
+
+  toJson() {
+    return {
+      code: this.code,
+      message: this.message,
+      data: this.data,
+    };
+  }
 }
 
 export const createSuccessResponseSchema = (data: TSchema) =>

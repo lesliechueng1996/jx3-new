@@ -3,6 +3,7 @@ import { type Static, t } from 'elysia';
 export const createIdiomBodySchema = t.Object({
   text: t.String({
     minLength: 4,
+    error: () => '成语长度至少为4个字符',
   }),
   meaning: t.Optional(t.String()),
 });

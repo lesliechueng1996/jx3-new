@@ -30,7 +30,7 @@ export class Idiom {
           index,
           item.pinyin,
           item.initial,
-          item.final,
+          item.final.substring(0, item.final.length - 1),
           item.num,
         );
       });

@@ -12,7 +12,7 @@ export const APP_LOGGER_CATEGORY = 'app';
 const ansiColorFormatter = getAnsiColorFormatter({
   timestamp: (timestamp) => formatDate(new Date(timestamp)),
   format: ({ timestamp, level, category, message, record }) =>
-    `${timestamp ? `${timestamp} ` : ''}[${level}] ${category}: ${record.properties.requestId ?? '-'} - ${message}`,
+    `${timestamp ? `${timestamp} ` : ''}[${level}] ${category}: ${record.properties.requestId ? `[${record.properties.requestId}] ` : ''}- ${message}`,
 });
 
 export const initializeLogger = async () => {
