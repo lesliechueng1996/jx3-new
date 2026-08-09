@@ -1,8 +1,8 @@
+import { env } from '@api/infrastructure/config/env';
 import { account, session, user, verification } from '@jx3/db';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { admin, openAPI } from 'better-auth/plugins';
-import { env } from '@/infrastructure/config/env';
 import { db } from './db';
 
 export const auth = betterAuth({

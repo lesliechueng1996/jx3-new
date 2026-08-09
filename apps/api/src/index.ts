@@ -4,8 +4,12 @@ import { createIdiomRoute } from './interface/endpoint/idiom-route';
 
 await initializeLogger();
 
-app.use(createIdiomRoute).listen(3001);
+const server = app.use(createIdiomRoute);
+
+export type App = typeof server;
+
+server.listen(3001);
 
 logger.info(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`,
+  `🦊 Elysia is running at ${server.server?.hostname}:${server.server?.port}`,
 );

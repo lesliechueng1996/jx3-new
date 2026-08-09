@@ -1,22 +1,22 @@
-import { Idiom } from '@/domain/idiom/idiom';
-import { logger } from '@/infrastructure/logger';
-import { IdiomCharRepository } from '@/infrastructure/repository/idiom-char-repository';
-import { IdiomPhraseRepository } from '@/infrastructure/repository/idiom-phrase-repository';
+import { Idiom } from '@api/domain/idiom/idiom';
+import { logger } from '@api/infrastructure/logger';
+import { IdiomCharRepository } from '@api/infrastructure/repository/idiom-char-repository';
+import { IdiomPhraseRepository } from '@api/infrastructure/repository/idiom-phrase-repository';
 import type {
   CreateIdiomResponse,
   GetIdiomResponse,
   ListIdiomsQuery,
   UpdateIdiomBody,
-} from '@/interface/schema/idiom-schema';
+} from '@api/interface/schema/idiom-schema';
 import {
   BadRequestException,
   ConflictException,
   ERROR_CODES,
   NotFoundException,
-} from '@/shared/exception';
-import { formatDateTime } from '@/shared/util/date';
-import { isUniqueViolationError } from '@/shared/util/db';
-import { pickDefinedProperties } from '@/shared/util/object';
+} from '@api/shared/exception';
+import { formatDateTime } from '@api/shared/util/date';
+import { isUniqueViolationError } from '@api/shared/util/db';
+import { pickDefinedProperties } from '@api/shared/util/object';
 
 const idiomPhraseRepository = new IdiomPhraseRepository();
 const idiomCharRepository = new IdiomCharRepository();

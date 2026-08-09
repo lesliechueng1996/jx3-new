@@ -26,7 +26,7 @@ export const navItems: NavItem[] = [
   {
     title: '成语管理',
     icon: BookOpenTextIcon,
-    to: '/idioms',
+    to: '/admin/idioms',
   },
   {
     title: '游戏辅助',

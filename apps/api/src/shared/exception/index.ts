@@ -2,11 +2,13 @@ import { ERROR_CODES } from './error-code';
 
 export { ERROR_CODES };
 
+export type HttpErrorStatus = 400 | 401 | 403 | 404 | 409 | 429 | 500;
+
 export class AppException extends Error {
-  statusCode: number;
+  statusCode: HttpErrorStatus;
   code: string;
 
-  constructor(message: string, statusCode: number, code: string) {
+  constructor(message: string, statusCode: HttpErrorStatus, code: string) {
     super(message);
     this.statusCode = statusCode;
     this.code = code;

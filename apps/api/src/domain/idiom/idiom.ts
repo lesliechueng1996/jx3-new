@@ -1,5 +1,5 @@
+import { logger } from '@api/infrastructure/logger';
 import { pinyin } from 'pinyin-pro';
-import { logger } from '@/infrastructure/logger';
 import { IdiomChar } from './idiom-char';
 
 export class Idiom {

@@ -1,5 +1,5 @@
+import { APP_LOGGER_CATEGORY } from '@api/infrastructure/logger/config';
 import { elysiaLogger } from '@logtape/elysia';
-import { APP_LOGGER_CATEGORY } from '@/infrastructure/logger/config';
 
 /**
  * HTTP access logging + per-request LogTape implicit context (requestId).

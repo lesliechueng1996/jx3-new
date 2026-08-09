@@ -4,11 +4,12 @@ import {
   getIdiom,
   listIdiomsPagination,
   updateIdiom,
-} from '@/application/service/idiom-service';
-import { roleAdmin } from '@/shared/util/auth';
+} from '@api/application/service/idiom-service';
+import { roleAdmin } from '@api/shared/util/auth';
 import {
   AppResponse,
   createSuccessResponseSchema,
+  emptySuccessResponseSchema,
   errorResponseSchema,
 } from '../schema/common';
 import {
@@ -88,7 +89,7 @@ export const createIdiomRoute = apiRoute.group('/idiom', (app) =>
         auth: roleAdmin,
         params: deleteIdiomParamsSchema,
         response: {
-          200: createSuccessResponseSchema(),
+          200: emptySuccessResponseSchema,
           400: errorResponseSchema,
           404: errorResponseSchema,
           500: errorResponseSchema,

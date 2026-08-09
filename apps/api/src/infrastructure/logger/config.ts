@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
+import { formatDate } from '@api/shared/util/date';
 import { getTimeRotatingFileSink } from '@logtape/file';
 import {
   configure,
@@ -7,7 +8,6 @@ import {
   getTextFormatter,
   type TextFormatterOptions,
 } from '@logtape/logtape';
-import { formatDate } from '@/shared/util/date';
 
 export const APP_LOGGER_CATEGORY = 'app';
 

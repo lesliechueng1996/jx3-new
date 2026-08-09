@@ -11,8 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as ForbiddenIndexRouteImport } from './routes/forbidden/index'
 import { Route as LoginIndexRouteImport } from './routes/login/index'
-import { Route as AuthenticatedIdiomsIndexRouteImport } from './routes/_authenticated/idioms/index'
+import { Route as AuthenticatedAdminIdiomsIndexRouteImport } from './routes/_authenticated/admin/idioms/index'
 import { Route as AuthenticatedGameAssistGuessIdiomIndexRouteImport } from './routes/_authenticated/game-assist/guess-idiom/index'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -24,16 +26,26 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ForbiddenIndexRoute = ForbiddenIndexRouteImport.update({
+  id: '/forbidden/',
+  path: '/forbidden/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginIndexRoute = LoginIndexRouteImport.update({
   id: '/login/',
   path: '/login/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedIdiomsIndexRoute =
-  AuthenticatedIdiomsIndexRouteImport.update({
+const AuthenticatedAdminIdiomsIndexRoute =
+  AuthenticatedAdminIdiomsIndexRouteImport.update({
     id: '/idioms/',
     path: '/idioms/',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 const AuthenticatedGameAssistGuessIdiomIndexRoute =
   AuthenticatedGameAssistGuessIdiomIndexRouteImport.update({
@@ -44,40 +56,61 @@ const AuthenticatedGameAssistGuessIdiomIndexRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
+  '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
+  '/forbidden/': typeof ForbiddenIndexRoute
   '/login/': typeof LoginIndexRoute
-  '/idioms/': typeof AuthenticatedIdiomsIndexRoute
+  '/admin/idioms/': typeof AuthenticatedAdminIdiomsIndexRoute
   '/game-assist/guess-idiom/': typeof AuthenticatedGameAssistGuessIdiomIndexRoute
 }
 export interface FileRoutesByTo {
+  '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/': typeof AuthenticatedIndexRoute
+  '/forbidden': typeof ForbiddenIndexRoute
   '/login': typeof LoginIndexRoute
-  '/idioms': typeof AuthenticatedIdiomsIndexRoute
+  '/admin/idioms': typeof AuthenticatedAdminIdiomsIndexRoute
   '/game-assist/guess-idiom': typeof AuthenticatedGameAssistGuessIdiomIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/forbidden/': typeof ForbiddenIndexRoute
   '/login/': typeof LoginIndexRoute
-  '/_authenticated/idioms/': typeof AuthenticatedIdiomsIndexRoute
+  '/_authenticated/admin/idioms/': typeof AuthenticatedAdminIdiomsIndexRoute
   '/_authenticated/game-assist/guess-idiom/': typeof AuthenticatedGameAssistGuessIdiomIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login/' | '/idioms/' | '/game-assist/guess-idiom/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/forbidden/'
+    | '/login/'
+    | '/admin/idioms/'
+    | '/game-assist/guess-idiom/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/idioms' | '/game-assist/guess-idiom'
+  to:
+    | '/admin'
+    | '/'
+    | '/forbidden'
+    | '/login'
+    | '/admin/idioms'
+    | '/game-assist/guess-idiom'
   id:
     | '__root__'
     | '/_authenticated'
+    | '/_authenticated/admin'
     | '/_authenticated/'
+    | '/forbidden/'
     | '/login/'
-    | '/_authenticated/idioms/'
+    | '/_authenticated/admin/idioms/'
     | '/_authenticated/game-assist/guess-idiom/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  ForbiddenIndexRoute: typeof ForbiddenIndexRoute
   LoginIndexRoute: typeof LoginIndexRoute
 }
 
@@ -97,6 +130,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/forbidden/': {
+      id: '/forbidden/'
+      path: '/forbidden'
+      fullPath: '/forbidden/'
+      preLoaderRoute: typeof ForbiddenIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login/': {
       id: '/login/'
       path: '/login'
@@ -104,12 +151,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/idioms/': {
-      id: '/_authenticated/idioms/'
+    '/_authenticated/admin/idioms/': {
+      id: '/_authenticated/admin/idioms/'
       path: '/idioms'
-      fullPath: '/idioms/'
-      preLoaderRoute: typeof AuthenticatedIdiomsIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      fullPath: '/admin/idioms/'
+      preLoaderRoute: typeof AuthenticatedAdminIdiomsIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
     }
     '/_authenticated/game-assist/guess-idiom/': {
       id: '/_authenticated/game-assist/guess-idiom/'
@@ -121,15 +168,29 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminIdiomsIndexRoute: typeof AuthenticatedAdminIdiomsIndexRoute
+}
+
+const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
+  {
+    AuthenticatedAdminIdiomsIndexRoute: AuthenticatedAdminIdiomsIndexRoute,
+  }
+
+const AuthenticatedAdminRouteRouteWithChildren =
+  AuthenticatedAdminRouteRoute._addFileChildren(
+    AuthenticatedAdminRouteRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
-  AuthenticatedIdiomsIndexRoute: typeof AuthenticatedIdiomsIndexRoute
   AuthenticatedGameAssistGuessIdiomIndexRoute: typeof AuthenticatedGameAssistGuessIdiomIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
-  AuthenticatedIdiomsIndexRoute: AuthenticatedIdiomsIndexRoute,
   AuthenticatedGameAssistGuessIdiomIndexRoute:
     AuthenticatedGameAssistGuessIdiomIndexRoute,
 }
@@ -139,6 +200,7 @@ const AuthenticatedRouteRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  ForbiddenIndexRoute: ForbiddenIndexRoute,
   LoginIndexRoute: LoginIndexRoute,
 }
 export const routeTree = rootRouteImport

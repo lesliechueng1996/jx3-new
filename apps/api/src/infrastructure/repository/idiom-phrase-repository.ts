@@ -1,9 +1,9 @@
-import type { Idiom } from '@/domain/idiom/idiom';
+import type { Idiom } from '@api/domain/idiom/idiom';
 import {
   ERROR_CODES,
   InternalServerErrorException,
   NotFoundException,
-} from '@/shared/exception';
+} from '@api/shared/exception';
 import {
   and,
   asc,
@@ -14,7 +14,7 @@ import {
   idiomChar,
   idiomPhrase,
   ilike,
-} from '@/shared/util/db';
+} from '@api/shared/util/db';
 
 type IdiomPhrase = typeof idiomPhrase.$inferSelect;
 type IdiomChar = typeof idiomChar.$inferSelect;

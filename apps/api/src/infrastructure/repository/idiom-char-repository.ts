@@ -1,4 +1,4 @@
-import { asc, db, eq, idiomChar } from '@/shared/util/db';
+import { asc, db, eq, idiomChar } from '@api/shared/util/db';
 
 type IdiomChar = typeof idiomChar.$inferSelect;
 

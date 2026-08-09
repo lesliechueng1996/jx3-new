@@ -1,7 +1,7 @@
+import { logger } from '@api/infrastructure/logger';
+import { ERROR_CODES } from '@api/shared/exception/error-code';
+import { auth } from '@api/shared/util/auth';
 import { Elysia } from 'elysia';
-import { logger } from '@/infrastructure/logger';
-import { ERROR_CODES } from '@/shared/exception/error-code';
-import { auth } from '@/shared/util/auth';
 import { AppResponse } from '../schema/common';
 
 export const authMacro = new Elysia({ name: 'auth-macro' }).macro({
