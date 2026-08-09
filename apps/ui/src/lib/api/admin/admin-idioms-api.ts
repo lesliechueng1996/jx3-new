@@ -120,3 +120,15 @@ export const adminUpdateIdiom = async (
 
   return data.data;
 };
+
+export const adminImportIdiomsFromCsvFile = async (file: File) => {
+  const { data, error } = await apiClient.api.v1.idiom.import.post({
+    file: file,
+  });
+
+  if (error) {
+    throw new Error(error.value.message ?? '导入成语失败');
+  }
+
+  return data.data;
+};

@@ -12,6 +12,7 @@ import {
   adminCreateIdiom,
   adminDeleteIdiom,
   adminGetIdiomDetail,
+  adminImportIdiomsFromCsvFile,
   adminListIdiomsPagination,
   adminUpdateIdiom,
 } from '@/lib/api/admin/admin-idioms-api';
@@ -19,6 +20,7 @@ import { handleApiError } from '@/lib/api-client';
 import { IdiomCreateDialogComponent } from './-components/IdiomCreateDialogComponent';
 import { IdiomEditDialogComponent } from './-components/IdiomEditDialogComponent';
 import IdiomFiltersComponent from './-components/IdiomFiltersComponent';
+import { IdiomImportDialogComponent } from './-components/IdiomImportDialogComponent';
 import { IdiomTableComponent } from './-components/IdiomTableComponent';
 import { defaultIdiomsSearch, idiomsSearchSchema } from './-lib/idioms-schema';
 
@@ -33,7 +35,7 @@ function IdiomsComponent() {
   const navigate = Route.useNavigate();
   const search = Route.useSearch();
   const [creating, setCreating] = useState(false);
-  const [, setImporting] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const [editingIdiom, setEditingIdiom] = useState<AdminIdiomListItem | null>(
     null,
@@ -92,6 +94,19 @@ function IdiomsComponent() {
       await invalidate();
     },
     onError: (error) => handleApiError(error, '更新成语失败'),
+  });
+
+  const importMutation = useMutation({
+    mutationFn: adminImportIdiomsFromCsvFile,
+    onSuccess: async (result) => {
+      toast.add({
+        type: 'success',
+        title: `导入完成：成功 ${result.created} 条，跳过 ${result.skipped} 条，失败 ${result.failed} 条`,
+      });
+      setImporting(false);
+      await invalidate();
+    },
+    onError: (error) => handleApiError(error, '导入成语失败'),
   });
 
   const deleteMutation = useMutation({
@@ -160,6 +175,13 @@ function IdiomsComponent() {
         pending={createMutation.isPending}
         onOpenChange={setCreating}
         onSubmit={(values) => createMutation.mutate(values)}
+      />
+
+      <IdiomImportDialogComponent
+        open={importing}
+        pending={importMutation.isPending}
+        onOpenChange={setImporting}
+        onSubmit={(file) => importMutation.mutate(file)}
       />
 
       <IdiomEditDialogComponent
