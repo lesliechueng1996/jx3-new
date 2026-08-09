@@ -1,10 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import ErrorAlert from '#/components/ErrorAlert';
 import Pagination from '#/components/Pagination';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/toast';
+import { usePaginatedQuery } from '@/hooks/use-paginated-query';
 import {
   type AdminIdiomEditFormValues,
   type AdminIdiomListItem,
@@ -15,16 +16,11 @@ import {
   adminUpdateIdiom,
 } from '@/lib/api/admin/admin-idioms-api';
 import { handleApiError } from '@/lib/api-client';
-import { toRouteSearch } from '@/lib/utils';
 import { IdiomCreateDialogComponent } from './-components/IdiomCreateDialogComponent';
 import { IdiomEditDialogComponent } from './-components/IdiomEditDialogComponent';
 import IdiomFiltersComponent from './-components/IdiomFiltersComponent';
 import { IdiomTableComponent } from './-components/IdiomTableComponent';
-import {
-  defaultIdiomsSearch,
-  type IdiomsSearch,
-  idiomsSearchSchema,
-} from './-lib/idioms-schema';
+import { defaultIdiomsSearch, idiomsSearchSchema } from './-lib/idioms-schema';
 
 export const Route = createFileRoute('/_authenticated/admin/idioms/')({
   component: IdiomsComponent,
@@ -35,8 +31,7 @@ const idiomsAdminQueryKey = ['admin-idioms'];
 
 function IdiomsComponent() {
   const navigate = Route.useNavigate();
-  const filters = Route.useSearch();
-  const queryClient = useQueryClient();
+  const search = Route.useSearch();
   const [creating, setCreating] = useState(false);
   const [, setImporting] = useState(false);
 
@@ -45,9 +40,20 @@ function IdiomsComponent() {
   );
   const [pendingIdiomId, setPendingIdiomId] = useState<string | null>(null);
 
-  const idiomsQuery = useQuery({
-    queryKey: [...idiomsAdminQueryKey, filters],
-    queryFn: () => adminListIdiomsPagination(filters),
+  const {
+    items,
+    isFetching,
+    isError,
+    setSearch,
+    resetSearch,
+    paginationProps,
+    invalidate,
+  } = usePaginatedQuery({
+    queryKey: idiomsAdminQueryKey,
+    search,
+    defaults: defaultIdiomsSearch,
+    navigate,
+    queryFn: adminListIdiomsPagination,
   });
 
   const idiomDetailQuery = useQuery({
@@ -55,16 +61,6 @@ function IdiomsComponent() {
     queryFn: () => adminGetIdiomDetail(editingIdiom?.id ?? ''),
     enabled: editingIdiom !== null,
   });
-
-  const invalidateIdioms = async () => {
-    await queryClient.invalidateQueries({ queryKey: idiomsAdminQueryKey });
-  };
-
-  const updateSearch = (nextFilters: IdiomsSearch) => {
-    navigate({
-      search: toRouteSearch(nextFilters, defaultIdiomsSearch),
-    });
-  };
 
   const createMutation = useMutation({
     mutationFn: adminCreateIdiom,
@@ -74,7 +70,7 @@ function IdiomsComponent() {
         title: '成语已创建',
       });
       setCreating(false);
-      await invalidateIdioms();
+      await invalidate();
     },
     onError: (error) => handleApiError(error, '创建成语失败'),
   });
@@ -93,7 +89,7 @@ function IdiomsComponent() {
         title: '成语信息已更新',
       });
       setEditingIdiom(null);
-      await invalidateIdioms();
+      await invalidate();
     },
     onError: (error) => handleApiError(error, '更新成语失败'),
   });
@@ -105,16 +101,11 @@ function IdiomsComponent() {
         type: 'success',
         title: '成语已删除',
       });
-      await invalidateIdioms();
+      await invalidate();
     },
     onError: (error) => handleApiError(error, '删除成语失败'),
     onSettled: () => setPendingIdiomId(null),
   });
-
-  const totalPages = useMemo(() => {
-    const total = idiomsQuery.data?.total ?? 0;
-    return Math.max(1, Math.ceil(total / filters.pageSize));
-  }, [filters.pageSize, idiomsQuery.data?.total]);
 
   return (
     <section className="space-y-6">
@@ -126,9 +117,9 @@ function IdiomsComponent() {
       </div>
 
       <IdiomFiltersComponent
-        committedFilters={filters}
-        onSearch={updateSearch}
-        onReset={() => updateSearch(defaultIdiomsSearch)}
+        committedFilters={search}
+        onSearch={setSearch}
+        onReset={resetSearch}
       />
 
       <div className="flex justify-end gap-2">
@@ -144,13 +135,13 @@ function IdiomsComponent() {
         </Button>
       </div>
 
-      {idiomsQuery.isError ? (
+      {isError ? (
         <ErrorAlert title="错误" description="加载成语列表失败，请稍后重试。" />
       ) : null}
 
       <IdiomTableComponent
-        items={idiomsQuery.data?.items ?? []}
-        isLoading={idiomsQuery.isFetching}
+        items={items}
+        isLoading={isFetching}
         pendingIdiomId={pendingIdiomId}
         onEdit={setEditingIdiom}
         onDelete={(idiom) => {
@@ -162,16 +153,7 @@ function IdiomsComponent() {
         }}
       />
 
-      <Pagination
-        total={idiomsQuery.data?.total ?? 0}
-        page={filters.page}
-        totalPages={totalPages}
-        isPreviousPageDisabled={filters.page <= 1 || idiomsQuery.isFetching}
-        isNextPageDisabled={
-          filters.page >= totalPages || idiomsQuery.isFetching
-        }
-        onPageChange={(page) => updateSearch({ ...filters, page })}
-      />
+      <Pagination {...paginationProps} />
 
       <IdiomCreateDialogComponent
         open={creating}
