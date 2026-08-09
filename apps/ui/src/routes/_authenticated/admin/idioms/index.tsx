@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
+import { ConfirmDialog } from '#/components/ConfirmDialog';
 import ErrorAlert from '#/components/ErrorAlert';
 import Pagination from '#/components/Pagination';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,9 @@ function IdiomsComponent() {
   const [importing, setImporting] = useState(false);
 
   const [editingIdiom, setEditingIdiom] = useState<AdminIdiomListItem | null>(
+    null,
+  );
+  const [deletingIdiom, setDeletingIdiom] = useState<AdminIdiomListItem | null>(
     null,
   );
   const [pendingIdiomId, setPendingIdiomId] = useState<string | null>(null);
@@ -159,16 +163,35 @@ function IdiomsComponent() {
         isLoading={isFetching}
         pendingIdiomId={pendingIdiomId}
         onEdit={setEditingIdiom}
-        onDelete={(idiom) => {
-          if (!window.confirm(`确定删除成语「${idiom.text}」吗？`)) {
-            return;
-          }
-          setPendingIdiomId(idiom.id);
-          deleteMutation.mutate(idiom.id);
-        }}
+        onDelete={setDeletingIdiom}
       />
 
       <Pagination {...paginationProps} />
+
+      <ConfirmDialog
+        open={deletingIdiom !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeletingIdiom(null);
+          }
+        }}
+        title="删除成语"
+        description={
+          deletingIdiom
+            ? `确定删除成语「${deletingIdiom.text}」吗？此操作无法撤销。`
+            : undefined
+        }
+        confirmLabel="删除"
+        variant="destructive"
+        pending={deleteMutation.isPending}
+        onConfirm={() => {
+          if (!deletingIdiom) {
+            return;
+          }
+          setPendingIdiomId(deletingIdiom.id);
+          deleteMutation.mutate(deletingIdiom.id);
+        }}
+      />
 
       <IdiomCreateDialogComponent
         open={creating}
