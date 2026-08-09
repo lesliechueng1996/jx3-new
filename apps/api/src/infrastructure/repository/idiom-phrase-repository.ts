@@ -1,6 +1,12 @@
 import type { Idiom } from '@/domain/idiom/idiom';
-import { ERROR_CODES, InternalServerErrorException } from '@/shared/exception';
 import {
+  ERROR_CODES,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@/shared/exception';
+import {
+  and,
+  asc,
   count,
   db,
   desc,
@@ -12,6 +18,10 @@ import {
 
 type IdiomPhrase = typeof idiomPhrase.$inferSelect;
 type IdiomChar = typeof idiomChar.$inferSelect;
+type IdiomCharUpdate = Pick<
+  IdiomChar,
+  'id' | 'position' | 'char' | 'pinyin' | 'initial' | 'final' | 'tone'
+>;
 
 export class IdiomPhraseRepository {
   async create(
@@ -126,5 +136,69 @@ export class IdiomPhraseRepository {
       .where(where);
 
     return result?.total ?? 0;
+  }
+
+  async updateById(
+    id: string,
+    properties: Partial<IdiomPhrase>,
+    chars: IdiomCharUpdate[],
+  ) {
+    const result = await db.transaction(async (tx) => {
+      const [updatedIdiom] = await tx
+        .update(idiomPhrase)
+        .set(properties)
+        .where(eq(idiomPhrase.id, id))
+        .returning();
+
+      if (!updatedIdiom) {
+        return null;
+      }
+
+      if (chars.length > 0) {
+        // Move positions to temporary negative slots first to avoid unique
+        // conflicts when swapping idiom_char positions in-place.
+        for (const [index, char] of chars.entries()) {
+          const [moved] = await tx
+            .update(idiomChar)
+            .set({ position: -1 - index })
+            .where(and(eq(idiomChar.id, char.id), eq(idiomChar.idiomId, id)))
+            .returning({ id: idiomChar.id });
+
+          if (!moved) {
+            throw new NotFoundException(
+              '字记录不存在或不属于该成语',
+              ERROR_CODES.IDIOM_NOT_FOUND,
+            );
+          }
+        }
+
+        for (const char of chars) {
+          await tx
+            .update(idiomChar)
+            .set({
+              position: char.position,
+              char: char.char,
+              pinyin: char.pinyin,
+              initial: char.initial,
+              final: char.final,
+              tone: char.tone,
+            })
+            .where(and(eq(idiomChar.id, char.id), eq(idiomChar.idiomId, id)));
+        }
+      }
+
+      const updatedChars = await tx
+        .select()
+        .from(idiomChar)
+        .where(eq(idiomChar.idiomId, id))
+        .orderBy(asc(idiomChar.position));
+
+      return {
+        idiom: updatedIdiom,
+        chars: updatedChars,
+      };
+    });
+
+    return result;
   }
 }

@@ -3,6 +3,7 @@ import {
   deleteIdiom,
   getIdiom,
   listIdiomsPagination,
+  updateIdiom,
 } from '@/application/service/idiom-service';
 import { roleAdmin } from '@/shared/util/auth';
 import {
@@ -14,10 +15,12 @@ import {
   createIdiomBodySchema,
   createIdiomResponseSchema,
   deleteIdiomParamsSchema,
-  getIdiomParamsSchema,
   getIdiomResponseSchema,
   listIdiomsQuerySchema,
   listIdiomsResponseSchema,
+  singleIdiomParamsSchema,
+  updateIdiomBodySchema,
+  updateIdiomResponseSchema,
 } from '../schema/idiom-schema';
 import { apiRoute } from './api-route';
 
@@ -60,7 +63,7 @@ export const createIdiomRoute = apiRoute.group('/idiom', (app) =>
       },
       {
         auth: roleAdmin,
-        params: getIdiomParamsSchema,
+        params: singleIdiomParamsSchema,
         response: {
           200: createSuccessResponseSchema(getIdiomResponseSchema),
           400: errorResponseSchema,
@@ -117,6 +120,31 @@ export const createIdiomRoute = apiRoute.group('/idiom', (app) =>
           summary: 'List idioms with pagination and filters',
           description:
             'Returns a paginated list of idioms. Requires admin role.',
+        },
+      },
+    )
+    .patch(
+      '/:id',
+      async ({ status, body, params }) => {
+        const result = await updateIdiom(params.id, body);
+        return status(200, AppResponse.success(result).toJson());
+      },
+      {
+        auth: roleAdmin,
+        params: singleIdiomParamsSchema,
+        body: updateIdiomBodySchema,
+        response: {
+          200: createSuccessResponseSchema(updateIdiomResponseSchema),
+          400: errorResponseSchema,
+          404: errorResponseSchema,
+          409: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [idiomTag.name],
+          summary: 'Update idiom information',
+          description:
+            'Updates idiom and character records directly. Requires admin role.',
         },
       },
     ),

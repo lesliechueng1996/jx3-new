@@ -6,14 +6,17 @@ import type {
   CreateIdiomResponse,
   GetIdiomResponse,
   ListIdiomsQuery,
+  UpdateIdiomBody,
 } from '@/interface/schema/idiom-schema';
 import {
+  BadRequestException,
   ConflictException,
   ERROR_CODES,
   NotFoundException,
 } from '@/shared/exception';
 import { formatDateTime } from '@/shared/util/date';
 import { isUniqueViolationError } from '@/shared/util/db';
+import { pickDefinedProperties } from '@/shared/util/object';
 
 const idiomPhraseRepository = new IdiomPhraseRepository();
 const idiomCharRepository = new IdiomCharRepository();
@@ -66,11 +69,16 @@ export const createIdiom = async (
   }
 };
 
-export const getIdiom = async (id: string): Promise<GetIdiomResponse> => {
+const findIdiomByIdOrThrow = async (id: string) => {
   const idiom = await idiomPhraseRepository.findById(id);
   if (!idiom) {
     throw new NotFoundException('成语不存在', ERROR_CODES.IDIOM_NOT_FOUND);
   }
+  return idiom;
+};
+
+export const getIdiom = async (id: string): Promise<GetIdiomResponse> => {
+  const idiom = await findIdiomByIdOrThrow(id);
 
   const chars = await idiomCharRepository.findByPhraseId(idiom.id);
 
@@ -126,4 +134,72 @@ export const listIdiomsPagination = async (query: ListIdiomsQuery) => {
     page,
     pageSize,
   };
+};
+
+export const updateIdiom = async (id: string, body: UpdateIdiomBody) => {
+  await findIdiomByIdOrThrow(id);
+
+  const chars = body.chars;
+  const textLength =
+    body.text !== undefined ? Array.from(body.text).length : undefined;
+
+  if (chars && textLength !== undefined && chars.length !== textLength) {
+    throw new BadRequestException('成语文本长度与字列表数量不一致');
+  }
+
+  const pickedProperties = pickDefinedProperties(body, ['chars']);
+  const updatedIdiomProperties = {
+    ...pickedProperties,
+    ...(chars
+      ? {
+          tonePattern: chars.map((char) => char.tone).join('-'),
+          charCount: chars.length,
+        }
+      : textLength !== undefined
+        ? { charCount: textLength }
+        : {}),
+  };
+
+  try {
+    const result = await idiomPhraseRepository.updateById(
+      id,
+      updatedIdiomProperties,
+      chars ?? [],
+    );
+
+    if (!result) {
+      throw new NotFoundException('成语不存在', ERROR_CODES.IDIOM_NOT_FOUND);
+    }
+
+    return {
+      id: result.idiom.id,
+      text: result.idiom.text,
+      charCount: result.idiom.charCount,
+      pinyin: result.idiom.pinyin,
+      tonePattern: result.idiom.tonePattern,
+      meaning: result.idiom.meaning,
+      chars: result.chars.map((char) => ({
+        id: char.id,
+        idiomId: char.idiomId,
+        position: char.position,
+        char: char.char,
+        pinyin: char.pinyin,
+        initial: char.initial,
+        final: char.final,
+        tone: char.tone,
+        createdAt: formatDateTime(char.createdAt),
+        updatedAt: formatDateTime(char.updatedAt),
+      })),
+      createdAt: formatDateTime(result.idiom.createdAt),
+      updatedAt: formatDateTime(result.idiom.updatedAt),
+    };
+  } catch (error) {
+    if (isUniqueViolationError(error, 'idiom_phrase_text_unique')) {
+      throw new ConflictException(
+        '成语已存在',
+        ERROR_CODES.IDIOM_ALREADY_EXISTS,
+      );
+    }
+    throw error;
+  }
 };
