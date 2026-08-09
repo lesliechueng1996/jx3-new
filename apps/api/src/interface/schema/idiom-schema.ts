@@ -185,3 +185,25 @@ export const updateIdiomResponseSchema = t.Object({
   createdAt: t.String(),
   updatedAt: t.String(),
 });
+
+export const importIdiomsBodySchema = t.Object({
+  file: t.File({
+    maxSize: '10m',
+    error: () => '文件大小不能超过10MB',
+  }),
+});
+
+export const importIdiomsResponseSchema = t.Object({
+  created: t.Integer(),
+  skipped: t.Integer(),
+  failed: t.Integer(),
+  errors: t.Array(
+    t.Object({
+      row: t.Integer(),
+      text: t.String(),
+      message: t.String(),
+    }),
+  ),
+});
+
+export type ImportIdiomsResponse = Static<typeof importIdiomsResponseSchema>;

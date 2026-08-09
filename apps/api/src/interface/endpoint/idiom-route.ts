@@ -2,6 +2,7 @@ import {
   createIdiom,
   deleteIdiom,
   getIdiom,
+  importIdiomsFromCsvFile,
   listIdiomsPagination,
   updateIdiom,
 } from '@api/application/service/idiom-service';
@@ -17,6 +18,8 @@ import {
   createIdiomResponseSchema,
   deleteIdiomParamsSchema,
   getIdiomResponseSchema,
+  importIdiomsBodySchema,
+  importIdiomsResponseSchema,
   listIdiomsQuerySchema,
   listIdiomsResponseSchema,
   singleIdiomParamsSchema,
@@ -146,6 +149,27 @@ export const createIdiomRoute = apiRoute.group('/idiom', (app) =>
           summary: 'Update idiom information',
           description:
             'Updates idiom and character records directly. Requires admin role.',
+        },
+      },
+    )
+    .post(
+      '/import',
+      async ({ body, status }) => {
+        const result = await importIdiomsFromCsvFile(body.file);
+        return status(200, AppResponse.success(result).toJson());
+      },
+      {
+        auth: roleAdmin,
+        body: importIdiomsBodySchema,
+        response: {
+          200: createSuccessResponseSchema(importIdiomsResponseSchema),
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [idiomTag.name],
+          summary: 'Import idioms from CSV file',
+          description:
+            'Imports idioms from a CSV file with a required text column. pinyin and meaning are optional; missing pinyin is derived via pinyin-pro. Requires admin role.',
         },
       },
     ),

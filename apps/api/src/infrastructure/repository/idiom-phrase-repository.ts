@@ -201,4 +201,44 @@ export class IdiomPhraseRepository {
 
     return result;
   }
+
+  async insertProcessedIdiom(processed: Idiom) {
+    return await db.transaction(async (tx) => {
+      const phraseRows = await tx
+        .insert(idiomPhrase)
+        .values({
+          text: processed.text,
+          charCount: processed.chars.length,
+          pinyin: processed.pinyin,
+          tonePattern: processed.tonePattern,
+          meaning: processed.meaning,
+        })
+        .returning();
+
+      const phrase = phraseRows[0];
+      if (!phrase) {
+        throw new Error('Failed to create idiom');
+      }
+
+      const charRows = await tx
+        .insert(idiomChar)
+        .values(
+          processed.chars.map((item) => ({
+            idiomId: phrase.id,
+            position: item.position,
+            char: item.char,
+            pinyin: item.pinyin,
+            initial: item.initial,
+            final: item.final,
+            tone: item.tone,
+          })),
+        )
+        .returning();
+
+      return {
+        idiom: phrase,
+        chars: charRows,
+      };
+    });
+  }
 }

@@ -5,10 +5,12 @@ import { IdiomPhraseRepository } from '@api/infrastructure/repository/idiom-phra
 import type {
   CreateIdiomResponse,
   GetIdiomResponse,
+  ImportIdiomsResponse,
   ListIdiomsQuery,
   UpdateIdiomBody,
 } from '@api/interface/schema/idiom-schema';
 import {
+  AppException,
   BadRequestException,
   ConflictException,
   ERROR_CODES,
@@ -17,6 +19,7 @@ import {
 import { formatDateTime } from '@api/shared/util/date';
 import { isUniqueViolationError } from '@api/shared/util/db';
 import { pickDefinedProperties } from '@api/shared/util/object';
+import { parseCsv, parseCsvHeaders } from '@api/shared/util/parse-csv';
 
 const idiomPhraseRepository = new IdiomPhraseRepository();
 const idiomCharRepository = new IdiomCharRepository();
@@ -202,4 +205,73 @@ export const updateIdiom = async (id: string, body: UpdateIdiomBody) => {
     }
     throw error;
   }
+};
+
+export const importIdiomsFromCsvFile = async (file: File) => {
+  const content = await file.text();
+  const headers = parseCsvHeaders(content);
+
+  if (headers.length === 0) {
+    throw new BadRequestException(
+      'CSV文件为空或缺少表头',
+      ERROR_CODES.IDIOM_CSV_EMPTY_OR_MISSING_HEADERS,
+    );
+  }
+
+  if (!headers.includes('text')) {
+    throw new BadRequestException(
+      'CSV文件缺少text列',
+      ERROR_CODES.IDIOM_CSV_MISSING_TEXT_COLUMN,
+    );
+  }
+
+  const rows = parseCsv(content);
+
+  if (rows.length === 0) {
+    throw new BadRequestException('CSV文件为空', ERROR_CODES.IDIOM_CSV_EMPTY);
+  }
+
+  const result: ImportIdiomsResponse = {
+    created: 0,
+    skipped: 0,
+    failed: 0,
+    errors: [],
+  };
+
+  for (const [index, row] of rows.entries()) {
+    const rowNumber = index + 2;
+    const text = row.text?.trim();
+    const pinyinValue = row.pinyin?.trim();
+    const meaning = row.meaning?.trim() ? row.meaning.trim() : null;
+
+    if (!text) {
+      result.failed += 1;
+      result.errors.push({
+        row: rowNumber,
+        text,
+        message: 'text 不能为空',
+      });
+      continue;
+    }
+
+    try {
+      const processed = new Idiom(text, meaning ?? '', pinyinValue ?? '');
+      await idiomPhraseRepository.insertProcessedIdiom(processed);
+      result.created += 1;
+    } catch (error) {
+      if (isUniqueViolationError(error, 'idiom_phrase_text_unique')) {
+        result.skipped += 1;
+        continue;
+      }
+
+      result.failed += 1;
+      result.errors.push({
+        row: rowNumber,
+        text,
+        message: error instanceof AppException ? error.message : '导入失败',
+      });
+    }
+  }
+
+  return result;
 };
