@@ -275,3 +275,47 @@ export const importIdiomsFromCsvFile = async (file: File) => {
 
   return result;
 };
+
+export const getPinyin = async (text: string) => {
+  const dbIdiom = await idiomPhraseRepository.findByText(text);
+  if (dbIdiom) {
+    const chars = await idiomCharRepository.findByPhraseId(dbIdiom.id);
+
+    if (chars.length !== text.length || chars.length !== dbIdiom.charCount) {
+      throw new BadRequestException(
+        '数据库中成语数据错误，请联系管理员',
+        ERROR_CODES.IDION_DB_BROKEN_DATA,
+      );
+    }
+
+    return {
+      text: dbIdiom.text,
+      inDatabase: true,
+      idiomId: dbIdiom.id,
+      cells: chars.map((char) => ({
+        position: char.position,
+        char: char.char,
+        pinyin: char.pinyin,
+        initial: char.initial,
+        final: char.final,
+        tone: char.tone,
+      })),
+    };
+  }
+
+  const idiom = new Idiom(text, '', '');
+
+  return {
+    text: idiom.text,
+    inDatabase: false,
+    idiomId: null,
+    cells: idiom.chars.map((char) => ({
+      position: char.position,
+      char: char.char,
+      pinyin: char.pinyin,
+      initial: char.initial,
+      final: char.final,
+      tone: char.tone,
+    })),
+  };
+};

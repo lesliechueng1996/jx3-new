@@ -207,3 +207,23 @@ export const importIdiomsResponseSchema = t.Object({
 });
 
 export type ImportIdiomsResponse = Static<typeof importIdiomsResponseSchema>;
+
+export const getPinyinQuerySchema = t.Object({
+  text: t.String(),
+});
+
+export const getPinyinResponseSchema = t.Object({
+  text: t.String(),
+  inDatabase: t.Boolean(),
+  idiomId: t.Nullable(t.String()),
+  cells: t.Array(
+    t.Object({
+      position: t.Integer(),
+      char: t.String(),
+      pinyin: t.String(),
+      initial: t.String(),
+      final: t.String(),
+      tone: t.Integer(),
+    }),
+  ),
+});

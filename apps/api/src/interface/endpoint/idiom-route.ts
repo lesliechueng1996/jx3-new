@@ -2,11 +2,13 @@ import {
   createIdiom,
   deleteIdiom,
   getIdiom,
+  getPinyin,
   importIdiomsFromCsvFile,
   listIdiomsPagination,
   updateIdiom,
 } from '@api/application/service/idiom-service';
-import { roleAdmin } from '@api/shared/util/auth';
+import { ERROR_CODES } from '@api/shared/exception/error-code';
+import { roleAdmin, roleUser } from '@api/shared/util/auth';
 import {
   AppResponse,
   createSuccessResponseSchema,
@@ -18,6 +20,8 @@ import {
   createIdiomResponseSchema,
   deleteIdiomParamsSchema,
   getIdiomResponseSchema,
+  getPinyinQuerySchema,
+  getPinyinResponseSchema,
   importIdiomsBodySchema,
   importIdiomsResponseSchema,
   listIdiomsQuerySchema,
@@ -170,6 +174,37 @@ export const createIdiomRoute = apiRoute.group('/idiom', (app) =>
           summary: 'Import idioms from CSV file',
           description:
             'Imports idioms from a CSV file with a required text column. pinyin and meaning are optional; missing pinyin is derived via pinyin-pro. Requires admin role.',
+        },
+      },
+    )
+    .get(
+      '/pinyin',
+      async ({ query, status }) => {
+        const regex = /^\p{Script=Han}{4}$/u;
+        if (!regex.test(query.text)) {
+          return status(
+            400,
+            AppResponse.error({
+              code: ERROR_CODES.BAD_REQUEST,
+              message: '参数应当为四个汉字',
+            }).toJson(),
+          );
+        }
+        const result = await getPinyin(query.text);
+        return status(200, AppResponse.success(result).toJson());
+      },
+      {
+        auth: roleUser,
+        query: getPinyinQuerySchema,
+        response: {
+          200: createSuccessResponseSchema(getPinyinResponseSchema),
+          400: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [idiomTag.name],
+          summary: 'Get pinyin for a text',
+          description: 'Returns pinyin for a text. Requires user role.',
         },
       },
     ),
