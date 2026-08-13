@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { toast } from '@/components/ui/toast';
 import { authClient } from '@/lib/auth-client';
+import { clearSessionQuery } from '@/lib/auth-session';
 import { AuthCredentialsFormComponent } from './-components/AuthCredentialsFormComponent';
 import type { AuthCredentials } from './-lib/auth-credentials-schema';
 import { authSearchSchema } from './-lib/auth-search-schema';
@@ -31,6 +32,7 @@ function LoginComponent() {
       return data;
     },
     onSuccess: () => {
+      clearSessionQuery();
       navigate({ to: redirect ?? '/' });
     },
     onError: (error: Error) => {

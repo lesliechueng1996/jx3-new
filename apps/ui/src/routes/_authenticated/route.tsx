@@ -1,14 +1,15 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { authClient } from '@/lib/auth-client';
+import { ROLE_ADMIN } from '@/lib/auth-client';
+import { fetchCachedSession } from '@/lib/auth-session';
 import { AppHeaderComponent } from './-components/AppHeaderComponent';
 import { AppSidebarNavComponent } from './-components/AppSidebarNavComponent';
 
 export const Route = createFileRoute('/_authenticated')({
   component: RouteComponent,
   beforeLoad: async ({ location }) => {
-    const { data: session } = await authClient.getSession();
+    const session = await fetchCachedSession();
 
     if (!session) {
       throw redirect({
@@ -17,7 +18,7 @@ export const Route = createFileRoute('/_authenticated')({
       });
     }
 
-    return { user: session.user };
+    return { user: session.user, isAdmin: session.user.role === ROLE_ADMIN };
   },
 });
 

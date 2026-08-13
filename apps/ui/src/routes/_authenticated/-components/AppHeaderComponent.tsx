@@ -14,6 +14,7 @@ import {
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { toast } from '@/components/ui/toast';
 import { authClient } from '@/lib/auth-client';
+import { clearSessionQuery } from '@/lib/auth-session';
 
 type AppHeaderUser = {
   name: string;
@@ -41,6 +42,7 @@ export function AppHeaderComponent({ user }: { user: AppHeaderUser }) {
       }
     },
     onSuccess: () => {
+      clearSessionQuery();
       navigate({ to: '/login' });
     },
     onError: (error: Error) => {
