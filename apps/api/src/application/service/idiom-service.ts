@@ -1,4 +1,5 @@
 import { Idiom } from '@api/domain/idiom/idiom';
+import { IdiomGame } from '@api/domain/idiom/idiom-game';
 import { logger } from '@api/infrastructure/logger';
 import { IdiomCharRepository } from '@api/infrastructure/repository/idiom-char-repository';
 import { IdiomPhraseRepository } from '@api/infrastructure/repository/idiom-phrase-repository';
@@ -7,6 +8,8 @@ import type {
   GetIdiomResponse,
   ImportIdiomsResponse,
   ListIdiomsQuery,
+  SearchIdiomsResponse,
+  SearchIdiomsRound,
   UpdateIdiomBody,
 } from '@api/interface/schema/idiom-schema';
 import {
@@ -318,4 +321,12 @@ export const getPinyin = async (text: string) => {
       tone: char.tone,
     })),
   };
+};
+
+export const searchIdioms = async (
+  rounds: SearchIdiomsRound[],
+  limit: number,
+): Promise<SearchIdiomsResponse> => {
+  const game = new IdiomGame({ rounds, limit });
+  return game.search();
 };

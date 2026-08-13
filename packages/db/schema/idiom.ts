@@ -59,5 +59,6 @@ export const idiomChar = pgTable(
     t
       .index('idiom_char_initial_final_tone_idx')
       .on(table.initial, table.final, table.tone),
+    t.index('idiom_char_char_position_idx').on(table.char, table.position),
   ],
 );

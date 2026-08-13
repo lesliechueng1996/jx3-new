@@ -3,21 +3,47 @@ import { BadRequestException, ERROR_CODES } from '@api/shared/exception';
 import { convert, getInitialAndFinal, pinyin } from 'pinyin-pro';
 import { IdiomChar } from './idiom-char';
 
+export type IdiomConstructorParams = {
+  id: string | null;
+  text: string;
+  meaning: string;
+  chars: IdiomChar[];
+  pinyin: string;
+  tonePattern: string;
+};
+
 export class Idiom {
+  id: string | null = null;
   text: string;
   meaning: string;
   chars: IdiomChar[] = [];
   pinyin: string = '';
   tonePattern: string = '';
 
-  constructor(text: string, meaning: string = '', pinyin: string = '') {
-    this.text = text;
-    this.meaning = meaning;
-    if (pinyin) {
-      this.#initWithPinyin(pinyin);
-    } else {
-      this.#parsePinyin(text);
+  constructor(props: IdiomConstructorParams);
+  constructor(text: string, meaning?: string, pinyin?: string);
+  constructor(
+    propsOrText: IdiomConstructorParams | string,
+    meaning: string = '',
+    pinyin: string = '',
+  ) {
+    if (typeof propsOrText === 'string') {
+      this.text = propsOrText;
+      this.meaning = meaning;
+      if (pinyin) {
+        this.#initWithPinyin(pinyin);
+      } else {
+        this.#parsePinyin(propsOrText);
+      }
+      return;
     }
+
+    this.id = propsOrText.id;
+    this.text = propsOrText.text;
+    this.meaning = propsOrText.meaning;
+    this.chars = propsOrText.chars;
+    this.pinyin = propsOrText.pinyin;
+    this.tonePattern = propsOrText.tonePattern;
   }
 
   #splitPinyinInput(pinyinInput: string) {
@@ -59,14 +85,15 @@ export class Idiom {
     this.pinyin = normalizedPinyin;
     this.tonePattern = processedChars.map((item) => item.tone).join('-');
     this.chars = processedChars.map((item, index) => {
-      return new IdiomChar(
-        item.char,
-        index,
-        item.pinyin,
-        item.initial,
-        item.final,
-        item.tone,
-      );
+      return new IdiomChar({
+        id: null,
+        char: item.char,
+        position: index,
+        pinyin: item.pinyin,
+        initial: item.initial,
+        final: item.final,
+        tone: item.tone,
+      });
     });
   }
 
@@ -117,14 +144,15 @@ export class Idiom {
       this.pinyin = result.map((item) => item.pinyin).join(' ');
       this.tonePattern = result.map((item) => item.num).join('-');
       this.chars = result.map((item, index) => {
-        return new IdiomChar(
-          item.origin,
-          index,
-          item.pinyin,
-          item.initial,
-          item.final.substring(0, item.final.length - 1),
-          item.num,
-        );
+        return new IdiomChar({
+          id: null,
+          char: item.origin,
+          position: index,
+          pinyin: item.pinyin,
+          initial: item.initial,
+          final: item.final.substring(0, item.final.length - 1),
+          tone: item.num,
+        });
       });
     } catch (error) {
       logger.error('Parse pinyin failed', { error });
@@ -134,5 +162,44 @@ export class Idiom {
 
   isValid() {
     return this.pinyin !== '';
+  }
+
+  scoreCandidate(candidates: Idiom[]): {
+    score: number;
+    reasonPosition: number;
+  } {
+    let score = 0;
+    let reasonPosition = 0;
+    let maxDistinct = 0;
+
+    for (let position = 0; position < 4; position += 1) {
+      const charOptions = new Set(
+        candidates
+          .map((item) => item.chars[position].char)
+          .filter((value): value is string => Boolean(value)),
+      );
+
+      const distinctCount = charOptions.size;
+      if (distinctCount > 1) {
+        score += distinctCount;
+        if (distinctCount > maxDistinct) {
+          maxDistinct = distinctCount;
+          reasonPosition = position;
+        }
+      }
+
+      const charAtPosition = this.chars[position].char;
+      if (charAtPosition && distinctCount > 1) {
+        const frequency =
+          candidates.filter(
+            (item) => item.chars[position].char === charAtPosition,
+          ).length / candidates.length;
+        if (frequency > 0.2 && frequency < 0.8) {
+          score += 1;
+        }
+      }
+    }
+
+    return { score, reasonPosition };
   }
 }

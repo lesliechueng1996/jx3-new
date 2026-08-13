@@ -14,6 +14,7 @@ import {
   idiomChar,
   idiomPhrase,
   ilike,
+  type SQL,
 } from '@api/shared/util/db';
 
 type IdiomPhrase = typeof idiomPhrase.$inferSelect;
@@ -240,5 +241,15 @@ export class IdiomPhraseRepository {
         chars: charRows,
       };
     });
+  }
+
+  async search(where: SQL | undefined) {
+    const items = await db
+      .select()
+      .from(idiomPhrase)
+      .where(where)
+      .orderBy(desc(idiomPhrase.createdAt));
+
+    return items;
   }
 }

@@ -227,3 +227,108 @@ export const getPinyinResponseSchema = t.Object({
     }),
   ),
 });
+
+const createIdiomColorSchema = (label: string) =>
+  t.Enum(
+    {
+      black: 'black',
+      orange: 'orange',
+      green: 'green',
+    },
+    {
+      error: () => `${label}颜色必须为black, orange, green`,
+    },
+  );
+
+export const searchIdiomsBodySchema = t.Object({
+  rounds: t.Array(
+    t.Object({
+      text: t.String({
+        minLength: 4,
+        maxLength: 4,
+        error: () => '成语长度必须为4个字符',
+      }),
+      cells: t.Array(
+        t.Object({
+          position: t.Integer({
+            minimum: 0,
+            maximum: 3,
+            error: () => '位置范围为0-3',
+          }),
+          char: t.String({
+            minLength: 1,
+            maxLength: 1,
+            error: () => '单个字符长度必须为1',
+          }),
+          charColor: createIdiomColorSchema('字符'),
+          initial: t.String(),
+          initialColor: createIdiomColorSchema('声母'),
+          final: t.String(),
+          finalColor: createIdiomColorSchema('韵母'),
+          tone: t.Integer({
+            minimum: 0,
+            maximum: 4,
+            error: () => '声调范围为0-4',
+          }),
+          toneColor: createIdiomColorSchema('声调'),
+          syllableLink: createIdiomColorSchema('拼音链接标志'),
+        }),
+        {
+          minItems: 4,
+          maxItems: 4,
+          error: () => '格子数必须为4',
+        },
+      ),
+    }),
+    {
+      minItems: 1,
+      maxItems: 15,
+      error: () => '回合数范围为1-15',
+    },
+  ),
+  limit: t.Integer({
+    minimum: 1,
+    maximum: 50,
+    default: 20,
+    error: () => '限制范围为1-50',
+  }),
+});
+
+export type SearchIdiomsRound = Static<
+  typeof searchIdiomsBodySchema
+>['rounds'][number];
+
+export const searchIdiomsResponseSchema = t.Object({
+  total: t.Integer(),
+  items: t.Array(
+    t.Object({
+      id: t.String(),
+      text: t.String(),
+      pinyin: t.String(),
+      meaning: t.Nullable(t.String()),
+    }),
+  ),
+  analysis: t.Object({
+    isUnique: t.Boolean(),
+    byPosition: t.Array(
+      t.Object({
+        position: t.Integer(),
+        charOptions: t.Array(t.String()),
+        initialOptions: t.Array(t.String()),
+        finalOptions: t.Array(t.String()),
+        toneOptions: t.Array(t.Integer()),
+      }),
+    ),
+    suggestedProbes: t.Array(
+      t.Object({
+        text: t.String(),
+        reason: t.String(),
+      }),
+    ),
+    message: t.Optional(t.String()),
+  }),
+});
+
+export type SearchIdiomsResponse = Static<typeof searchIdiomsResponseSchema>;
+
+export type SearchAnalysis = SearchIdiomsResponse['analysis'];

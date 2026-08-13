@@ -5,6 +5,7 @@ import {
   getPinyin,
   importIdiomsFromCsvFile,
   listIdiomsPagination,
+  searchIdioms,
   updateIdiom,
 } from '@api/application/service/idiom-service';
 import { ERROR_CODES } from '@api/shared/exception/error-code';
@@ -26,6 +27,8 @@ import {
   importIdiomsResponseSchema,
   listIdiomsQuerySchema,
   listIdiomsResponseSchema,
+  searchIdiomsBodySchema,
+  searchIdiomsResponseSchema,
   singleIdiomParamsSchema,
   updateIdiomBodySchema,
   updateIdiomResponseSchema,
@@ -205,6 +208,28 @@ export const createIdiomRoute = apiRoute.group('/idiom', (app) =>
           tags: [idiomTag.name],
           summary: 'Get pinyin for a text',
           description: 'Returns pinyin for a text. Requires user role.',
+        },
+      },
+    )
+    .post(
+      '/search',
+      async ({ body, status }) => {
+        const result = await searchIdioms(body.rounds, body.limit);
+        return status(200, AppResponse.success(result).toJson());
+      },
+      {
+        auth: roleUser,
+        body: searchIdiomsBodySchema,
+        response: {
+          200: createSuccessResponseSchema(searchIdiomsResponseSchema),
+          400: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [idiomTag.name],
+          summary: 'Search idioms by rounds',
+          description:
+            'Search idioms based on the given rounds. Requires user role.',
         },
       },
     ),
