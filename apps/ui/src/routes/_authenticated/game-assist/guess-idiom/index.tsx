@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/toast';
 import {
@@ -27,7 +28,8 @@ export const Route = createFileRoute(
 
 export const FOUR_HAN_REGEX = /^\p{Script=Han}{4}$/u;
 
-const createRoundId = (): string => crypto.randomUUID();
+// const createRoundId = (): string => crypto.randomUUID();
+const createRoundId = (): string => uuidv4();
 
 function GuessIdiomComponent() {
   const [rounds, setRounds] = useState<GuessRoundState[]>([]);
