@@ -6,6 +6,8 @@ export const apiBaseUrl =
 
 export const apiClient = createApiClient(apiBaseUrl);
 
+export const MAX_ROUNDS = 15;
+
 export const handleApiError = (error: unknown, defaultMessage: string) => {
   toast.add({
     type: 'error',

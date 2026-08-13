@@ -113,17 +113,22 @@ export class IdiomGameCell {
   }
 
   extractSqlNecessaryCondition() {
+    // Green char locks the glyph; phonetic colors on this cell are feedback for
+    // the guessed reading of that glyph, not independent answer constraints.
+    if (this.charColor === IdiomGameCellColor.GREEN) {
+      return [
+        {
+          kind: 'green' as const,
+          field: 'char' as const,
+          position: this.position,
+          value: this.char,
+        },
+      ];
+    }
+
     const sqlNecessaryConditions: SqlNecessaryCondition[] = [];
 
     switch (this.charColor) {
-      case IdiomGameCellColor.GREEN:
-        sqlNecessaryConditions.push({
-          kind: 'green',
-          field: 'char',
-          position: this.position,
-          value: this.char,
-        });
-        break;
       case IdiomGameCellColor.BLACK:
         sqlNecessaryConditions.push({
           kind: 'black',

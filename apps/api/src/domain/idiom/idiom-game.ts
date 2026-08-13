@@ -6,8 +6,17 @@ import type {
   SearchIdiomsResponse,
 } from '@api/interface/schema/idiom-schema';
 import { BadRequestException } from '@api/shared/exception';
-import { and, eq, exists, ne, notExists, type SQL } from '@api/shared/util/db';
-import { db, idiomChar, idiomPhrase } from '@jx3/db';
+import {
+  and,
+  db,
+  eq,
+  exists,
+  idiomChar,
+  idiomPhrase,
+  ne,
+  notExists,
+  type SQL,
+} from '@api/shared/util/db';
 import { Idiom } from './idiom';
 import { IdiomChar } from './idiom-char';
 import type {
@@ -149,11 +158,27 @@ export class IdiomGame {
   }
 
   #filterPossibleByMatchAllRounds(possibleIdioms: Idiom[]): Idiom[] {
-    return possibleIdioms.filter((possiableIdiom) => {
-      return this.rounds.every((round) => {
-        return round.validateFeedback(possiableIdiom);
-      });
+    const rejectionCounts = new Map<string, number>();
+    const matched = possibleIdioms.filter((possiableIdiom) => {
+      for (const [roundIndex, round] of this.rounds.entries()) {
+        const rejection = round.explainFeedbackRejection(possiableIdiom);
+        if (rejection !== null) {
+          const key = `round ${roundIndex + 1}/${rejection}`;
+          rejectionCounts.set(key, (rejectionCounts.get(key) ?? 0) + 1);
+          return false;
+        }
+      }
+      return true;
     });
+
+    if (rejectionCounts.size > 0) {
+      const summary = [...rejectionCounts.entries()]
+        .map(([key, count]) => `${key}=${count}`)
+        .join(', ');
+      logger.info(`Match-all-rounds rejections: ${summary}`);
+    }
+
+    return matched;
   }
 
   #collectGreenLocks(): GreenLock[] | null {
@@ -194,6 +219,10 @@ export class IdiomGame {
         logger.error('Unknown condition kind');
         return '';
     }
+  }
+
+  #fieldValueKey(field: PhoneticField, value: string | number): string {
+    return `${field}:${value}`;
   }
 
   #fieldColumn(field: PhoneticField) {
@@ -281,18 +310,38 @@ export class IdiomGame {
   #extractSqlNecessaryConditions(): SqlNecessaryCondition[] {
     const conditions: SqlNecessaryCondition[] = [];
     const conditionKeySet: Set<string> = new Set();
+    // Green/orange already require the value somewhere; a black NOT EXISTS for
+    // the same field+value would contradict them (Wordle black = no extras).
+    const requiredFieldValues: Set<string> = new Set();
+    const rawConditions = this.rounds.flatMap((round) =>
+      round.extractSqlNecessaryConditions(),
+    );
 
-    for (const round of this.rounds) {
-      const roundConditions = round.extractSqlNecessaryConditions();
-      for (const condition of roundConditions) {
-        const conditionKey = this.#conditionKey(condition);
-        if (conditionKeySet.has(conditionKey)) {
-          continue;
-        }
-
-        conditionKeySet.add(conditionKey);
-        conditions.push(condition);
+    for (const condition of rawConditions) {
+      if (condition.kind === 'green' || condition.kind === 'orange') {
+        requiredFieldValues.add(
+          this.#fieldValueKey(condition.field, condition.value),
+        );
       }
+    }
+
+    for (const condition of rawConditions) {
+      if (
+        condition.kind === 'black' &&
+        requiredFieldValues.has(
+          this.#fieldValueKey(condition.field, condition.value),
+        )
+      ) {
+        continue;
+      }
+
+      const conditionKey = this.#conditionKey(condition);
+      if (conditionKeySet.has(conditionKey)) {
+        continue;
+      }
+
+      conditionKeySet.add(conditionKey);
+      conditions.push(condition);
     }
 
     return conditions;
