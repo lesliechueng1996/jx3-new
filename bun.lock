@@ -19,6 +19,7 @@
         "@elysia/openapi": "^1.4.15",
         "@elysiajs/cors": "^1.4.2",
         "@jx3/db": "workspace:*",
+        "@logtape/drizzle-orm": "^2.3.1",
         "@logtape/elysia": "^2.3.0",
         "@logtape/file": "^2.3.0",
         "@logtape/logtape": "^2.3.0",
@@ -307,6 +308,8 @@
     "@jx3/db": ["@jx3/db@workspace:packages/db"],
 
     "@jx3/ui": ["@jx3/ui@workspace:apps/ui"],
+
+    "@logtape/drizzle-orm": ["@logtape/drizzle-orm@2.3.1", "", { "peerDependencies": { "@logtape/logtape": "^2.3.1" } }, "sha512-Ru9N9b3o6q2wI2/3gRjf5209H+ICTER7NIcdkb6GpzycMV6LnK3KMTYR4OSonzr+pS/OTqIv4XITxGXPAGpAPQ=="],
 
     "@logtape/elysia": ["@logtape/elysia@2.3.0", "", { "peerDependencies": { "@logtape/logtape": "^2.3.0", "elysia": "^1.4.0" } }, "sha512-A002K04xH9YbgqYrXeDyti50ElD27KlJGePOmRc5It+Gj+S210NMtEr4SRM0Lm/jfsFyJQf+u6GPo7IiiWtpHA=="],
 

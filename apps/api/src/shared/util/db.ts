@@ -1,5 +1,11 @@
 export * from '@jx3/db';
 
+import { env } from '@api/infrastructure/config/env';
+import { createClient } from '@jx3/db';
+import { getLogger } from '@logtape/drizzle-orm';
+
+export const db = createClient(env.DATABASE_URL, getLogger());
+
 export const isUniqueViolationError = (
   error: unknown,
   constraint?: string,

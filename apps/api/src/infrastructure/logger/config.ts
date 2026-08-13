@@ -45,6 +45,11 @@ export const initializeLogger = async () => {
         lowestLevel: 'debug',
         sinks: ['console', 'file'],
       },
+      {
+        category: ['drizzle-orm'],
+        sinks: ['console', 'file'],
+        lowestLevel: 'debug',
+      },
     ],
     contextLocalStorage: new AsyncLocalStorage(),
   });
