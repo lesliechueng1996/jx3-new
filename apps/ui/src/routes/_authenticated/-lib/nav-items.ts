@@ -31,7 +31,10 @@ export const navItems: NavItem[] = [
   {
     title: '游戏辅助',
     icon: Gamepad2Icon,
-    children: [{ title: '猜成语', to: '/game-assist/guess-idiom' }],
+    children: [
+      { title: '猜成语', to: '/game-assist/guess-idiom' },
+      { title: '扫雷', to: '/game-assist/minesweeper' },
+    ],
   },
 ];
 

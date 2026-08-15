@@ -16,6 +16,7 @@ import { Route as ForbiddenIndexRouteImport } from './routes/forbidden/index'
 import { Route as LoginIndexRouteImport } from './routes/login/index'
 import { Route as AuthenticatedAdminIdiomsIndexRouteImport } from './routes/_authenticated/admin/idioms/index'
 import { Route as AuthenticatedGameAssistGuessIdiomIndexRouteImport } from './routes/_authenticated/game-assist/guess-idiom/index'
+import { Route as AuthenticatedGameAssistMinesweeperIndexRouteImport } from './routes/_authenticated/game-assist/minesweeper/index'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -53,6 +54,12 @@ const AuthenticatedGameAssistGuessIdiomIndexRoute =
     path: '/game-assist/guess-idiom/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedGameAssistMinesweeperIndexRoute =
+  AuthenticatedGameAssistMinesweeperIndexRouteImport.update({
+    id: '/game-assist/minesweeper/',
+    path: '/game-assist/minesweeper/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -61,6 +68,7 @@ export interface FileRoutesByFullPath {
   '/login/': typeof LoginIndexRoute
   '/admin/idioms/': typeof AuthenticatedAdminIdiomsIndexRoute
   '/game-assist/guess-idiom/': typeof AuthenticatedGameAssistGuessIdiomIndexRoute
+  '/game-assist/minesweeper/': typeof AuthenticatedGameAssistMinesweeperIndexRoute
 }
 export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
@@ -69,6 +77,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginIndexRoute
   '/admin/idioms': typeof AuthenticatedAdminIdiomsIndexRoute
   '/game-assist/guess-idiom': typeof AuthenticatedGameAssistGuessIdiomIndexRoute
+  '/game-assist/minesweeper': typeof AuthenticatedGameAssistMinesweeperIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -79,6 +88,7 @@ export interface FileRoutesById {
   '/login/': typeof LoginIndexRoute
   '/_authenticated/admin/idioms/': typeof AuthenticatedAdminIdiomsIndexRoute
   '/_authenticated/game-assist/guess-idiom/': typeof AuthenticatedGameAssistGuessIdiomIndexRoute
+  '/_authenticated/game-assist/minesweeper/': typeof AuthenticatedGameAssistMinesweeperIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -89,6 +99,7 @@ export interface FileRouteTypes {
     | '/login/'
     | '/admin/idioms/'
     | '/game-assist/guess-idiom/'
+    | '/game-assist/minesweeper/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/admin'
@@ -97,6 +108,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/admin/idioms'
     | '/game-assist/guess-idiom'
+    | '/game-assist/minesweeper'
   id:
     | '__root__'
     | '/_authenticated'
@@ -106,6 +118,7 @@ export interface FileRouteTypes {
     | '/login/'
     | '/_authenticated/admin/idioms/'
     | '/_authenticated/game-assist/guess-idiom/'
+    | '/_authenticated/game-assist/minesweeper/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -165,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGameAssistGuessIdiomIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/game-assist/minesweeper/': {
+      id: '/_authenticated/game-assist/minesweeper/'
+      path: '/game-assist/minesweeper'
+      fullPath: '/game-assist/minesweeper/'
+      preLoaderRoute: typeof AuthenticatedGameAssistMinesweeperIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -186,6 +206,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedGameAssistGuessIdiomIndexRoute: typeof AuthenticatedGameAssistGuessIdiomIndexRoute
+  AuthenticatedGameAssistMinesweeperIndexRoute: typeof AuthenticatedGameAssistMinesweeperIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -193,6 +214,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedGameAssistGuessIdiomIndexRoute:
     AuthenticatedGameAssistGuessIdiomIndexRoute,
+  AuthenticatedGameAssistMinesweeperIndexRoute:
+    AuthenticatedGameAssistMinesweeperIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
