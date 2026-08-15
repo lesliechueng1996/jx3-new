@@ -1,4 +1,4 @@
-export type DifficultyMode = 'challenge' | 'custom';
+export type DifficultyMode = 'challenge' | 'hero' | 'custom';
 
 export type MinesweeperConfig = {
   rows: number;
@@ -7,9 +7,23 @@ export type MinesweeperConfig = {
 };
 
 export const CHALLENGE_CONFIG: MinesweeperConfig = {
-  rows: 11,
+  rows: 14,
   columns: 14,
   mines: 80,
+};
+
+export const HERO_CONFIG: MinesweeperConfig = {
+  rows: 12,
+  columns: 12,
+  mines: 42,
+};
+
+export const PRESET_CONFIGS: Record<
+  Exclude<DifficultyMode, 'custom'>,
+  MinesweeperConfig
+> = {
+  challenge: CHALLENGE_CONFIG,
+  hero: HERO_CONFIG,
 };
 
 export const MAX_ROWS = 20;

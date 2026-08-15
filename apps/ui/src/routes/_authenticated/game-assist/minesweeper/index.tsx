@@ -21,6 +21,7 @@ import {
   cellPositionKey,
   type DifficultyMode,
   type MinesweeperConfig,
+  PRESET_CONFIGS,
   parseCellPositionKey,
   validateCustomConfig,
 } from './-lib/minesweeper-setup';
@@ -41,11 +42,32 @@ function formatCellLabels(cells: MinesweeperCell[]): string {
 }
 
 async function copyText(text: string): Promise<boolean> {
+  if (window.isSecureContext && navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // HTTP / permission errors fall through to the legacy path.
+    }
+  }
+  return copyTextWithFallback(text);
+}
+
+function copyTextWithFallback(text: string): boolean {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  document.body.appendChild(textarea);
+  textarea.select();
+  textarea.setSelectionRange(0, text.length);
   try {
-    await navigator.clipboard.writeText(text);
-    return true;
+    return document.execCommand('copy');
   } catch {
     return false;
+  } finally {
+    textarea.remove();
   }
 }
 
@@ -79,9 +101,9 @@ function MinesweeperComponent() {
   };
 
   const handleStart = () => {
-    if (mode === 'challenge') {
+    if (mode !== 'custom') {
       setSetupError(null);
-      startGame(CHALLENGE_CONFIG);
+      startGame(PRESET_CONFIGS[mode]);
       return;
     }
 
@@ -299,7 +321,7 @@ function MinesweeperComponent() {
   }, [isGameComplete]);
 
   return (
-    <section className="flex flex-col gap-6">
+    <section className="flex flex-col gap-6 pb-48">
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight">扫雷辅助</h1>
         <p className="text-sm text-muted-foreground">
@@ -366,15 +388,17 @@ function MinesweeperComponent() {
                 </AlertDescription>
               </Alert>
             ) : null}
-            <MinesweeperBoardComponent
-              game={game}
-              selected={selected}
-              explodeKeys={explodeKeys}
-              flagKeys={flagKeys}
-              pendingValueKeys={pendingValueKeySet}
-              onLeftClick={handleLeftClick}
-              onRightClick={handleRightClick}
-            />
+            <div className="flex w-full justify-center">
+              <MinesweeperBoardComponent
+                game={game}
+                selected={selected}
+                explodeKeys={explodeKeys}
+                flagKeys={flagKeys}
+                pendingValueKeys={pendingValueKeySet}
+                onLeftClick={handleLeftClick}
+                onRightClick={handleRightClick}
+              />
+            </div>
           </div>
           <div className="w-full min-w-0 xl:max-w-sm">
             <MinesweeperAnalysisPanelComponent

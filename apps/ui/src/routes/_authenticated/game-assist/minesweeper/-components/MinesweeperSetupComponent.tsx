@@ -8,11 +8,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
-  CHALLENGE_CONFIG,
   type DifficultyMode,
   MAX_COLUMNS,
   MAX_MINES,
   MAX_ROWS,
+  PRESET_CONFIGS,
 } from '../-lib/minesweeper-setup';
 
 type MinesweeperSetupComponentProps = {
@@ -55,22 +55,22 @@ const MinesweeperSetupComponent = ({
             value={[mode]}
             onValueChange={(value) => {
               const nextMode = value[0];
-              if (nextMode === 'challenge' || nextMode === 'custom') {
+              if (
+                nextMode === 'challenge' ||
+                nextMode === 'hero' ||
+                nextMode === 'custom'
+              ) {
                 onModeChange(nextMode);
               }
             }}
           >
             <ToggleGroupItem value="challenge">挑战</ToggleGroupItem>
+            <ToggleGroupItem value="hero">英雄</ToggleGroupItem>
             <ToggleGroupItem value="custom">自定义</ToggleGroupItem>
           </ToggleGroup>
         </Field>
 
-        {mode === 'challenge' ? (
-          <p className="text-sm text-muted-foreground">
-            {CHALLENGE_CONFIG.rows} 行 × {CHALLENGE_CONFIG.columns} 列，
-            {CHALLENGE_CONFIG.mines} 雷
-          </p>
-        ) : (
+        {mode === 'custom' ? (
           <FieldGroup className="flex-row flex-wrap gap-3">
             <Field className="w-24">
               <FieldLabel htmlFor="minesweeper-rows">行数</FieldLabel>
@@ -109,6 +109,11 @@ const MinesweeperSetupComponent = ({
               />
             </Field>
           </FieldGroup>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            {PRESET_CONFIGS[mode].rows} 行 × {PRESET_CONFIGS[mode].columns} 列，
+            {PRESET_CONFIGS[mode].mines} 雷
+          </p>
         )}
 
         <div className="flex flex-wrap gap-2">

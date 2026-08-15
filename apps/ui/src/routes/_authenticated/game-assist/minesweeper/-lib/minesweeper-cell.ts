@@ -103,7 +103,7 @@ export class MinesweeperCell {
   }
 
   getCellLabel(): string {
-    if (this.column <= 9) {
+    if (this.column <= 10) {
       return `${this.column + 1}${this.row + 1}`;
     }
     return `${this.column + 1}${(this.row + 1).toString().padStart(2, '0')}`;
