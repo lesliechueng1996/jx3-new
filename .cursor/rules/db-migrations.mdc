@@ -1,6 +1,6 @@
 ---
 description: Database migration workflow after schema changes
-globs: packages/db/src/schema/**
+globs: packages/db/schema/**
 alwaysApply: false
 ---
 

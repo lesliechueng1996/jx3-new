@@ -1,0 +1,29 @@
+---
+description: Admin CRUD pages vs user feature pages in TanStack Router
+globs: apps/ui/src/routes/**
+alwaysApply: false
+---
+
+# Admin vs user UI
+
+Same SPA. Auth is `_authenticated/route.tsx` (`beforeLoad` session). Admin is `_authenticated/admin/route.tsx` (non-admin → `/forbidden`).
+
+| | Admin | User |
+|---|--------|------|
+| Path | `routes/_authenticated/admin/<resource>/` | `routes/_authenticated/<area>/<feature>/` |
+| Example | `/admin/idioms` | `/game-assist/guess-idiom` |
+| API | `lib/api/admin/admin-*-api.ts` | `lib/api/<feature>-api.ts` |
+| Data | URL search + `usePaginatedQuery` | Local `useState` + mutations |
+| Extra admin UI | Whole page is admin-only | `Route.useRouteContext().isAdmin` for optional actions |
+
+## Admin list page (idioms)
+
+Route file is the container: queries/mutations, toasts, `invalidate`. Children in `-components/` stay presentational (`onSubmit` only). Search schema in `-lib/` (`validateSearch`). Delete via shared `ConfirmDialog`. Pagination via `Pagination` + `usePaginatedQuery`.
+
+## User feature page (guess-idiom)
+
+Interactive tool, not a resource table. Keep game state local. Reuse an admin mutation only when the extra action is truly admin-only (e.g. quick-add idiom).
+
+## Nav
+
+Add entries in `routes/_authenticated/-lib/nav-items.ts`. Sidebar lists all items; **access control is `beforeLoad`**, not the nav. Do not add a second app or a public CRUD page.

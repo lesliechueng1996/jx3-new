@@ -1,0 +1,54 @@
+---
+description: Layered Elysia API structure — directories, routes, auth, responses
+globs: apps/api/**
+alwaysApply: false
+---
+
+# API architecture
+
+Follow `.agents/skills/elysiajs/SKILL.md`. Import via `@api/*`.
+
+## Directories
+
+| Dir | Owns | Must not |
+|-----|------|----------|
+| `interface/endpoint/` | HTTP routes, OpenAPI tags | Business rules, SQL |
+| `interface/schema/` | Elysia `t` schemas + `Static<>` types | DB access |
+| `interface/plugins/` | Auth macro, HTTP logger | Feature logic |
+| `application/service/` | Use cases, DTO mapping, `AppException` | `status()`, route plugins |
+| `domain/<feature>/` | Entities and domain rules | HTTP / `AppResponse` |
+| `infrastructure/` | Config, logger, repositories (Drizzle) | HTTP shapes |
+| `shared/` | Exceptions, Better Auth, `db`, utils | Feature orchestration |
+
+## Routes
+
+- Extend `apiRoute` (`/api/v1`, error handler, `authMacro`).
+- One resource group: `apiRoute.group('/idiom', ...)`. Mix `auth: roleAdmin` and `auth: roleUser` per handler; do not split `/admin/...` paths.
+- Handler: call a service, then `status(n, AppResponse.success(data).toJson())`.
+- Declare `body` / `query` / `params` / `response` (including error statuses). Use `createSuccessResponseSchema` / `emptySuccessResponseSchema` / `errorResponseSchema`.
+- Export `<resource>Tag` and register it in `app.ts` swagger `tags`. Mount the group in `index.ts` **before** `export type App` so Eden stays typed.
+- Pagination: `paginationQuerySchema` + `paginationResponseSchema` from `schema/common.ts`.
+
+```typescript
+.post('', async ({ body, status }) => {
+  const result = await createIdiom(body.text, body.meaning);
+  return status(201, AppResponse.success(result).toJson());
+}, {
+  auth: roleAdmin,
+  body: createIdiomBodySchema,
+  response: {
+    201: createSuccessResponseSchema(createIdiomResponseSchema),
+    400: errorResponseSchema,
+    409: errorResponseSchema,
+    500: errorResponseSchema,
+  },
+  detail: { tags: [idiomTag.name], summary: 'Create an idiom' },
+})
+```
+
+## Errors and logging
+
+- Throw `AppException` subclasses (`NotFoundException`, `ConflictException`, …) with codes from `ERROR_CODES`.
+- Add feature-specific codes next to the existing `IDIOM_*` entries.
+- User-facing exception messages may be Chinese; OpenAPI `summary`/`description` stay English.
+- Log with `@api/infrastructure/logger` (LogTape). Never `console.log`.

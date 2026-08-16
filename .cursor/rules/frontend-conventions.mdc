@@ -99,24 +99,29 @@ Do not mix API logic and form rendering in a single component.
 - Pathless / non-URL folders use a leading `-` prefix (e.g. `-components/`, `-lib/`).
 - Use `@/*` path alias for cross-cutting imports (`@/lib/...`); prefer relative imports within the same route (`-components/`, `-lib/`).
 
+## Admin vs user pages
+
+See `admin-vs-user-ui.mdc`. Admin CRUD lives under `routes/_authenticated/admin/`; user tools under `routes/_authenticated/<area>/`. Nav: `routes/_authenticated/-lib/nav-items.ts`.
+
 ## Structure
 
 ```
 src/
   components/ui/           # shadcn / design-system primitives
-  components/              # app-wide reusable base components (rare)
-  lib/                     # domain subfolders — see web-lib-structure.mdc
-    api/                   # request helpers, proxies, admin resource APIs
-    auth/                  # client, guards, session
-    query/                 # query client
-    utils/                 # cn, formatters
-    logging/               # isomorphic logger
+  components/              # app-wide reusable base components (ConfirmDialog, Pagination, ErrorAlert)
+  hooks/                   # app-wide hooks (use-paginated-query)
+  lib/                     # see web-lib-structure.mdc
   routes/
     __root.tsx
-    index.tsx              # / (root — no directory segment in URL)
-    login/
-      index.tsx            # /login — route + page component
-      -components/         # login-only child components
-      -lib/                # login-only schemas, hooks, helpers
-    api/                   # server / proxy routes
+    login/                 # /login
+    forbidden/             # /forbidden
+    _authenticated/        # session required (pathless layout)
+      route.tsx            # shell + beforeLoad
+      index.tsx            # / (home)
+      -components/         # header, sidebar
+      -lib/nav-items.ts
+      admin/               # admin role required
+        idioms/
+      game-assist/         # user tools
+        guess-idiom/
 ```

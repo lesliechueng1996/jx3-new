@@ -1,0 +1,38 @@
+---
+description: Monorepo layout and the idiom feature as the template for new work
+alwaysApply: true
+---
+
+# Feature template
+
+Treat **idiom** as the reference when adding a feature. Copy its layers, not ad-hoc shortcuts.
+
+## Call chain
+
+UI route → `apps/ui/src/lib/api/*` Eden wrapper → `@jx3/api-client` → `apps/api` `interface/endpoint` → `application/service` → `domain` + `infrastructure/repository` → `@jx3/db`
+
+Do not skip layers: route handlers stay thin; pages never call Eden/`fetch` directly; services never return Elysia `status()`.
+
+## Apps and packages
+
+| Path | Package | Role |
+|------|---------|------|
+| `apps/api` | `@jx3/api` | Elysia HTTP API (`@api/*` → `src/*`) |
+| `apps/ui` | `@jx3/ui` | TanStack Router + React Query (`@/*` → `src/*`) |
+| `packages/db` | `@jx3/db` | Drizzle schema and `createClient` |
+| `packages/api-client` | `@jx3/api-client` | Eden Treaty client typed from `App` |
+
+## New feature checklist
+
+1. Tables in `packages/db/schema/<feature>.ts`, re-export from `schema/index.ts`, then `db:generate` (ask before `db:migrate`)
+2. Domain in `apps/api/src/domain/<feature>/`
+3. Repository in `apps/api/src/infrastructure/repository/`
+4. Service in `apps/api/src/application/service/`
+5. Elysia schemas in `apps/api/src/interface/schema/`
+6. Routes on `apiRoute.group('/<resource>')`, `.use()` in `index.ts`, OpenAPI tag in `app.ts`
+7. UI wrappers in `lib/api/` (admin CRUD vs user feature)
+8. Admin CRUD under `routes/_authenticated/admin/`
+9. User page under `routes/_authenticated/<area>/`
+10. Nav entry in `routes/_authenticated/-lib/nav-items.ts`
+
+Reference: `idiom-route.ts`, `admin/idioms/`, `game-assist/guess-idiom/`.

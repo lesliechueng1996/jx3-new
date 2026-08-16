@@ -1,0 +1,33 @@
+---
+description: apps/ui src/lib layout and Eden API wrappers
+globs: apps/ui/src/lib/**
+alwaysApply: false
+---
+
+# UI `src/lib` structure
+
+| Folder / file | Role |
+|---------------|------|
+| `api-client.ts` | `createApiClient` from `@jx3/api-client`, `handleApiError` |
+| `api/admin/admin-<resource>-api.ts` | Admin CRUD wrappers (`auth: roleAdmin`) |
+| `api/<feature>-api.ts` | User-facing wrappers (`auth: roleUser`) |
+| `auth-client.ts` | Better Auth React client |
+| `auth-session.ts` | Cached session query |
+| `query-client.ts` | TanStack Query client |
+| `pagination.ts` | Shared page/pageSize zod + defaults |
+| `utils.ts` | `cn`, `toRouteSearch` |
+
+## Eden wrappers
+
+Pages import wrappers, never `apiClient` / `fetch` / `@jx3/api`.
+
+```typescript
+const { data, error } = await apiClient.api.v1.idiom.get({ query: { page, pageSize, text } });
+if (error) throw new Error(error.value.message ?? '获取成语列表失败');
+return data.data;
+```
+
+- Unwrap the envelope (`data.data`). Throw `Error` with the API message so `handleApiError` can toast it.
+- Derive list/detail types with `Awaited<ReturnType<typeof fn>>` — do not duplicate backend TypeBox types.
+- Admin functions: prefix `admin*` (`adminListIdiomsPagination`, `adminCreateIdiom`).
+- Put user APIs next to `lib/api/`, not under `api/admin/` (idiom-guess currently lives under `admin/` — do not copy that).
