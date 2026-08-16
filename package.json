@@ -14,6 +14,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.7",
     "prettier": "^3.7.4",
+    "shadcn": "^4.18.0",
     "skills-npm": "^1.2.0",
     "turbo": "^2.10.8",
     "typescript": "5.9.2"

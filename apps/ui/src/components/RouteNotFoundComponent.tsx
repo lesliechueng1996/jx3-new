@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowRightIcon, ShieldOffIcon } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { HouseIcon, SearchXIcon } from 'lucide-react';
 import {
   BrandedBlurTextComponent,
   BrandedCountUpComponent,
@@ -9,13 +9,9 @@ import {
 } from '@/components/BrandedStageComponent';
 import { Button } from '@/components/ui/button';
 
-export const Route = createFileRoute('/forbidden/')({
-  component: ForbiddenComponent,
-});
-
-function ForbiddenComponent() {
+export function RouteNotFoundComponent() {
   return (
-    <BrandedStageComponent mood="forbidden" contentClassName="max-w-md gap-10">
+    <BrandedStageComponent mood="not-found" contentClassName="max-w-md gap-10">
       <div className="flex flex-col items-center gap-4">
         <BrandedMarkComponent />
         <p className="font-heading text-sm font-light tracking-[0.32em] text-white/55">
@@ -29,7 +25,7 @@ function ForbiddenComponent() {
             aria-hidden
             className="flex size-12 items-center justify-center rounded-xl border border-white/10 bg-white/4 text-[oklch(0.72_0.12_28)]"
           >
-            <ShieldOffIcon className="size-5" strokeWidth={1.5} />
+            <SearchXIcon className="size-5" strokeWidth={1.5} />
           </div>
 
           <div className="flex flex-col items-center gap-2">
@@ -37,16 +33,16 @@ function ForbiddenComponent() {
               aria-hidden
               className="font-heading text-[4.5rem] leading-none font-light tracking-[-0.04em] text-white/90"
             >
-              <BrandedCountUpComponent to={403} />
+              <BrandedCountUpComponent to={404} />
             </p>
             <h1 className="text-lg font-medium tracking-wide text-white/90">
               <BrandedBlurTextComponent
-                text="无权访问"
+                text="页面不存在"
                 className="justify-center text-lg font-medium tracking-wide text-white/90"
               />
             </h1>
             <p className="mx-auto max-w-xs text-sm leading-relaxed text-white/45">
-              当前账号没有访问此页面的权限。请更换有权限的账号登录，或返回首页继续浏览。
+              这个地址没有对应的页面。检查链接是否正确，或返回首页继续。
             </p>
           </div>
         </div>
@@ -55,19 +51,10 @@ function ForbiddenComponent() {
           <Button
             size="lg"
             nativeButton={false}
-            render={<Link to="/login" />}
+            render={<Link to="/" />}
             className="h-11 w-full rounded-xl border-0 bg-[oklch(0.58_0.17_28)] text-[15px] font-medium tracking-wide text-white shadow-[0_8px_32px_-8px_oklch(0.58_0.17_28/0.7)] hover:bg-[oklch(0.54_0.17_28)] active:scale-[0.99]"
           >
-            前往登录
-            <ArrowRightIcon data-icon="inline-end" />
-          </Button>
-          <Button
-            size="lg"
-            variant="ghost"
-            nativeButton={false}
-            render={<Link to="/" />}
-            className="h-11 w-full rounded-xl text-[15px] font-medium tracking-wide text-white/55 hover:bg-white/5 hover:text-white/85"
-          >
+            <HouseIcon data-icon="inline-start" />
             返回首页
           </Button>
         </div>
