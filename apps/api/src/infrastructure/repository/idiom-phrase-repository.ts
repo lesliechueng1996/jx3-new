@@ -253,3 +253,5 @@ export class IdiomPhraseRepository {
     return items;
   }
 }
+
+export const idiomPhraseRepository = new IdiomPhraseRepository();

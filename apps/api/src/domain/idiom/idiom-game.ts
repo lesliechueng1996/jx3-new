@@ -1,6 +1,6 @@
 import { logger } from '@api/infrastructure/logger';
-import { IdiomCharRepository } from '@api/infrastructure/repository/idiom-char-repository';
-import { IdiomPhraseRepository } from '@api/infrastructure/repository/idiom-phrase-repository';
+import { idiomCharRepository } from '@api/infrastructure/repository/idiom-char-repository';
+import { idiomPhraseRepository } from '@api/infrastructure/repository/idiom-phrase-repository';
 import type {
   SearchAnalysis,
   SearchIdiomsResponse,
@@ -40,16 +40,12 @@ const POSITION_LABELS = ['第 1 字', '第 2 字', '第 3 字', '第 4 字'] as 
 export class IdiomGame {
   private readonly rounds: IdiomGameRound[];
   private readonly limit: number;
-  private readonly idiomPhraseRepository: IdiomPhraseRepository;
-  private readonly idiomCharRepository: IdiomCharRepository;
 
   constructor(props: IdiomGameConstructorParams) {
     this.rounds = props.rounds.map(
       (roundProps) => new IdiomGameRound(roundProps),
     );
     this.limit = props.limit;
-    this.idiomPhraseRepository = new IdiomPhraseRepository();
-    this.idiomCharRepository = new IdiomCharRepository();
   }
 
   async search(): Promise<SearchIdiomsResponse> {
@@ -350,11 +346,11 @@ export class IdiomGame {
   async #loadIdioms() {
     const sqlNecessaryConditions = this.#extractSqlNecessaryConditions();
     const prefilterWhere = this.#buildPrefilterWhere(sqlNecessaryConditions);
-    const idioms = await this.idiomPhraseRepository.search(prefilterWhere);
+    const idioms = await idiomPhraseRepository.search(prefilterWhere);
     logger.info(`Loaded ${idioms.length} idioms by prefilter`);
 
     const idiomIds = idioms.map((idiom) => idiom.id);
-    const chars = await this.idiomCharRepository.findByPhraseIds(idiomIds);
+    const chars = await idiomCharRepository.findByPhraseIds(idiomIds);
     logger.info(`Loaded ${chars.length} chars by idiom ids`);
 
     const idiomCharsMap = new Map<string, IdiomChar[]>();

@@ -37,10 +37,10 @@ import { apiRoute } from './api-route';
 
 export const idiomTag = {
   name: 'idiom',
-  description: '成语接口',
+  description: 'Idiom API',
 };
 
-export const createIdiomRoute = apiRoute.group('/idiom', (app) =>
+export const idiomRoute = apiRoute.group('/idiom', (app) =>
   app
     .post(
       '',

@@ -1,10 +1,11 @@
 import { app } from './app';
 import { initializeLogger, logger } from './infrastructure/logger';
-import { createIdiomRoute } from './interface/endpoint/idiom-route';
+import { idiomRoute } from './interface/endpoint/idiom-route';
+import { userRoute } from './interface/endpoint/user-route';
 
 await initializeLogger();
 
-const server = app.use(createIdiomRoute);
+const server = app.use(idiomRoute).use(userRoute);
 
 export type App = typeof server;
 

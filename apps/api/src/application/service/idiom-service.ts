@@ -1,8 +1,8 @@
 import { Idiom } from '@api/domain/idiom/idiom';
 import { IdiomGame } from '@api/domain/idiom/idiom-game';
 import { logger } from '@api/infrastructure/logger';
-import { IdiomCharRepository } from '@api/infrastructure/repository/idiom-char-repository';
-import { IdiomPhraseRepository } from '@api/infrastructure/repository/idiom-phrase-repository';
+import { idiomCharRepository } from '@api/infrastructure/repository/idiom-char-repository';
+import { idiomPhraseRepository } from '@api/infrastructure/repository/idiom-phrase-repository';
 import type {
   CreateIdiomResponse,
   GetIdiomResponse,
@@ -23,9 +23,6 @@ import { formatDateTime } from '@api/shared/util/date';
 import { isUniqueViolationError } from '@api/shared/util/db';
 import { pickDefinedProperties } from '@api/shared/util/object';
 import { parseCsv, parseCsvHeaders } from '@api/shared/util/parse-csv';
-
-const idiomPhraseRepository = new IdiomPhraseRepository();
-const idiomCharRepository = new IdiomCharRepository();
 
 export const createIdiom = async (
   text: string,

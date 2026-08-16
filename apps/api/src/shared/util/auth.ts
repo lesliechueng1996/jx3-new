@@ -48,3 +48,17 @@ export const OpenAPI = {
 
 export const roleUser = 'user';
 export const roleAdmin = 'admin';
+
+export const authProviders = ['credential'] as const;
+
+export type AuthProvider = (typeof authProviders)[number];
+
+export const normalizeProviders = (providerIds: string[]): AuthProvider[] => {
+  const normalized = new Set<AuthProvider>();
+  for (const providerId of providerIds) {
+    if (authProviders.includes(providerId as AuthProvider)) {
+      normalized.add(providerId as AuthProvider);
+    }
+  }
+  return [...normalized];
+};

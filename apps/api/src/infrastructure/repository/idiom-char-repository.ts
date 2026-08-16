@@ -23,3 +23,5 @@ export class IdiomCharRepository {
     return result;
   }
 }
+
+export const idiomCharRepository = new IdiomCharRepository();
