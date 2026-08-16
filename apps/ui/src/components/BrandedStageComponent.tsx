@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useState } from 'react';
-import Aurora from '@/components/Aurora';
-import BlurText from '@/components/BlurText';
-import CountUp from '@/components/CountUp';
+import Aurora from '@/components/react-bits/Aurora';
+import BlurText from '@/components/react-bits/BlurText';
+import CountUp from '@/components/react-bits/CountUp';
 import { cn } from '@/lib/utils';
 
 export type BrandedStageMood = 'login' | 'forbidden' | 'error' | 'not-found';

@@ -1,0 +1,40 @@
+---
+description: How to install and use React Bits in apps/ui via the shadcn CLI
+globs: apps/ui/**
+alwaysApply: false
+---
+
+# React Bits
+
+Animated backgrounds and text for **full-screen branded pages only** (login, 403, 404, route error). Do not use on admin CRUD, forms, the minesweeper board, or the sidebar.
+
+Shared chrome lives in `BrandedStageComponent` (`mood`: `login` | `forbidden` | `error` | `not-found`). Pages compose that wrapper; they do not import Aurora / BlurText / CountUp directly.
+
+## Install
+
+Registry is already in `apps/ui/components.json` (`@react-bits` → `https://reactbits.dev/r/{name}.json`).
+
+From `apps/ui/`, always `@latest`, always the **TS + Tailwind** variant:
+
+```bash
+bunx --bun shadcn@latest add -y -p src/components/react-bits @react-bits/<Name>-TS-TW
+```
+
+Correct: `bunx --bun shadcn@latest add -y -p src/components/react-bits @react-bits/Aurora-TS-TW`
+
+Wrong: pinned CLI (`shadcn@4.x`), JS/CSS variants (`Aurora-JS-CSS`), `npx jsrepo`, or omitting `-p` (that dumps files into `src/components/`).
+
+CLI writes `src/components/react-bits/<Name>.tsx` (default export). Wrap with an app component (`BrandedStageComponent`) if several pages share the effect. Do not import these vendor files from routes.
+
+Do **not** add SplitText — it needs the paid GSAP Club `SplitText` plugin. Prefer BlurText / CountUp (`motion`).
+
+## After add
+
+1. WebGL components (Aurora / `ogl`): wrap setup in `try/catch`; keep the existing CSS glow behind the canvas so the page still works if init fails.
+2. Honor `prefers-reduced-motion`: skip canvas / text animation and render static copy.
+3. Recolor to the terracotta token `oklch(0.58 0.17 28)` — never ship the default neon purple/green.
+4. One extra motion per page besides the shared background (title BlurText **or** status-code CountUp, not both plus particles).
+
+## Button + Link
+
+Base UI `Button` with `render={<Link />}` must set `nativeButton={false}` (Link is an `<a>`).
