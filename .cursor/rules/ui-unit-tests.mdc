@@ -1,0 +1,65 @@
+---
+description: Unit test layout, mocking, coverage, and excludes for apps/ui
+globs: apps/ui/**
+alwaysApply: false
+---
+
+# UI unit tests
+
+Use Vitest (`@jx3/ui` scripts `test` / `test:cov`). Coverage config is in `apps/ui/vitest.config.ts`.
+
+## Layout
+
+Mirror `src/` under `tests/`. One test file per source file:
+
+`src/lib/utils.ts` → `tests/lib/utils.test.ts`
+`src/routes/login/index.tsx` → `tests/routes/login/index.test.tsx`
+
+## Mock every external dependency
+
+The file under test must not load real collaborators. `vi.mock` every runtime import of API wrappers, `authClient`, `toast`, and `@jx3/api-client`. `import type` is fine.
+
+Do not call a real HTTP API, boot Better Auth, or read real `VITE_*` secrets.
+
+`vi.mock` is hoisted — declare mocked fns with `vi.hoisted`, then import the target:
+
+```typescript
+const { adminListIdiomsPagination } = vi.hoisted(() => ({
+  adminListIdiomsPagination: vi.fn(),
+}));
+
+vi.mock('@/lib/api/admin/admin-idioms-api', () => ({
+  adminListIdiomsPagination,
+}));
+```
+
+Mock `components/react-bits/*` (WebGL) and `toast` when imported. Do **not** mock the route's own `-components/` from a page test.
+
+## Coverage
+
+Each **reported** file must be ≥90% functions and lines (per-file). Cover both branches of `?.` / `??` / ternaries. Untested source is omitted from the report — add a test (or keep the file on the exclude list).
+
+After adding or changing tests, run `bun run --filter @jx3/ui test:cov`.
+
+## Write tests for
+
+- `lib/**` and `hooks/**` — mock clients, toast, and `navigate`
+- `routes/**/-lib/**` — game engines, zod schemas, nav helpers; no HTTP
+- **Every `.tsx` except `components/ui` and `components/react-bits`** — route modules (`index.tsx`, `route.tsx`, `__root.tsx`), `-components/`, and `src/components/*.tsx`
+
+TSX tests use Testing Library. Query by role / label / text (Chinese copy is part of the contract). Do not assert `className` or snapshot JSX.
+
+Route modules: wrap with a test Router (`createMemoryHistory`) and `QueryClientProvider`. Assert user contracts — validation messages, `beforeLoad` redirects, submit → toast / navigate — not layout chrome.
+
+Shared components: pass fake callbacks; assert they are invoked with the transformed payload.
+
+## Do not unit-test (also in coverage `exclude`)
+
+| Path | Why |
+|------|-----|
+| `src/main.tsx`, `src/router.tsx`, `src/routeTree.gen.ts` | `createRoot` / `createRouter` / generated tree |
+| `src/components/ui/**` | shadcn primitives |
+| `src/components/react-bits/**` | Vendor (Aurora / ogl) |
+| `src/lib/auth-client.ts`, `src/lib/query-client.ts` | `createAuthClient` / `QueryClient` at import time |
+
+If a pure helper sits in an excluded file, extract it to a testable `lib/` or `-lib/` module first — do not pull the boot module into unit tests.

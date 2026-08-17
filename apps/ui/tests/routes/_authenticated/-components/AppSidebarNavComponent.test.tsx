@@ -1,0 +1,41 @@
+import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
+import { authClient } from '@/lib/auth-client';
+import { renderApp } from '../../../helpers/render';
+import { adminSession } from '../../../helpers/session';
+
+describe('AppSidebarNavComponent', () => {
+  it('renders navigation links and expands game assist', async () => {
+    vi.mocked(authClient.getSession).mockResolvedValue({
+      data: adminSession,
+    } as never);
+    const user = userEvent.setup();
+    await renderApp('/');
+
+    expect(await screen.findByRole('link', { name: '概览' })).toHaveAttribute(
+      'href',
+      '/',
+    );
+    expect(screen.getByRole('link', { name: '成语管理' })).toHaveAttribute(
+      'href',
+      '/admin/idioms',
+    );
+
+    await user.click(screen.getByText('游戏辅助'));
+    expect(await screen.findByRole('link', { name: '猜成语' })).toHaveAttribute(
+      'href',
+      '/game-assist/guess-idiom',
+    );
+  });
+
+  it('keeps the matching branch open', async () => {
+    vi.mocked(authClient.getSession).mockResolvedValue({
+      data: adminSession,
+    } as never);
+    await renderApp('/game-assist/minesweeper');
+    expect(
+      await screen.findByRole('link', { name: '扫雷' }),
+    ).toBeInTheDocument();
+  });
+});
