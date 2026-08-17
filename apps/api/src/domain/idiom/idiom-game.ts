@@ -238,7 +238,23 @@ export class IdiomGame {
     }
   }
 
-  #conditionToSql(condition: SqlNecessaryCondition): SQL | null {
+  #charGreenPositions(): number[] {
+    return [
+      ...new Set(
+        this.rounds.flatMap((round) =>
+          round
+            .collectGreenLocks()
+            .filter((lock) => lock.kind === 'char')
+            .map((lock) => lock.position),
+        ),
+      ),
+    ];
+  }
+
+  #conditionToSql(
+    condition: SqlNecessaryCondition,
+    lockedCharPositions: number[],
+  ): SQL | null {
     const fieldColumn = this.#fieldColumn(condition.field);
     if (fieldColumn === null) {
       return null;
@@ -258,18 +274,26 @@ export class IdiomGame {
               ),
             ),
         );
-      case 'black':
+      case 'black': {
+        const whereParts: SQL[] = [
+          eq(idiomChar.idiomId, idiomPhrase.id),
+          eq(fieldColumn, condition.value),
+        ];
+        // Char-green slots already occupy their answer phonetics. Black means
+        // no extras, so ignore those positions (same as consuming locked
+        // positions before the black check in #validatePartMultiset).
+        if (condition.field !== 'char') {
+          for (const position of lockedCharPositions) {
+            whereParts.push(ne(idiomChar.position, position));
+          }
+        }
         return notExists(
           db
             .select({ id: idiomChar.id })
             .from(idiomChar)
-            .where(
-              and(
-                eq(idiomChar.idiomId, idiomPhrase.id),
-                eq(fieldColumn, condition.value),
-              ),
-            ),
+            .where(and(...whereParts)),
         );
+      }
       case 'orange':
         return exists(
           db
@@ -291,9 +315,10 @@ export class IdiomGame {
   }
 
   #buildPrefilterWhere(conditions: SqlNecessaryCondition[]): SQL | undefined {
+    const lockedCharPositions = this.#charGreenPositions();
     const clauses: SQL[] = [eq(idiomPhrase.charCount, 4)];
     for (const condition of conditions) {
-      const conditionSql = this.#conditionToSql(condition);
+      const conditionSql = this.#conditionToSql(condition, lockedCharPositions);
       if (conditionSql === null) {
         continue;
       }
