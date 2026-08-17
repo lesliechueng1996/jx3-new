@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import {
   BrandedBlurTextComponent,
   BrandedGlassCardComponent,
@@ -8,13 +8,24 @@ import {
 } from '@/components/BrandedStageComponent';
 import { toast } from '@/components/ui/toast';
 import { authClient } from '@/lib/auth-client';
-import { clearSessionQuery } from '@/lib/auth-session';
+import { clearSessionQuery, fetchCachedSession } from '@/lib/auth-session';
 import { AuthCredentialsFormComponent } from './-components/AuthCredentialsFormComponent';
 import type { AuthCredentials } from './-lib/auth-credentials-schema';
 import { authSearchSchema } from './-lib/auth-search-schema';
 
 export const Route = createFileRoute('/login/')({
   validateSearch: authSearchSchema,
+  beforeLoad: async ({ search }) => {
+    const session = await fetchCachedSession();
+    if (!session) {
+      return;
+    }
+
+    throw redirect({
+      to: search.redirect ?? '/',
+      replace: true,
+    });
+  },
   component: LoginComponent,
 });
 
