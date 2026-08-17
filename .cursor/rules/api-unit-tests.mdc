@@ -1,0 +1,60 @@
+---
+description: Unit test layout, mocking, coverage, and excludes for apps/api
+globs: apps/api/**
+alwaysApply: false
+---
+
+# API unit tests
+
+Use `bun test` (`@jx3/api` scripts `test` / `test:cov`). Coverage config is in `apps/api/bunfig.toml` and the repo-root `bunfig.toml` (Bun may treat either as the project root).
+
+## Layout
+
+Mirror `src/` under `tests/`. One test file per source file:
+
+`src/application/service/user-service.ts` → `tests/application/service/user-service.test.ts`
+
+Reference: `tests/application/service/user-service.test.ts`.
+
+## Mock every external dependency
+
+The file under test must not load real collaborators. `mock.module` **every runtime import** (repositories, services, auth, db, logger, date/email helpers, other domain modules). `import type` is fine.
+
+Do not connect to Postgres, boot Better Auth, call `listen()`, or write log files.
+
+`mock.module` is not hoisted — register mocks first, then dynamic-import the target:
+
+```typescript
+mock.module('@api/infrastructure/repository/user-repository', () => ({
+  userRepository: { listPagination, count, buildWhereClause },
+}));
+
+const { listAdminUsers } = await import('@api/application/service/user-service');
+```
+
+Keep `--isolate` (already in `package.json`) so mocks do not leak across files.
+
+## Coverage
+
+Each **reported** file must be ≥90% functions and lines (`coverageThreshold = 0.9`, per-file). Cover both branches of `?.` / `??` / ternaries. Untested source is omitted from the Bun report — add a test (or keep the file on the exclude list).
+
+After adding or changing tests, run `bun run --filter @jx3/api test:cov`.
+
+## Write tests for
+
+- `application/service/*` — mock repositories and utils
+- `domain/*` — mock other modules; keep domain tests free of HTTP/DB
+- `shared/exception/*` and pure `shared/util/*` (`email`, `date`, `object`, `parse-csv`, `uuid`)
+- `interface/endpoint/*` and `interface/plugins/*` — `app.handle(Request)`, mock services/auth
+
+## Do not unit-test (also in `coveragePathIgnorePatterns`)
+
+| Path | Why |
+|------|-----|
+| `src/index.ts`, `src/app.ts` | Process boot, `listen()`, OpenAPI, CORS, auth mount |
+| `src/infrastructure/logger/**`, `config/env.ts` | Sinks / `process.env` |
+| `src/infrastructure/repository/**` | Drizzle SQL; needs a DB integration suite |
+| `src/shared/util/auth.ts`, `db.ts` | `betterAuth` / `createClient` at import time |
+| `src/interface/schema/**` | Elysia `t` declarations; cover via route tests |
+
+If a pure helper sits in an excluded file (`normalizeProviders`, `isUniqueViolationError`), extract it to a testable util first — do not pull the boot module into unit tests.

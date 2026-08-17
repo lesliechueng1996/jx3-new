@@ -1,0 +1,23 @@
+# Bun loads this workspace-root file even when tests run from apps/api.
+[test]
+coverageSkipTestFiles = true
+coverageThreshold = 0.9
+coverageDir = "./coverage"
+coveragePathIgnorePatterns = [
+  "src/index.ts",
+  "src/app.ts",
+  "src/infrastructure/logger/**",
+  "src/infrastructure/config/env.ts",
+  "src/infrastructure/repository/**",
+  "src/shared/util/auth.ts",
+  "src/shared/util/db.ts",
+  "src/interface/schema/**",
+  "**/src/index.ts",
+  "**/src/app.ts",
+  "**/infrastructure/logger/**",
+  "**/infrastructure/config/env.ts",
+  "**/infrastructure/repository/**",
+  "**/shared/util/auth.ts",
+  "**/shared/util/db.ts",
+  "**/interface/schema/**",
+]
