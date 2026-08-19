@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { SchoolSelectComponent } from '@/components/SchoolSelectComponent';
 import {
   Field,
+  FieldContent,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -31,6 +32,48 @@ type KungfuFormComponentProps = {
 
 const emptyErrors = (): FieldErrors => ({});
 
+const HORIZONTAL_FIELD_CLASS =
+  'grid grid-cols-[6rem_minmax(0,1fr)] gap-x-3 gap-y-1 *:w-auto';
+const FIELD_LABEL_CLASS = 'col-start-1 row-start-1 self-center';
+
+type HorizontalFieldProps = {
+  label: string;
+  labelId?: string;
+  htmlFor?: string;
+  error?: string;
+  invalid?: boolean;
+  disabled?: boolean;
+  children: React.ReactNode;
+};
+
+function HorizontalField({
+  label,
+  labelId,
+  htmlFor,
+  error,
+  invalid,
+  disabled,
+  children,
+}: HorizontalFieldProps) {
+  return (
+    <Field
+      className={HORIZONTAL_FIELD_CLASS}
+      data-invalid={invalid || undefined}
+      data-disabled={disabled || undefined}
+    >
+      <FieldLabel id={labelId} htmlFor={htmlFor} className={FIELD_LABEL_CLASS}>
+        {label}
+      </FieldLabel>
+      <FieldContent className="col-start-2 row-start-1 min-w-0">
+        {children}
+      </FieldContent>
+      {error ? (
+        <FieldError className="col-start-2 row-start-2">{error}</FieldError>
+      ) : null}
+    </Field>
+  );
+}
+
 export function KungfuFormComponent({
   formId,
   initialValues,
@@ -48,6 +91,9 @@ export function KungfuFormComponent({
   const unlimitedId = `${formId}-unlimited`;
   const pveExternalId = `${formId}-pve-external`;
   const pveInternalId = `${formId}-pve-internal`;
+  const kungfuTypeId = `${formId}-kungfu-type`;
+  const attackTypeId = `${formId}-attack-type`;
+  const attackMethodId = `${formId}-attack-method`;
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -72,13 +118,17 @@ export function KungfuFormComponent({
   return (
     <form
       id={formId}
-      className="flex flex-col gap-4"
+      className="flex flex-col gap-6"
       noValidate
       onSubmit={handleSubmit}
     >
-      <FieldGroup className="grid gap-4 md:grid-cols-2">
-        <Field data-invalid={Boolean(fieldErrors.name) || undefined}>
-          <FieldLabel htmlFor={nameId}>名称</FieldLabel>
+      <FieldGroup>
+        <HorizontalField
+          label="名称"
+          htmlFor={nameId}
+          error={fieldErrors.name}
+          invalid={Boolean(fieldErrors.name)}
+        >
           <Input
             id={nameId}
             name="name"
@@ -90,13 +140,14 @@ export function KungfuFormComponent({
               setValues((current) => ({ ...current, name: event.target.value }))
             }
           />
-          {fieldErrors.name ? (
-            <FieldError>{fieldErrors.name}</FieldError>
-          ) : null}
-        </Field>
+        </HorizontalField>
 
-        <Field data-invalid={Boolean(fieldErrors.schoolId) || undefined}>
-          <FieldLabel htmlFor={schoolId}>门派</FieldLabel>
+        <HorizontalField
+          label="门派"
+          htmlFor={schoolId}
+          error={fieldErrors.schoolId}
+          invalid={Boolean(fieldErrors.schoolId)}
+        >
           <SchoolSelectComponent
             id={schoolId}
             value={values.schoolId || undefined}
@@ -106,19 +157,20 @@ export function KungfuFormComponent({
               setValues((current) => ({ ...current, schoolId: next ?? '' }))
             }
           />
-          {fieldErrors.schoolId ? (
-            <FieldError>{fieldErrors.schoolId}</FieldError>
-          ) : null}
-        </Field>
+        </HorizontalField>
 
-        <Field
-          data-invalid={Boolean(fieldErrors.kungfuType) || undefined}
-          data-disabled={pending || undefined}
+        <HorizontalField
+          label="心法类型"
+          labelId={kungfuTypeId}
+          error={fieldErrors.kungfuType}
+          invalid={Boolean(fieldErrors.kungfuType)}
+          disabled={pending}
         >
-          <FieldLabel>心法类型</FieldLabel>
           <ToggleGroup
             variant="outline"
             spacing={0}
+            className="w-full"
+            aria-labelledby={kungfuTypeId}
             value={[values.kungfuType]}
             disabled={pending}
             onValueChange={(value) => {
@@ -132,29 +184,38 @@ export function KungfuFormComponent({
               }
             }}
           >
-            <ToggleGroupItem value="defense" disabled={pending}>
+            <ToggleGroupItem
+              className="flex-1"
+              value="defense"
+              disabled={pending}
+            >
               防御
             </ToggleGroupItem>
-            <ToggleGroupItem value="heal" disabled={pending}>
+            <ToggleGroupItem className="flex-1" value="heal" disabled={pending}>
               治疗
             </ToggleGroupItem>
-            <ToggleGroupItem value="attack" disabled={pending}>
+            <ToggleGroupItem
+              className="flex-1"
+              value="attack"
+              disabled={pending}
+            >
               攻击
             </ToggleGroupItem>
           </ToggleGroup>
-          {fieldErrors.kungfuType ? (
-            <FieldError>{fieldErrors.kungfuType}</FieldError>
-          ) : null}
-        </Field>
+        </HorizontalField>
 
-        <Field
-          data-invalid={Boolean(fieldErrors.attackType) || undefined}
-          data-disabled={pending || undefined}
+        <HorizontalField
+          label="攻击类型"
+          labelId={attackTypeId}
+          error={fieldErrors.attackType}
+          invalid={Boolean(fieldErrors.attackType)}
+          disabled={pending}
         >
-          <FieldLabel>攻击类型</FieldLabel>
           <ToggleGroup
             variant="outline"
             spacing={0}
+            className="w-full"
+            aria-labelledby={attackTypeId}
             value={values.attackType ? [values.attackType] : []}
             disabled={pending}
             onValueChange={(value) => {
@@ -166,26 +227,35 @@ export function KungfuFormComponent({
               setValues((current) => ({ ...current, attackType: '' }));
             }}
           >
-            <ToggleGroupItem value="internal" disabled={pending}>
+            <ToggleGroupItem
+              className="flex-1"
+              value="internal"
+              disabled={pending}
+            >
               内功
             </ToggleGroupItem>
-            <ToggleGroupItem value="external" disabled={pending}>
+            <ToggleGroupItem
+              className="flex-1"
+              value="external"
+              disabled={pending}
+            >
               外功
             </ToggleGroupItem>
           </ToggleGroup>
-          {fieldErrors.attackType ? (
-            <FieldError>{fieldErrors.attackType}</FieldError>
-          ) : null}
-        </Field>
+        </HorizontalField>
 
-        <Field
-          data-invalid={Boolean(fieldErrors.attackMethod) || undefined}
-          data-disabled={pending || undefined}
+        <HorizontalField
+          label="攻击方式"
+          labelId={attackMethodId}
+          error={fieldErrors.attackMethod}
+          invalid={Boolean(fieldErrors.attackMethod)}
+          disabled={pending}
         >
-          <FieldLabel>攻击方式</FieldLabel>
           <ToggleGroup
             variant="outline"
             spacing={0}
+            className="w-full"
+            aria-labelledby={attackMethodId}
             value={values.attackMethod ? [values.attackMethod] : []}
             disabled={pending}
             onValueChange={(value) => {
@@ -200,20 +270,29 @@ export function KungfuFormComponent({
               setValues((current) => ({ ...current, attackMethod: '' }));
             }}
           >
-            <ToggleGroupItem value="melee" disabled={pending}>
+            <ToggleGroupItem
+              className="flex-1"
+              value="melee"
+              disabled={pending}
+            >
               近战
             </ToggleGroupItem>
-            <ToggleGroupItem value="ranged" disabled={pending}>
+            <ToggleGroupItem
+              className="flex-1"
+              value="ranged"
+              disabled={pending}
+            >
               远程
             </ToggleGroupItem>
           </ToggleGroup>
-          {fieldErrors.attackMethod ? (
-            <FieldError>{fieldErrors.attackMethod}</FieldError>
-          ) : null}
-        </Field>
+        </HorizontalField>
 
-        <Field data-invalid={Boolean(fieldErrors.icon) || undefined}>
-          <FieldLabel htmlFor={iconId}>图标</FieldLabel>
+        <HorizontalField
+          label="图标"
+          htmlFor={iconId}
+          error={fieldErrors.icon}
+          invalid={Boolean(fieldErrors.icon)}
+        >
           <Input
             id={iconId}
             name="icon"
@@ -225,77 +304,14 @@ export function KungfuFormComponent({
               setValues((current) => ({ ...current, icon: event.target.value }))
             }
           />
-          {fieldErrors.icon ? (
-            <FieldError>{fieldErrors.icon}</FieldError>
-          ) : null}
-        </Field>
+        </HorizontalField>
 
-        <Field data-invalid={Boolean(fieldErrors.formationName) || undefined}>
-          <FieldLabel htmlFor={formationNameId}>阵眼名称</FieldLabel>
-          <Input
-            id={formationNameId}
-            name="formationName"
-            value={values.formationName}
-            placeholder="可选"
-            aria-invalid={Boolean(fieldErrors.formationName)}
-            disabled={pending}
-            onChange={(event) =>
-              setValues((current) => ({
-                ...current,
-                formationName: event.target.value,
-              }))
-            }
-          />
-          {fieldErrors.formationName ? (
-            <FieldError>{fieldErrors.formationName}</FieldError>
-          ) : null}
-        </Field>
-
-        <FieldSet
-          className="md:col-span-2"
-          data-invalid={Boolean(fieldErrors.formationEffects) || undefined}
+        <HorizontalField
+          label="别名"
+          htmlFor={aliasId}
+          error={fieldErrors.aliasText}
+          invalid={Boolean(fieldErrors.aliasText)}
         >
-          <FieldLegend variant="label">阵眼效果</FieldLegend>
-          <FieldGroup className="grid gap-4 md:grid-cols-2">
-            {FORMATION_EFFECT_LEVEL_LABELS.map((label, index) => {
-              const inputId = `${formId}-formation-effect-${index}`;
-              return (
-                <Field key={label}>
-                  <FieldLabel htmlFor={inputId}>{label}</FieldLabel>
-                  <Input
-                    id={inputId}
-                    name={`formationEffects.${index}`}
-                    value={values.formationEffects[index]}
-                    placeholder="可选"
-                    aria-invalid={Boolean(fieldErrors.formationEffects)}
-                    disabled={pending}
-                    onChange={(event) =>
-                      setValues((current) => {
-                        const nextEffects = [
-                          ...current.formationEffects,
-                        ] as FormationEffectLevels;
-                        nextEffects[index] = event.target.value;
-                        return {
-                          ...current,
-                          formationEffects: nextEffects,
-                        };
-                      })
-                    }
-                  />
-                </Field>
-              );
-            })}
-          </FieldGroup>
-          {fieldErrors.formationEffects ? (
-            <FieldError>{fieldErrors.formationEffects}</FieldError>
-          ) : null}
-        </FieldSet>
-
-        <Field
-          className="md:col-span-2"
-          data-invalid={Boolean(fieldErrors.aliasText) || undefined}
-        >
-          <FieldLabel htmlFor={aliasId}>别名</FieldLabel>
           <Input
             id={aliasId}
             name="aliasText"
@@ -310,53 +326,112 @@ export function KungfuFormComponent({
               }))
             }
           />
-          {fieldErrors.aliasText ? (
-            <FieldError>{fieldErrors.aliasText}</FieldError>
-          ) : null}
-        </Field>
+        </HorizontalField>
 
-        <Field orientation="horizontal" className="w-fit">
-          <Switch
-            id={unlimitedId}
-            checked={values.isUnlimited}
-            disabled={pending}
-            onCheckedChange={(checked) =>
-              setValues((current) => ({ ...current, isUnlimited: checked }))
-            }
-          />
-          <FieldLabel htmlFor={unlimitedId}>无界</FieldLabel>
-        </Field>
+        <FieldGroup className="flex-row flex-wrap gap-x-6">
+          <Field orientation="horizontal" className="w-fit">
+            <Switch
+              id={unlimitedId}
+              checked={values.isUnlimited}
+              disabled={pending}
+              onCheckedChange={(checked) =>
+                setValues((current) => ({ ...current, isUnlimited: checked }))
+              }
+            />
+            <FieldLabel htmlFor={unlimitedId}>无界</FieldLabel>
+          </Field>
 
-        <Field orientation="horizontal" className="w-fit">
-          <Switch
-            id={pveExternalId}
-            checked={values.isPveExternalRecommended}
-            disabled={pending}
-            onCheckedChange={(checked) =>
-              setValues((current) => ({
-                ...current,
-                isPveExternalRecommended: checked,
-              }))
-            }
-          />
-          <FieldLabel htmlFor={pveExternalId}>PVE 外功推荐</FieldLabel>
-        </Field>
+          <Field orientation="horizontal" className="w-fit">
+            <Switch
+              id={pveExternalId}
+              checked={values.isPveExternalRecommended}
+              disabled={pending}
+              onCheckedChange={(checked) =>
+                setValues((current) => ({
+                  ...current,
+                  isPveExternalRecommended: checked,
+                }))
+              }
+            />
+            <FieldLabel htmlFor={pveExternalId}>PVE 外功推荐</FieldLabel>
+          </Field>
 
-        <Field orientation="horizontal" className="w-fit">
-          <Switch
-            id={pveInternalId}
-            checked={values.isPveInternalRecommended}
-            disabled={pending}
-            onCheckedChange={(checked) =>
-              setValues((current) => ({
-                ...current,
-                isPveInternalRecommended: checked,
-              }))
-            }
-          />
-          <FieldLabel htmlFor={pveInternalId}>PVE 内功推荐</FieldLabel>
-        </Field>
+          <Field orientation="horizontal" className="w-fit">
+            <Switch
+              id={pveInternalId}
+              checked={values.isPveInternalRecommended}
+              disabled={pending}
+              onCheckedChange={(checked) =>
+                setValues((current) => ({
+                  ...current,
+                  isPveInternalRecommended: checked,
+                }))
+              }
+            />
+            <FieldLabel htmlFor={pveInternalId}>PVE 内功推荐</FieldLabel>
+          </Field>
+        </FieldGroup>
       </FieldGroup>
+
+      <FieldSet
+        data-invalid={Boolean(fieldErrors.formationEffects) || undefined}
+      >
+        <FieldLegend>阵眼</FieldLegend>
+        <FieldGroup className="gap-3">
+          <HorizontalField
+            label="阵眼名称"
+            htmlFor={formationNameId}
+            error={fieldErrors.formationName}
+            invalid={Boolean(fieldErrors.formationName)}
+          >
+            <Input
+              id={formationNameId}
+              name="formationName"
+              value={values.formationName}
+              placeholder="可选"
+              aria-invalid={Boolean(fieldErrors.formationName)}
+              disabled={pending}
+              onChange={(event) =>
+                setValues((current) => ({
+                  ...current,
+                  formationName: event.target.value,
+                }))
+              }
+            />
+          </HorizontalField>
+
+          {FORMATION_EFFECT_LEVEL_LABELS.map((label, index) => {
+            const inputId = `${formId}-formation-effect-${index}`;
+            return (
+              <HorizontalField key={label} label={label} htmlFor={inputId}>
+                <Input
+                  id={inputId}
+                  name={`formationEffects.${index}`}
+                  value={values.formationEffects[index]}
+                  placeholder="可选"
+                  aria-invalid={Boolean(fieldErrors.formationEffects)}
+                  disabled={pending}
+                  onChange={(event) =>
+                    setValues((current) => {
+                      const nextEffects = [
+                        ...current.formationEffects,
+                      ] as FormationEffectLevels;
+                      nextEffects[index] = event.target.value;
+                      return {
+                        ...current,
+                        formationEffects: nextEffects,
+                      };
+                    })
+                  }
+                />
+              </HorizontalField>
+            );
+          })}
+        </FieldGroup>
+        {fieldErrors.formationEffects ? (
+          <FieldError>{fieldErrors.formationEffects}</FieldError>
+        ) : null}
+      </FieldSet>
     </form>
   );
 }
