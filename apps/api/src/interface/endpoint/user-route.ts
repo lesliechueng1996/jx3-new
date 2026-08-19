@@ -1,13 +1,27 @@
-import { listAdminUsers } from '@api/application/service/user-service';
+import {
+  banAdminUser,
+  createAdminUser,
+  deleteAdminUser,
+  getAdminUser,
+  listAdminUsers,
+  unbanAdminUser,
+  updateAdminUser,
+} from '@api/application/service/user-service';
 import { roleAdmin } from '@api/shared/util/auth';
 import {
   AppResponse,
   createSuccessResponseSchema,
+  emptySuccessResponseSchema,
   errorResponseSchema,
 } from '../schema/common';
 import {
+  adminUserDetailSchema,
+  banUserBodySchema,
+  createUserBodySchema,
   listUsersQuerySchema,
   listUsersResponseSchema,
+  updateUserBodySchema,
+  userIdParamsSchema,
 } from '../schema/user-schema';
 import { apiRoute } from './api-route';
 
@@ -16,27 +30,170 @@ export const userTag = {
   description: 'User API',
 };
 
+const adminUserDetailResponse = {
+  200: createSuccessResponseSchema(adminUserDetailSchema),
+  400: errorResponseSchema,
+  403: errorResponseSchema,
+  404: errorResponseSchema,
+  500: errorResponseSchema,
+};
+
 export const userRoute = apiRoute.group('/user', (app) =>
-  app.get(
-    '',
-    async ({ query, status }) => {
-      const result = await listAdminUsers(query);
-      return status(200, AppResponse.success(result).toJson());
-    },
-    {
-      auth: roleAdmin,
-      query: listUsersQuerySchema,
-      response: {
-        200: createSuccessResponseSchema(listUsersResponseSchema),
-        400: errorResponseSchema,
-        403: errorResponseSchema,
-        500: errorResponseSchema,
+  app
+    .post(
+      '',
+      async ({ body, request, status }) => {
+        const result = await createAdminUser(body, request.headers);
+        return status(201, AppResponse.success(result).toJson());
       },
-      detail: {
-        tags: [userTag.name],
-        summary: 'List users with pagination and filters',
-        description: 'Returns a paginated list of users. Requires admin role.',
+      {
+        auth: roleAdmin,
+        body: createUserBodySchema,
+        response: {
+          201: createSuccessResponseSchema(adminUserDetailSchema),
+          400: errorResponseSchema,
+          403: errorResponseSchema,
+          409: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [userTag.name],
+          summary: 'Create a user',
+          description:
+            'Creates a user with email and password. Requires admin role.',
+        },
       },
-    },
-  ),
+    )
+    .get(
+      '/:id',
+      async ({ params, status }) => {
+        const result = await getAdminUser(params.id);
+        return status(200, AppResponse.success(result).toJson());
+      },
+      {
+        auth: roleAdmin,
+        params: userIdParamsSchema,
+        response: adminUserDetailResponse,
+        detail: {
+          tags: [userTag.name],
+          summary: 'Get a user',
+          description: 'Returns a user by id. Requires admin role.',
+        },
+      },
+    )
+    .patch(
+      '/:id',
+      async ({ body, params, request, status, user }) => {
+        const result = await updateAdminUser(
+          params.id,
+          body,
+          user.id,
+          request.headers,
+        );
+        return status(200, AppResponse.success(result).toJson());
+      },
+      {
+        auth: roleAdmin,
+        params: userIdParamsSchema,
+        body: updateUserBodySchema,
+        response: {
+          ...adminUserDetailResponse,
+          409: errorResponseSchema,
+        },
+        detail: {
+          tags: [userTag.name],
+          summary: 'Update a user',
+          description:
+            'Updates user name, email, role, or password. Requires admin role.',
+        },
+      },
+    )
+    .delete(
+      '/:id',
+      async ({ params, request, status, user }) => {
+        await deleteAdminUser(params.id, user.id, request.headers);
+        return status(200, AppResponse.success().toJson());
+      },
+      {
+        auth: roleAdmin,
+        params: userIdParamsSchema,
+        response: {
+          200: emptySuccessResponseSchema,
+          400: errorResponseSchema,
+          403: errorResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [userTag.name],
+          summary: 'Delete a user',
+          description:
+            'Deletes a user. Cannot delete yourself or another admin. Requires admin role.',
+        },
+      },
+    )
+    .post(
+      '/:id/ban',
+      async ({ body, params, request, status, user }) => {
+        const result = await banAdminUser(
+          params.id,
+          body,
+          user.id,
+          request.headers,
+        );
+        return status(200, AppResponse.success(result).toJson());
+      },
+      {
+        auth: roleAdmin,
+        params: userIdParamsSchema,
+        body: banUserBodySchema,
+        response: adminUserDetailResponse,
+        detail: {
+          tags: [userTag.name],
+          summary: 'Ban a user',
+          description:
+            'Bans a user and revokes their sessions. Cannot ban yourself or another admin. Requires admin role.',
+        },
+      },
+    )
+    .post(
+      '/:id/unban',
+      async ({ params, request, status }) => {
+        const result = await unbanAdminUser(params.id, request.headers);
+        return status(200, AppResponse.success(result).toJson());
+      },
+      {
+        auth: roleAdmin,
+        params: userIdParamsSchema,
+        response: adminUserDetailResponse,
+        detail: {
+          tags: [userTag.name],
+          summary: 'Unban a user',
+          description: 'Removes a user ban. Requires admin role.',
+        },
+      },
+    )
+    .get(
+      '',
+      async ({ query, status }) => {
+        const result = await listAdminUsers(query);
+        return status(200, AppResponse.success(result).toJson());
+      },
+      {
+        auth: roleAdmin,
+        query: listUsersQuerySchema,
+        response: {
+          200: createSuccessResponseSchema(listUsersResponseSchema),
+          400: errorResponseSchema,
+          403: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [userTag.name],
+          summary: 'List users with pagination and filters',
+          description:
+            'Returns a paginated list of users. Requires admin role.',
+        },
+      },
+    ),
 );

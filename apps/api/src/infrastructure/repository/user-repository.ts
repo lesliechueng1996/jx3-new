@@ -61,6 +61,11 @@ export class UserRepository {
   count(where: SQL | undefined) {
     return db.select({ total: count() }).from(user).where(where);
   }
+
+  async findById(id: string) {
+    const result = await db.select().from(user).where(eq(user.id, id)).limit(1);
+    return result[0] ?? null;
+  }
 }
 
 export const userRepository = new UserRepository();
