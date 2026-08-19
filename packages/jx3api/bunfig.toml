@@ -1,0 +1,9 @@
+[test]
+coverageSkipTestFiles = true
+coverageThreshold = 0.9
+coverageDir = "./coverage"
+coveragePathIgnorePatterns = [
+  "src/index.ts",
+  "src/providers/jx3api/index.ts",
+  "src/providers/jx3box/index.ts",
+]

@@ -111,6 +111,17 @@
         "typescript": "^5",
       },
     },
+    "packages/jx3api": {
+      "name": "@jx3/jx3api",
+      "devDependencies": {
+        "@biomejs/biome": "2.5.7",
+        "@types/bun": "latest",
+      },
+      "peerDependencies": {
+        "@logtape/logtape": "^2.3.0",
+        "typescript": "^5",
+      },
+    },
   },
   "packages": {
     "@adobe/css-tools": ["@adobe/css-tools@4.5.0", "", {}, "sha512-6OzddxPio9UiWTCemp4N8cYLV2ZN1ncRnV1cVGtve7dhPOtRkleRyx32GQCYSwDYgaHU3USMm84tNsvKzRCa1Q=="],
@@ -340,6 +351,8 @@
     "@jx3/api-client": ["@jx3/api-client@workspace:packages/api-client"],
 
     "@jx3/db": ["@jx3/db@workspace:packages/db"],
+
+    "@jx3/jx3api": ["@jx3/jx3api@workspace:packages/jx3api"],
 
     "@jx3/ui": ["@jx3/ui@workspace:apps/ui"],
 

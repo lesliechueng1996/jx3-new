@@ -1,0 +1,20 @@
+{
+  "name": "@jx3/jx3api",
+  "module": "./src/index.ts",
+  "type": "module",
+  "scripts": {
+    "check": "biome check .",
+    "typecheck": "tsc --noEmit",
+    "fix": "biome check --write .",
+    "test": "bun test --isolate",
+    "test:cov": "bun test --isolate --coverage --coverage-reporter=text --coverage-reporter=lcov"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@biomejs/biome": "2.5.7"
+  },
+  "peerDependencies": {
+    "typescript": "^5",
+    "@logtape/logtape": "^2.3.0"
+  }
+}
