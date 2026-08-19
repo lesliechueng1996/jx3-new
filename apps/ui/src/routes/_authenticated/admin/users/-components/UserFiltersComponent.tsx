@@ -2,7 +2,14 @@ import { type KeyboardEvent, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { ROLE_ADMIN, ROLE_USER } from '@/lib/auth-client';
 import type { UsersSearch } from '../-lib/users-schema';
 
@@ -11,6 +18,18 @@ type UserFiltersComponentProps = {
   onSearch: (filters: UsersSearch) => void;
   onReset: () => void;
 };
+
+const ROLE_FILTER_ITEMS = [
+  { label: '全部', value: 'all' },
+  { label: '用户', value: ROLE_USER },
+  { label: '管理员', value: ROLE_ADMIN },
+];
+
+const BANNED_FILTER_ITEMS = [
+  { label: '全部', value: 'all' },
+  { label: '正常', value: 'false' },
+  { label: '已封禁', value: 'true' },
+];
 
 const roleFilterValue = (role: UsersSearch['role']) => role ?? 'all';
 const bannedFilterValue = (banned: UsersSearch['banned']) => banned ?? 'all';
@@ -71,48 +90,58 @@ export function UserFiltersComponent({
           />
         </Field>
         <Field>
-          <FieldLabel>角色</FieldLabel>
-          <ToggleGroup
-            variant="outline"
-            spacing={0}
-            value={[roleFilterValue(draft.role)]}
-            onValueChange={(value) => {
-              const next = value[0];
-              if (next === 'all') {
-                setDraft((current) => ({ ...current, role: undefined }));
-                return;
-              }
+          <FieldLabel htmlFor="filter-user-role">角色</FieldLabel>
+          <Select
+            items={ROLE_FILTER_ITEMS}
+            value={roleFilterValue(draft.role)}
+            onValueChange={(next) => {
               if (next === ROLE_ADMIN || next === ROLE_USER) {
                 setDraft((current) => ({ ...current, role: next }));
-              }
-            }}
-          >
-            <ToggleGroupItem value="all">全部</ToggleGroupItem>
-            <ToggleGroupItem value={ROLE_USER}>用户</ToggleGroupItem>
-            <ToggleGroupItem value={ROLE_ADMIN}>管理员</ToggleGroupItem>
-          </ToggleGroup>
-        </Field>
-        <Field>
-          <FieldLabel>状态</FieldLabel>
-          <ToggleGroup
-            variant="outline"
-            spacing={0}
-            value={[bannedFilterValue(draft.banned)]}
-            onValueChange={(value) => {
-              const next = value[0];
-              if (next === 'all') {
-                setDraft((current) => ({ ...current, banned: undefined }));
                 return;
               }
-              if (next === 'true' || next === 'false') {
-                setDraft((current) => ({ ...current, banned: next }));
-              }
+              setDraft((current) => ({ ...current, role: undefined }));
             }}
           >
-            <ToggleGroupItem value="all">全部</ToggleGroupItem>
-            <ToggleGroupItem value="false">正常</ToggleGroupItem>
-            <ToggleGroupItem value="true">已封禁</ToggleGroupItem>
-          </ToggleGroup>
+            <SelectTrigger id="filter-user-role" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent alignItemWithTrigger={false}>
+              <SelectGroup>
+                {ROLE_FILTER_ITEMS.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="filter-user-banned">状态</FieldLabel>
+          <Select
+            items={BANNED_FILTER_ITEMS}
+            value={bannedFilterValue(draft.banned)}
+            onValueChange={(next) => {
+              if (next === 'true' || next === 'false') {
+                setDraft((current) => ({ ...current, banned: next }));
+                return;
+              }
+              setDraft((current) => ({ ...current, banned: undefined }));
+            }}
+          >
+            <SelectTrigger id="filter-user-banned" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent alignItemWithTrigger={false}>
+              <SelectGroup>
+                {BANNED_FILTER_ITEMS.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </Field>
       </FieldGroup>
       <div className="flex items-center gap-2">

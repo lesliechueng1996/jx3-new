@@ -13,6 +13,15 @@ const filters: UsersSearch = {
   banned: 'false',
 };
 
+const chooseSelectOption = async (
+  user: ReturnType<typeof userEvent.setup>,
+  label: string,
+  option: string,
+) => {
+  await user.click(screen.getByRole('combobox', { name: label }));
+  await user.click(await screen.findByRole('option', { name: option }));
+};
+
 describe('UserFiltersComponent', () => {
   it('commits search from page 1 and resets', async () => {
     const user = userEvent.setup();
@@ -33,8 +42,8 @@ describe('UserFiltersComponent', () => {
     const emailInput = screen.getByLabelText('邮箱');
     await user.clear(emailInput);
     await user.type(emailInput, 'a@');
-    await user.click(screen.getByRole('button', { name: '管理员' }));
-    await user.click(screen.getByRole('button', { name: '已封禁' }));
+    await chooseSelectOption(user, '角色', '管理员');
+    await chooseSelectOption(user, '状态', '已封禁');
     await user.click(screen.getByRole('button', { name: '搜索' }));
     expect(onSearch).toHaveBeenCalledWith({
       page: 1,
@@ -60,8 +69,8 @@ describe('UserFiltersComponent', () => {
       />,
     );
 
-    await user.click(screen.getAllByRole('button', { name: '全部' })[0]);
-    await user.click(screen.getAllByRole('button', { name: '全部' })[1]);
+    await chooseSelectOption(user, '角色', '全部');
+    await chooseSelectOption(user, '状态', '全部');
     await user.type(screen.getByLabelText('用户名'), '{Enter}');
     expect(onSearch).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -72,7 +81,7 @@ describe('UserFiltersComponent', () => {
     );
   });
 
-  it('submits on Enter from the email field and ignores empty toggle changes', async () => {
+  it('submits on Enter from the email field', async () => {
     const user = userEvent.setup();
     const onSearch = vi.fn();
     render(
@@ -83,8 +92,8 @@ describe('UserFiltersComponent', () => {
       />,
     );
 
-    await user.click(screen.getByRole('button', { name: '用户' }));
-    await user.click(screen.getByRole('button', { name: '正常' }));
+    await chooseSelectOption(user, '角色', '用户');
+    await chooseSelectOption(user, '状态', '正常');
     await user.type(screen.getByLabelText('邮箱'), '{Enter}');
     expect(onSearch).toHaveBeenCalledWith(
       expect.objectContaining({
