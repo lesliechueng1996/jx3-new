@@ -3,6 +3,7 @@ import {
   BookOpenTextIcon,
   Gamepad2Icon,
   LayoutDashboardIcon,
+  UsersIcon,
 } from 'lucide-react';
 
 export type NavLeaf = {
@@ -22,6 +23,11 @@ export const navItems: NavItem[] = [
     title: '概览',
     icon: LayoutDashboardIcon,
     to: '/',
+  },
+  {
+    title: '用户管理',
+    icon: UsersIcon,
+    to: '/admin/users',
   },
   {
     title: '成语管理',
