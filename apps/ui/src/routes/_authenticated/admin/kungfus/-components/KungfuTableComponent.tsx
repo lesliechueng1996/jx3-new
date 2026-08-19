@@ -9,30 +9,32 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { AdminSchoolListItem } from '@/lib/api/admin/admin-schools-api';
+import type { AdminKungfuListItem } from '@/lib/api/admin/admin-kungfus-api';
 import {
-  schoolTypeBadgeClassName,
-  schoolTypeLabel,
-} from '../-lib/schools-helpers';
+  formatAttackSummary,
+  kungfuTypeBadgeClassName,
+  kungfuTypeLabel,
+  kungfuUnlimitedBadgeClassName,
+} from '../-lib/kungfus-helpers';
 
-type SchoolTableComponentProps = {
-  items: AdminSchoolListItem[];
+type KungfuTableComponentProps = {
+  items: AdminKungfuListItem[];
   isLoading?: boolean;
-  pendingSchoolId: string | null;
-  onEdit: (school: AdminSchoolListItem) => void;
-  onDelete: (school: AdminSchoolListItem) => void;
+  pendingKungfuId: string | null;
+  onEdit: (kungfu: AdminKungfuListItem) => void;
+  onDelete: (kungfu: AdminKungfuListItem) => void;
 };
 
 const emptyValue = (value: string | null | undefined) =>
   value ? value : <span className="text-muted-foreground">-</span>;
 
-export function SchoolTableComponent({
+export function KungfuTableComponent({
   items,
   isLoading = false,
-  pendingSchoolId,
+  pendingKungfuId,
   onEdit,
   onDelete,
-}: SchoolTableComponentProps) {
+}: KungfuTableComponentProps) {
   return (
     <div className="relative rounded-lg border border-border">
       <TableLoadingOverlayComponent loading={isLoading} />
@@ -40,7 +42,10 @@ export function SchoolTableComponent({
         <TableHeader>
           <TableRow>
             <TableHead>名称</TableHead>
+            <TableHead>门派</TableHead>
             <TableHead>类型</TableHead>
+            <TableHead>攻击属性</TableHead>
+            <TableHead>无界</TableHead>
             <TableHead>别名</TableHead>
             <TableHead>图标</TableHead>
             <TableHead>创建时间</TableHead>
@@ -51,45 +56,62 @@ export function SchoolTableComponent({
           {!isLoading && items.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={6}
+                colSpan={9}
                 className="py-10 text-center text-muted-foreground"
               >
-                暂无门派数据
+                暂无心法数据
               </TableCell>
             </TableRow>
           ) : (
-            items.map((school) => (
-              <TableRow key={school.id}>
-                <TableCell className="font-medium">{school.name}</TableCell>
+            items.map((kungfu) => (
+              <TableRow key={kungfu.id}>
+                <TableCell className="font-medium">{kungfu.name}</TableCell>
+                <TableCell>{kungfu.schoolName}</TableCell>
                 <TableCell>
-                  <Badge className={schoolTypeBadgeClassName(school.type)}>
-                    {schoolTypeLabel(school.type)}
+                  <Badge
+                    className={kungfuTypeBadgeClassName(kungfu.kungfuType)}
+                  >
+                    {kungfuTypeLabel(kungfu.kungfuType)}
                   </Badge>
                 </TableCell>
                 <TableCell>
                   {emptyValue(
-                    school.alias.length > 0 ? school.alias.join('、') : null,
+                    formatAttackSummary(kungfu.attackType, kungfu.attackMethod),
                   )}
                 </TableCell>
                 <TableCell>
-                  {school.icon ? (
+                  {kungfu.isUnlimited ? (
+                    <Badge className={kungfuUnlimitedBadgeClassName}>
+                      无界
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground">-</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {emptyValue(
+                    kungfu.alias.length > 0 ? kungfu.alias.join('、') : null,
+                  )}
+                </TableCell>
+                <TableCell>
+                  {kungfu.icon ? (
                     <img
-                      src={school.icon}
-                      alt={`${school.name}图标`}
+                      src={kungfu.icon}
+                      alt={`${kungfu.name}图标`}
                       className="size-8 rounded-md object-contain"
                     />
                   ) : (
                     <span className="text-muted-foreground">-</span>
                   )}
                 </TableCell>
-                <TableCell>{school.createdAt}</TableCell>
+                <TableCell>{kungfu.createdAt}</TableCell>
                 <TableCell>
                   <div className="flex justify-end gap-2">
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => onEdit(school)}
+                      onClick={() => onEdit(kungfu)}
                     >
                       编辑
                     </Button>
@@ -97,8 +119,8 @@ export function SchoolTableComponent({
                       type="button"
                       variant="destructive"
                       size="sm"
-                      disabled={pendingSchoolId === school.id}
-                      onClick={() => onDelete(school)}
+                      disabled={pendingKungfuId === kungfu.id}
+                      onClick={() => onDelete(kungfu)}
                     >
                       删除
                     </Button>

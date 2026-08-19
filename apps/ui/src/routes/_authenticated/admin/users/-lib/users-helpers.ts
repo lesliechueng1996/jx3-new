@@ -15,6 +15,21 @@ export const userRoleLabel = (role: string | null): string => {
   return '未设置';
 };
 
+export const userRoleBadgeClassName = (role: string | null): string => {
+  if (role === ROLE_ADMIN) {
+    return 'border-transparent bg-violet-500 text-white';
+  }
+  if (role === ROLE_USER) {
+    return 'border-transparent bg-sky-500 text-white';
+  }
+  return 'border-transparent bg-zinc-400 text-white';
+};
+
+export const userStatusBadgeClassName = (banned: boolean): string =>
+  banned
+    ? 'border-transparent bg-red-500 text-white'
+    : 'border-transparent bg-emerald-500 text-white';
+
 export const providerLabel = (provider: string): string => {
   if (provider === 'credential') {
     return '密码';

@@ -15,6 +15,7 @@ import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authentic
 import { Route as ForbiddenIndexRouteImport } from './routes/forbidden/index'
 import { Route as LoginIndexRouteImport } from './routes/login/index'
 import { Route as AuthenticatedAdminIdiomsIndexRouteImport } from './routes/_authenticated/admin/idioms/index'
+import { Route as AuthenticatedAdminKungfusIndexRouteImport } from './routes/_authenticated/admin/kungfus/index'
 import { Route as AuthenticatedAdminSchoolsIndexRouteImport } from './routes/_authenticated/admin/schools/index'
 import { Route as AuthenticatedAdminUsersIndexRouteImport } from './routes/_authenticated/admin/users/index'
 import { Route as AuthenticatedGameAssistGuessIdiomIndexRouteImport } from './routes/_authenticated/game-assist/guess-idiom/index'
@@ -50,6 +51,12 @@ const AuthenticatedAdminIdiomsIndexRoute =
     path: '/idioms/',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminKungfusIndexRoute =
+  AuthenticatedAdminKungfusIndexRouteImport.update({
+    id: '/kungfus/',
+    path: '/kungfus/',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminSchoolsIndexRoute =
   AuthenticatedAdminSchoolsIndexRouteImport.update({
     id: '/schools/',
@@ -81,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/forbidden/': typeof ForbiddenIndexRoute
   '/login/': typeof LoginIndexRoute
   '/admin/idioms/': typeof AuthenticatedAdminIdiomsIndexRoute
+  '/admin/kungfus/': typeof AuthenticatedAdminKungfusIndexRoute
   '/admin/schools/': typeof AuthenticatedAdminSchoolsIndexRoute
   '/admin/users/': typeof AuthenticatedAdminUsersIndexRoute
   '/game-assist/guess-idiom/': typeof AuthenticatedGameAssistGuessIdiomIndexRoute
@@ -92,6 +100,7 @@ export interface FileRoutesByTo {
   '/forbidden': typeof ForbiddenIndexRoute
   '/login': typeof LoginIndexRoute
   '/admin/idioms': typeof AuthenticatedAdminIdiomsIndexRoute
+  '/admin/kungfus': typeof AuthenticatedAdminKungfusIndexRoute
   '/admin/schools': typeof AuthenticatedAdminSchoolsIndexRoute
   '/admin/users': typeof AuthenticatedAdminUsersIndexRoute
   '/game-assist/guess-idiom': typeof AuthenticatedGameAssistGuessIdiomIndexRoute
@@ -105,6 +114,7 @@ export interface FileRoutesById {
   '/forbidden/': typeof ForbiddenIndexRoute
   '/login/': typeof LoginIndexRoute
   '/_authenticated/admin/idioms/': typeof AuthenticatedAdminIdiomsIndexRoute
+  '/_authenticated/admin/kungfus/': typeof AuthenticatedAdminKungfusIndexRoute
   '/_authenticated/admin/schools/': typeof AuthenticatedAdminSchoolsIndexRoute
   '/_authenticated/admin/users/': typeof AuthenticatedAdminUsersIndexRoute
   '/_authenticated/game-assist/guess-idiom/': typeof AuthenticatedGameAssistGuessIdiomIndexRoute
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/forbidden/'
     | '/login/'
     | '/admin/idioms/'
+    | '/admin/kungfus/'
     | '/admin/schools/'
     | '/admin/users/'
     | '/game-assist/guess-idiom/'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/forbidden'
     | '/login'
     | '/admin/idioms'
+    | '/admin/kungfus'
     | '/admin/schools'
     | '/admin/users'
     | '/game-assist/guess-idiom'
@@ -141,6 +153,7 @@ export interface FileRouteTypes {
     | '/forbidden/'
     | '/login/'
     | '/_authenticated/admin/idioms/'
+    | '/_authenticated/admin/kungfus/'
     | '/_authenticated/admin/schools/'
     | '/_authenticated/admin/users/'
     | '/_authenticated/game-assist/guess-idiom/'
@@ -197,6 +210,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIdiomsIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/kungfus/': {
+      id: '/_authenticated/admin/kungfus/'
+      path: '/kungfus'
+      fullPath: '/admin/kungfus/'
+      preLoaderRoute: typeof AuthenticatedAdminKungfusIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/schools/': {
       id: '/_authenticated/admin/schools/'
       path: '/schools'
@@ -230,6 +250,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminIdiomsIndexRoute: typeof AuthenticatedAdminIdiomsIndexRoute
+  AuthenticatedAdminKungfusIndexRoute: typeof AuthenticatedAdminKungfusIndexRoute
   AuthenticatedAdminSchoolsIndexRoute: typeof AuthenticatedAdminSchoolsIndexRoute
   AuthenticatedAdminUsersIndexRoute: typeof AuthenticatedAdminUsersIndexRoute
 }
@@ -237,6 +258,7 @@ interface AuthenticatedAdminRouteRouteChildren {
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
     AuthenticatedAdminIdiomsIndexRoute: AuthenticatedAdminIdiomsIndexRoute,
+    AuthenticatedAdminKungfusIndexRoute: AuthenticatedAdminKungfusIndexRoute,
     AuthenticatedAdminSchoolsIndexRoute: AuthenticatedAdminSchoolsIndexRoute,
     AuthenticatedAdminUsersIndexRoute: AuthenticatedAdminUsersIndexRoute,
   }

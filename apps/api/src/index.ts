@@ -1,12 +1,17 @@
 import { app } from './app';
 import { initializeLogger, logger } from './infrastructure/logger';
 import { idiomRoute } from './interface/endpoint/idiom-route';
+import { kungfuRoute } from './interface/endpoint/kungfu-route';
 import { schoolRoute } from './interface/endpoint/school-route';
 import { userRoute } from './interface/endpoint/user-route';
 
 await initializeLogger();
 
-const server = app.use(idiomRoute).use(schoolRoute).use(userRoute);
+const server = app
+  .use(idiomRoute)
+  .use(kungfuRoute)
+  .use(schoolRoute)
+  .use(userRoute);
 
 export type App = typeof server;
 

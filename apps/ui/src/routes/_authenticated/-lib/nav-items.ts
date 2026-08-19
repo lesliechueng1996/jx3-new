@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   BookOpenTextIcon,
+  FlameIcon,
   Gamepad2Icon,
   LayoutDashboardIcon,
   SwordsIcon,
@@ -34,6 +35,11 @@ export const navItems: NavItem[] = [
     title: '门派管理',
     icon: SwordsIcon,
     to: '/admin/schools',
+  },
+  {
+    title: '心法管理',
+    icon: FlameIcon,
+    to: '/admin/kungfus',
   },
   {
     title: '成语管理',

@@ -17,11 +17,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import type { AdminUserListItem } from '@/lib/api/admin/admin-users-api';
-import { ROLE_ADMIN } from '@/lib/auth-client';
 import {
   canBanOrDeleteUser,
   providerLabel,
+  userRoleBadgeClassName,
   userRoleLabel,
+  userStatusBadgeClassName,
 } from '../-lib/users-helpers';
 
 type UserTableComponentProps = {
@@ -88,16 +89,12 @@ export function UserTableComponent({
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.emailMasked}</TableCell>
                   <TableCell>
-                    <Badge
-                      variant={
-                        user.role === ROLE_ADMIN ? 'default' : 'secondary'
-                      }
-                    >
+                    <Badge className={userRoleBadgeClassName(user.role)}>
                       {userRoleLabel(user.role)}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={user.banned ? 'destructive' : 'outline'}>
+                    <Badge className={userStatusBadgeClassName(user.banned)}>
                       {user.banned ? '已封禁' : '正常'}
                     </Badge>
                   </TableCell>

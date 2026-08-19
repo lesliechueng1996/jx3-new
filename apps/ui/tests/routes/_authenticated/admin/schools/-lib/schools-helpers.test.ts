@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   formatAliasInput,
   parseAliasInput,
+  schoolTypeBadgeClassName,
   schoolTypeLabel,
 } from '@/routes/_authenticated/admin/schools/-lib/schools-helpers';
 
@@ -9,6 +10,13 @@ describe('schoolTypeLabel', () => {
   it('maps school and genre', () => {
     expect(schoolTypeLabel('school')).toBe('门派');
     expect(schoolTypeLabel('genre')).toBe('流派');
+  });
+});
+
+describe('schoolTypeBadgeClassName', () => {
+  it('maps school and genre', () => {
+    expect(schoolTypeBadgeClassName('school')).toContain('bg-amber-500');
+    expect(schoolTypeBadgeClassName('genre')).toContain('bg-cyan-500');
   });
 });
 

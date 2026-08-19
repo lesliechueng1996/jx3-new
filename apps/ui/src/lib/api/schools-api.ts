@@ -1,5 +1,7 @@
 import { apiClient } from '@/lib/api-client';
 
+export const schoolsAllQueryKey = ['schools-all'] as const;
+
 export const listAllSchools = async () => {
   const { data, error } = await apiClient.api.v1.school.all.get();
 

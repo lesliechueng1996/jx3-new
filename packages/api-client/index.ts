@@ -5,6 +5,7 @@ export const createApiClient = (apiHost?: string) => {
   const baseUrl = apiHost ?? 'http://localhost:3001';
 
   return treaty<App>(baseUrl, {
+    parseDate: false,
     fetch: {
       credentials: 'include',
     },
