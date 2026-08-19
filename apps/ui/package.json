@@ -12,8 +12,6 @@
     "preview": "vite preview",
     "test": "vitest run --config vitest.config.ts",
     "test:cov": "vitest run --config vitest.config.ts --coverage",
-    "format": "biome format",
-    "lint": "biome lint",
     "check": "biome check",
     "typecheck": "tsc --noEmit",
     "fix": "biome check --write"
