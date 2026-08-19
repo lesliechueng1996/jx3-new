@@ -3,6 +3,7 @@ import type {
   CreateSchoolBody,
   ListSchoolsQuery,
   SchoolDetail,
+  SchoolPublic,
   UpdateSchoolBody,
 } from '@api/interface/schema/school-schema';
 import {
@@ -69,6 +70,10 @@ const assertNameAvailable = async (name: string, excludeId?: string) => {
       ERROR_CODES.SCHOOL_NAME_ALREADY_EXISTS,
     );
   }
+};
+
+export const listAllSchools = async (): Promise<SchoolPublic[]> => {
+  return schoolRepository.listAll();
 };
 
 export const listAdminSchools = async (

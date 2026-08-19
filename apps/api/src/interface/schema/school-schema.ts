@@ -31,6 +31,16 @@ export const schoolIdParamsSchema = t.Object({
   }),
 });
 
+export const schoolPublicSchema = t.Object({
+  id: t.String(),
+  name: t.String(),
+  type: schoolTypeSchema,
+  icon: t.Nullable(t.String()),
+  alias: t.Array(t.String()),
+});
+
+export type SchoolPublic = Static<typeof schoolPublicSchema>;
+
 export const schoolDetailSchema = t.Object({
   id: t.String(),
   name: t.String(),
@@ -42,6 +52,8 @@ export const schoolDetailSchema = t.Object({
 });
 
 export type SchoolDetail = Static<typeof schoolDetailSchema>;
+
+export const listAllSchoolsResponseSchema = t.Array(schoolPublicSchema);
 
 export const listSchoolsQuerySchema = t.Composite([
   paginationQuerySchema,

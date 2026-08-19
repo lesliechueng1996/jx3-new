@@ -17,6 +17,15 @@ const listAdminSchools = mock(async () => ({
   page: 1,
   pageSize: 20,
 }));
+const listAllSchools = mock(async () => [
+  {
+    id: schoolDetail.id,
+    name: schoolDetail.name,
+    type: schoolDetail.type,
+    icon: schoolDetail.icon,
+    alias: schoolDetail.alias,
+  },
+]);
 const createAdminSchool = mock(async () => schoolDetail);
 const getAdminSchool = mock(async () => schoolDetail);
 const updateAdminSchool = mock(async () => schoolDetail);
@@ -24,6 +33,7 @@ const deleteAdminSchool = mock(async () => undefined);
 
 mock.module('@api/application/service/school-service', () => ({
   listAdminSchools,
+  listAllSchools,
   createAdminSchool,
   getAdminSchool,
   updateAdminSchool,
@@ -58,6 +68,7 @@ const jsonRequest = (path: string, init?: RequestInit) =>
 describe('schoolRoute', () => {
   beforeEach(() => {
     listAdminSchools.mockReset();
+    listAllSchools.mockReset();
     createAdminSchool.mockReset();
     getAdminSchool.mockReset();
     updateAdminSchool.mockReset();
@@ -69,6 +80,15 @@ describe('schoolRoute', () => {
       page: 1,
       pageSize: 20,
     });
+    listAllSchools.mockResolvedValue([
+      {
+        id: schoolDetail.id,
+        name: schoolDetail.name,
+        type: schoolDetail.type,
+        icon: schoolDetail.icon,
+        alias: schoolDetail.alias,
+      },
+    ]);
     createAdminSchool.mockResolvedValue(schoolDetail);
     getAdminSchool.mockResolvedValue(schoolDetail);
     updateAdminSchool.mockResolvedValue(schoolDetail);
@@ -80,6 +100,24 @@ describe('schoolRoute', () => {
       name: 'school',
       description: 'School API',
     });
+  });
+
+  it('lists all schools for users', async () => {
+    const response = await jsonRequest('/all');
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(listAllSchools).toHaveBeenCalled();
+    expect(body.data).toEqual([
+      {
+        id: schoolId,
+        name: '纯阳',
+        type: 'school',
+        icon: '/icons/chunyang.png',
+        alias: ['纯阳宫'],
+      },
+    ]);
+    expect(body.code).toBe('SUCCESS');
   });
 
   it('lists schools', async () => {

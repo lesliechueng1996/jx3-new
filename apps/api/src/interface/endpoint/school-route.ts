@@ -3,9 +3,10 @@ import {
   deleteAdminSchool,
   getAdminSchool,
   listAdminSchools,
+  listAllSchools,
   updateAdminSchool,
 } from '@api/application/service/school-service';
-import { roleAdmin } from '@api/shared/util/auth';
+import { roleAdmin, roleUser } from '@api/shared/util/auth';
 import {
   AppResponse,
   createSuccessResponseSchema,
@@ -14,6 +15,7 @@ import {
 } from '../schema/common';
 import {
   createSchoolBodySchema,
+  listAllSchoolsResponseSchema,
   listSchoolsQuerySchema,
   listSchoolsResponseSchema,
   schoolDetailSchema,
@@ -37,6 +39,27 @@ const schoolDetailResponse = {
 
 export const schoolRoute = apiRoute.group('/school', (app) =>
   app
+    .get(
+      '/all',
+      async ({ status }) => {
+        const result = await listAllSchools();
+        return status(200, AppResponse.success(result).toJson());
+      },
+      {
+        auth: roleUser,
+        response: {
+          200: createSuccessResponseSchema(listAllSchoolsResponseSchema),
+          403: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [schoolTag.name],
+          summary: 'List all schools',
+          description:
+            'Returns every school id, name, type, icon, and alias. Requires user role.',
+        },
+      },
+    )
     .post(
       '',
       async ({ body, status }) => {

@@ -38,6 +38,19 @@ export class SchoolRepository {
     return and(...conditions);
   }
 
+  listAll() {
+    return db
+      .select({
+        id: gameSchool.id,
+        name: gameSchool.name,
+        type: gameSchool.type,
+        icon: gameSchool.icon,
+        alias: gameSchool.alias,
+      })
+      .from(gameSchool)
+      .orderBy(gameSchool.name);
+  }
+
   listPagination(where: SQL | undefined, limit: number, offset: number) {
     return db
       .select()

@@ -10,6 +10,14 @@ import {
   NotFoundException,
 } from '@api/shared/exception';
 
+type SchoolPublicRow = {
+  id: string;
+  name: string;
+  type: 'school' | 'genre';
+  icon: string | null;
+  alias: string[];
+};
+
 type SchoolRow = {
   id: string;
   name: string;
@@ -36,6 +44,9 @@ const schoolRow = (overrides: Partial<SchoolRow> = {}): SchoolRow => ({
 
 const buildWhereClause = mock<(query: ListSchoolsQuery) => unknown>(
   () => undefined,
+);
+const listAll = mock<() => Promise<SchoolPublicRow[]>>(() =>
+  Promise.resolve([]),
 );
 const listPagination = mock<
   (where: unknown, limit: number, offset: number) => Promise<SchoolRow[]>
@@ -65,6 +76,7 @@ const formatDateTime = mock<(date: Date) => string>(
 
 mock.module('@api/infrastructure/repository/school-repository', () => ({
   schoolRepository: {
+    listAll,
     buildWhereClause,
     listPagination,
     count,
@@ -82,6 +94,7 @@ mock.module('@api/shared/util/date', () => ({
 }));
 
 const {
+  listAllSchools,
   listAdminSchools,
   getAdminSchool,
   createAdminSchool,
@@ -99,6 +112,7 @@ const listQuery = (
 
 describe('school-service', () => {
   beforeEach(() => {
+    listAll.mockReset();
     buildWhereClause.mockReset();
     listPagination.mockReset();
     count.mockReset();
@@ -110,6 +124,7 @@ describe('school-service', () => {
     isReferenced.mockReset();
     formatDateTime.mockClear();
 
+    listAll.mockResolvedValue([]);
     buildWhereClause.mockReturnValue(undefined);
     listPagination.mockResolvedValue([]);
     count.mockResolvedValue([{ total: 0 }]);
@@ -119,6 +134,28 @@ describe('school-service', () => {
     updateById.mockResolvedValue(schoolRow());
     deleteById.mockResolvedValue(undefined);
     isReferenced.mockResolvedValue(false);
+  });
+
+  it('lists all schools without timestamps', async () => {
+    listAll.mockResolvedValue([
+      {
+        id: 'school-1',
+        name: '纯阳',
+        type: 'school',
+        icon: '/icons/chunyang.png',
+        alias: ['纯阳宫'],
+      },
+    ]);
+
+    await expect(listAllSchools()).resolves.toEqual([
+      {
+        id: 'school-1',
+        name: '纯阳',
+        type: 'school',
+        icon: '/icons/chunyang.png',
+        alias: ['纯阳宫'],
+      },
+    ]);
   });
 
   it('lists schools and maps rows', async () => {
