@@ -3,6 +3,7 @@ import { cors } from '@elysiajs/cors';
 import { Elysia } from 'elysia';
 import { env } from './infrastructure/config/env';
 import { idiomTag } from './interface/endpoint/idiom-route';
+import { schoolTag } from './interface/endpoint/school-route';
 import { userTag } from './interface/endpoint/user-route';
 import { httpLogger } from './interface/plugins/http-logger';
 import { auth, OpenAPI } from './shared/util/auth';
@@ -22,7 +23,7 @@ export const app = new Elysia()
         info: { title: '四堆 API', version: '1.0.0' },
         components: await OpenAPI.components,
         paths: await OpenAPI.getPaths(),
-        tags: [idiomTag, userTag],
+        tags: [idiomTag, schoolTag, userTag],
       },
     }),
   )

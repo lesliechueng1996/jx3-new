@@ -3,6 +3,7 @@ import {
   BookOpenTextIcon,
   Gamepad2Icon,
   LayoutDashboardIcon,
+  SwordsIcon,
   UsersIcon,
 } from 'lucide-react';
 
@@ -28,6 +29,11 @@ export const navItems: NavItem[] = [
     title: '用户管理',
     icon: UsersIcon,
     to: '/admin/users',
+  },
+  {
+    title: '门派管理',
+    icon: SwordsIcon,
+    to: '/admin/schools',
   },
   {
     title: '成语管理',

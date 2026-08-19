@@ -17,6 +17,10 @@ describe('AppSidebarNavComponent', () => {
       'href',
       '/',
     );
+    expect(screen.getByRole('link', { name: '门派管理' })).toHaveAttribute(
+      'href',
+      '/admin/schools',
+    );
     expect(screen.getByRole('link', { name: '成语管理' })).toHaveAttribute(
       'href',
       '/admin/idioms',
