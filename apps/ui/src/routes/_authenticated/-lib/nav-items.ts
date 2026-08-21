@@ -3,6 +3,7 @@ import {
   BookOpenTextIcon,
   FlameIcon,
   Gamepad2Icon,
+  LayersIcon,
   LayoutDashboardIcon,
   ServerIcon,
   SwordsIcon,
@@ -36,6 +37,11 @@ export const navItems: NavItem[] = [
     title: '区服管理',
     icon: ServerIcon,
     to: '/admin/game-servers',
+  },
+  {
+    title: '资料片管理',
+    icon: LayersIcon,
+    to: '/admin/game-expansions',
   },
   {
     title: '门派管理',

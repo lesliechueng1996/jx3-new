@@ -1,5 +1,7 @@
 import { app } from './app';
 import { initializeLogger, logger } from './infrastructure/logger';
+import { gameExpansionRoute } from './interface/endpoint/game-expansion-route';
+import { gameSeasonRoute } from './interface/endpoint/game-season-route';
 import { gameServerRoute } from './interface/endpoint/game-server-route';
 import { idiomRoute } from './interface/endpoint/idiom-route';
 import { kungfuRoute } from './interface/endpoint/kungfu-route';
@@ -9,6 +11,8 @@ import { userRoute } from './interface/endpoint/user-route';
 await initializeLogger();
 
 const server = app
+  .use(gameExpansionRoute)
+  .use(gameSeasonRoute)
   .use(gameServerRoute)
   .use(idiomRoute)
   .use(kungfuRoute)

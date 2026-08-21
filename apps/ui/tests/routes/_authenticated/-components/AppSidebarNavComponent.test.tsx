@@ -21,6 +21,10 @@ describe('AppSidebarNavComponent', () => {
       'href',
       '/admin/game-servers',
     );
+    expect(screen.getByRole('link', { name: '资料片管理' })).toHaveAttribute(
+      'href',
+      '/admin/game-expansions',
+    );
     expect(screen.getByRole('link', { name: '门派管理' })).toHaveAttribute(
       'href',
       '/admin/schools',
