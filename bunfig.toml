@@ -21,3 +21,6 @@ coveragePathIgnorePatterns = [
   "**/shared/util/db.ts",
   "**/interface/schema/**",
 ]
+
+[install]
+registry = "https://registry.npmmirror.com/"
