@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
-import { IdiomChar } from '@api/domain/idiom/idiom-char';
+import { IdiomChar } from '@api/domain/model/idiom/idiom-char';
 import { BadRequestException, ERROR_CODES } from '@api/shared/exception';
 
 const logger = {
@@ -19,7 +19,7 @@ mock.module('pinyin-pro', () => ({
   getInitialAndFinal,
 }));
 
-const { Idiom } = await import('@api/domain/idiom/idiom');
+const { Idiom } = await import('@api/domain/model/idiom/idiom');
 
 const makeChar = (
   position: number,

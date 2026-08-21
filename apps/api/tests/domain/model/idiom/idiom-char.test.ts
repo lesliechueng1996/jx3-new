@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { IdiomChar } from '@api/domain/idiom/idiom-char';
+import { IdiomChar } from '@api/domain/model/idiom/idiom-char';
 
 describe('IdiomChar', () => {
   it('copies constructor params onto the instance', () => {

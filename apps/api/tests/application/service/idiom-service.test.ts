@@ -144,11 +144,11 @@ mock.module('@api/infrastructure/repository/idiom-char-repository', () => ({
   },
 }));
 
-mock.module('@api/domain/idiom/idiom', () => ({
+mock.module('@api/domain/model/idiom/idiom', () => ({
   Idiom: FakeIdiom,
 }));
 
-mock.module('@api/domain/idiom/idiom-game', () => ({
+mock.module('@api/domain/model/idiom/idiom-game', () => ({
   IdiomGame: class {
     constructor(public props: unknown) {}
     search = gameSearch;

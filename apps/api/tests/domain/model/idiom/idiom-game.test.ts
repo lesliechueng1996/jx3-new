@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import type {
   GreenLock,
   SqlNecessaryCondition,
-} from '@api/domain/idiom/idiom-game-cell';
-import type { IdiomGameRoundConstructorParams } from '@api/domain/idiom/idiom-game-round';
+} from '@api/domain/model/idiom/idiom-game-cell';
+import type { IdiomGameRoundConstructorParams } from '@api/domain/model/idiom/idiom-game-round';
 import { BadRequestException } from '@api/shared/exception';
 
 const logger = {
@@ -82,7 +82,7 @@ mock.module('@api/shared/util/db', () => ({
   },
 }));
 
-mock.module('@api/domain/idiom/idiom-game-round', () => ({
+mock.module('@api/domain/model/idiom/idiom-game-round', () => ({
   IdiomGameRound: class {
     collectGreenLocks = collectGreenLocks;
     extractSqlNecessaryConditions = extractSqlNecessaryConditions;
@@ -90,7 +90,7 @@ mock.module('@api/domain/idiom/idiom-game-round', () => ({
   },
 }));
 
-mock.module('@api/domain/idiom/idiom', () => ({
+mock.module('@api/domain/model/idiom/idiom', () => ({
   Idiom: class {
     id: string | null = null;
     text = '';
@@ -127,7 +127,7 @@ mock.module('@api/domain/idiom/idiom', () => ({
   },
 }));
 
-mock.module('@api/domain/idiom/idiom-char', () => ({
+mock.module('@api/domain/model/idiom/idiom-char', () => ({
   IdiomChar: class {
     constructor(props: Record<string, unknown>) {
       Object.assign(this, props);
@@ -135,7 +135,7 @@ mock.module('@api/domain/idiom/idiom-char', () => ({
   },
 }));
 
-const { IdiomGame } = await import('@api/domain/idiom/idiom-game');
+const { IdiomGame } = await import('@api/domain/model/idiom/idiom-game');
 
 const round: IdiomGameRoundConstructorParams = {
   text: '一帆风顺',

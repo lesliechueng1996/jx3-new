@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
-import type { IdiomGameCellConstructorParams } from '@api/domain/idiom/idiom-game-cell';
+import type { IdiomGameCellConstructorParams } from '@api/domain/model/idiom/idiom-game-cell';
 
 const logger = {
   error: mock((message: string) => message),
@@ -10,7 +10,7 @@ mock.module('@api/infrastructure/logger', () => ({
 }));
 
 const { IdiomGameCell, IdiomGameCellColor } = await import(
-  '@api/domain/idiom/idiom-game-cell'
+  '@api/domain/model/idiom/idiom-game-cell'
 );
 
 const base = (

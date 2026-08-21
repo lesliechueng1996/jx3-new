@@ -13,7 +13,7 @@ UI route → `apps/ui/src/lib/api/*` Eden wrapper → `@jx3/api-client` → `app
 
 Do not skip those layers: route handlers stay thin; pages never call Eden/`fetch` directly; services never return Elysia `status()`.
 
-**Domain is optional.** Simple admin CRUD (table in/out, uniqueness, “in use” checks) stays in the service — do not add `domain/<feature>/`. Add domain only when the feature has real rules (parsing, game logic, multi-step invariants). Idiom has domain; school-style admin CRUD does not.
+**Domain is optional.** Simple admin CRUD (table in/out, uniqueness, “in use” checks) stays in the service — do not add `domain/model/<feature>/`. Add domain only when the feature has real rules (parsing, game logic, multi-step invariants). Idiom has domain; school-style admin CRUD does not.
 
 ## Apps and packages
 
@@ -27,7 +27,7 @@ Do not skip those layers: route handlers stay thin; pages never call Eden/`fetch
 ## New feature checklist
 
 1. Tables in `packages/db/schema/<feature>.ts`, re-export from `schema/index.ts`, then `db:generate` (ask before `db:migrate`)
-2. Domain in `apps/api/src/domain/<feature>/` — only when there are real domain rules (skip for simple admin CRUD)
+2. Domain in `apps/api/src/domain/model/<feature>/` — only when there are real domain rules (skip for simple admin CRUD)
 3. Repository in `apps/api/src/infrastructure/repository/`
 4. Service in `apps/api/src/application/service/`
 5. Elysia schemas in `apps/api/src/interface/schema/`

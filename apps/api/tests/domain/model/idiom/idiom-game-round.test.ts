@@ -1,15 +1,17 @@
 import { describe, expect, it, mock } from 'bun:test';
-import type { Idiom } from '@api/domain/idiom/idiom';
-import { IdiomChar } from '@api/domain/idiom/idiom-char';
-import type { IdiomGameCellConstructorParams } from '@api/domain/idiom/idiom-game-cell';
+import type { Idiom } from '@api/domain/model/idiom/idiom';
+import { IdiomChar } from '@api/domain/model/idiom/idiom-char';
+import type { IdiomGameCellConstructorParams } from '@api/domain/model/idiom/idiom-game-cell';
 
 mock.module('@api/infrastructure/logger', () => ({
   logger: { error: mock() },
 }));
 
-const { IdiomGameRound } = await import('@api/domain/idiom/idiom-game-round');
+const { IdiomGameRound } = await import(
+  '@api/domain/model/idiom/idiom-game-round'
+);
 const { IdiomGameCellColor: Color } = await import(
-  '@api/domain/idiom/idiom-game-cell'
+  '@api/domain/model/idiom/idiom-game-cell'
 );
 
 const BLACK = Color.BLACK;

@@ -16,13 +16,13 @@ Follow `.agents/skills/elysiajs/SKILL.md`. Import via `@api/*`.
 | `interface/schema/` | Elysia `t` schemas + `Static<>` types | DB access |
 | `interface/plugins/` | Auth macro, HTTP logger | Feature logic |
 | `application/service/` | Use cases, DTO mapping, `AppException` | `status()`, route plugins |
-| `domain/<feature>/` | Entities and domain rules (optional) | HTTP / `AppResponse` |
+| `domain/model/<feature>/` | Entities and domain rules (optional) | HTTP / `AppResponse` |
 | `infrastructure/` | Config, logger, repositories (Drizzle) | HTTP shapes |
 | `shared/` | Exceptions, Better Auth, `db`, utils | Feature orchestration |
 
 ## Domain
 
-Skip `domain/<feature>/` for simple admin CRUD: list/get/create/update/delete, uniqueness, and referential “in use” checks belong in the service. Add domain only when the feature has rules beyond CRUD (e.g. idiom pinyin parsing and game search). Do not create empty entity classes.
+Skip `domain/model/<feature>/` for simple admin CRUD: list/get/create/update/delete, uniqueness, and referential “in use” checks belong in the service. Add domain only when the feature has rules beyond CRUD (e.g. idiom pinyin parsing and game search). Do not create empty entity classes.
 
 ## Routes
 

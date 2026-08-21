@@ -1,5 +1,5 @@
-import { Idiom } from '@api/domain/idiom/idiom';
-import { IdiomGame } from '@api/domain/idiom/idiom-game';
+import { Idiom } from '@api/domain/model/idiom/idiom';
+import { IdiomGame } from '@api/domain/model/idiom/idiom-game';
 import { logger } from '@api/infrastructure/logger';
 import { idiomCharRepository } from '@api/infrastructure/repository/idiom-char-repository';
 import { idiomPhraseRepository } from '@api/infrastructure/repository/idiom-phrase-repository';

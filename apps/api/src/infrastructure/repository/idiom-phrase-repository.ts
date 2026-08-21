@@ -1,4 +1,4 @@
-import type { Idiom } from '@api/domain/idiom/idiom';
+import type { Idiom } from '@api/domain/model/idiom/idiom';
 import {
   ERROR_CODES,
   InternalServerErrorException,
