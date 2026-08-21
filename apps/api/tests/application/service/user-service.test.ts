@@ -57,14 +57,31 @@ const formatDateTime = mock<(date: Date) => string>(
 const maskEmail = mock<(email: string) => string>((email) => `masked:${email}`);
 const logger = {
   error: mock((message: string) => message),
+  warn: mock((message: string) => message),
+  info: mock((message: string) => message),
 };
 const createUser = mock(async () => ({ user: { id: 'user-1' } }));
 const adminUpdateUserApi = mock(async () => ({ id: 'user-1' }));
 const setRole = mock(async () => ({ user: { id: 'user-1' } }));
 const setUserPassword = mock(async () => ({ status: true }));
+const changePasswordApi = mock(async () => ({ status: true }));
+const updateUserApi = mock(async () => ({
+  headers: new Headers(),
+  response: { status: true },
+}));
 const banUser = mock(async () => ({ user: { id: 'user-1' } }));
 const unbanUser = mock(async () => ({ user: { id: 'user-1' } }));
 const removeUser = mock(async () => ({ success: true }));
+const updateImage = mock(async () => undefined);
+const storageUpload = mock(
+  async () => 'http://avatars.example/user-1/uuid-1.png',
+);
+const storageDeletePublicUrl = mock(async () => undefined);
+const getBunS3StorageService = mock(() => ({
+  upload: storageUpload,
+  deletePublicUrl: storageDeletePublicUrl,
+}));
+const generateUUID = mock(() => 'uuid-1');
 
 mock.module('@api/infrastructure/logger', () => ({
   logger,
@@ -76,6 +93,7 @@ mock.module('@api/infrastructure/repository/user-repository', () => ({
     listPagination,
     count,
     findById,
+    updateImage,
   },
 }));
 
@@ -101,11 +119,24 @@ mock.module('@api/shared/util/auth', () => ({
       adminUpdateUser: adminUpdateUserApi,
       setRole,
       setUserPassword,
+      changePassword: changePasswordApi,
+      updateUser: updateUserApi,
       banUser,
       unbanUser,
       removeUser,
     },
   },
+}));
+
+mock.module(
+  '@api/infrastructure/external/storage/bun-s3-storage-service',
+  () => ({
+    getBunS3StorageService,
+  }),
+);
+
+mock.module('@api/shared/util/uuid', () => ({
+  generateUUID,
 }));
 
 mock.module('@api/shared/util/date', () => ({
@@ -118,12 +149,14 @@ mock.module('@api/shared/util/email', () => ({
 
 const {
   banAdminUser,
+  changeCurrentUserPassword,
   createAdminUser,
   deleteAdminUser,
   getAdminUser,
   listAdminUsers,
   unbanAdminUser,
   updateAdminUser,
+  uploadCurrentUserAvatar,
 } = await import('@api/application/service/user-service');
 
 const createdAt = new Date('2026-01-15T08:00:00.000Z');
@@ -327,6 +360,8 @@ describe('admin user mutations', () => {
     formatDateTime.mockReset();
     maskEmail.mockReset();
     logger.error.mockReset();
+    logger.warn.mockReset();
+    logger.info.mockReset();
     createUser.mockReset();
     adminUpdateUserApi.mockReset();
     setRole.mockReset();
@@ -693,5 +728,307 @@ describe('admin user mutations', () => {
       headers,
     });
     expect(result).toEqual(expectedDetail);
+  });
+});
+
+describe('uploadCurrentUserAvatar', () => {
+  beforeEach(() => {
+    findById.mockReset();
+    updateImage.mockReset();
+    storageUpload.mockReset();
+    storageDeletePublicUrl.mockReset();
+    generateUUID.mockReset();
+    logger.error.mockReset();
+    logger.warn.mockReset();
+    logger.info.mockReset();
+    getBunS3StorageService.mockReset();
+    updateUserApi.mockReset();
+
+    findById.mockResolvedValue(makeUser());
+    updateImage.mockResolvedValue(undefined);
+    storageUpload.mockResolvedValue('http://avatars.example/user-1/uuid-1.png');
+    storageDeletePublicUrl.mockResolvedValue(undefined);
+    generateUUID.mockReturnValue('uuid-1');
+    const sessionHeaders = new Headers();
+    sessionHeaders.append('set-cookie', 'better-auth.session_data=token');
+    updateUserApi.mockResolvedValue({
+      headers: sessionHeaders,
+      response: { status: true },
+    });
+    getBunS3StorageService.mockReturnValue({
+      upload: storageUpload,
+      deletePublicUrl: storageDeletePublicUrl,
+    });
+  });
+
+  it('uploads a png avatar and updates the user image', async () => {
+    const file = new File(['png'], 'avatar.png', { type: 'image/png' });
+
+    const result = await uploadCurrentUserAvatar('user-1', file, headers);
+
+    expect(storageUpload).toHaveBeenCalledWith({
+      key: 'user-1/uuid-1.png',
+      body: file,
+      contentType: 'image/png',
+    });
+    expect(updateImage).toHaveBeenCalledWith(
+      'user-1',
+      'http://avatars.example/user-1/uuid-1.png',
+    );
+    expect(updateUserApi).toHaveBeenCalledWith({
+      body: { image: 'http://avatars.example/user-1/uuid-1.png' },
+      headers,
+      returnHeaders: true,
+    });
+    expect(storageDeletePublicUrl).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      imageUrl: 'http://avatars.example/user-1/uuid-1.png',
+      sessionCookies: ['better-auth.session_data=token'],
+    });
+  });
+
+  it('maps jpeg, jpg, and webp content types', async () => {
+    await uploadCurrentUserAvatar(
+      'user-1',
+      new File(['jpg'], 'a.jpg', { type: 'image/jpeg' }),
+      headers,
+    );
+    expect(storageUpload).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        key: 'user-1/uuid-1.jpg',
+        contentType: 'image/jpeg',
+      }),
+    );
+
+    await uploadCurrentUserAvatar(
+      'user-1',
+      new File(['jpg'], 'a.jpg', { type: 'image/jpg' }),
+      headers,
+    );
+    expect(storageUpload).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        key: 'user-1/uuid-1.jpg',
+        contentType: 'image/jpeg',
+      }),
+    );
+
+    await uploadCurrentUserAvatar(
+      'user-1',
+      new File(['webp'], 'a.webp', { type: 'image/webp' }),
+      headers,
+    );
+    expect(storageUpload).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        key: 'user-1/uuid-1.webp',
+        contentType: 'image/webp',
+      }),
+    );
+  });
+
+  it('falls back to the filename extension when type is missing', async () => {
+    await uploadCurrentUserAvatar(
+      'user-1',
+      new File(['jpg'], 'photo.jpeg', { type: '' }),
+      headers,
+    );
+    expect(storageUpload).toHaveBeenLastCalledWith(
+      expect.objectContaining({ key: 'user-1/uuid-1.jpg' }),
+    );
+
+    await uploadCurrentUserAvatar(
+      'user-1',
+      new File(['jpg'], 'photo.jpg', { type: '' }),
+      headers,
+    );
+    expect(storageUpload).toHaveBeenLastCalledWith(
+      expect.objectContaining({ key: 'user-1/uuid-1.jpg' }),
+    );
+
+    await uploadCurrentUserAvatar(
+      'user-1',
+      new File(['png'], 'photo.png', { type: '' }),
+      headers,
+    );
+    expect(storageUpload).toHaveBeenLastCalledWith(
+      expect.objectContaining({ key: 'user-1/uuid-1.png' }),
+    );
+
+    await uploadCurrentUserAvatar(
+      'user-1',
+      new File(['webp'], 'photo.webp', { type: '' }),
+      headers,
+    );
+    expect(storageUpload).toHaveBeenLastCalledWith(
+      expect.objectContaining({ key: 'user-1/uuid-1.webp' }),
+    );
+  });
+
+  it('rejects unsupported avatar types', async () => {
+    await expect(
+      uploadCurrentUserAvatar(
+        'user-1',
+        new File(['gif'], 'a.gif', { type: 'image/gif' }),
+        headers,
+      ),
+    ).rejects.toMatchObject({
+      message: '头像须为 JPEG、PNG 或 WebP',
+      code: ERROR_CODES.USER_AVATAR_INVALID,
+    });
+    expect(storageUpload).not.toHaveBeenCalled();
+  });
+
+  it('rejects a file with no type and no usable extension', async () => {
+    await expect(
+      uploadCurrentUserAvatar(
+        'user-1',
+        new File(['bin'], 'avatar', { type: '' }),
+        headers,
+      ),
+    ).rejects.toMatchObject({
+      code: ERROR_CODES.USER_AVATAR_INVALID,
+    });
+  });
+
+  it('deletes the previous avatar after a successful upload', async () => {
+    findById.mockResolvedValue(
+      makeUser({ image: 'http://avatars.example/old.png' }),
+    );
+
+    await uploadCurrentUserAvatar(
+      'user-1',
+      new File(['png'], 'avatar.png', { type: 'image/png' }),
+      headers,
+    );
+
+    expect(storageDeletePublicUrl).toHaveBeenCalledWith(
+      'http://avatars.example/old.png',
+    );
+  });
+
+  it('warns when deleting the previous avatar fails', async () => {
+    findById.mockResolvedValue(
+      makeUser({ image: 'http://avatars.example/old.png' }),
+    );
+    storageDeletePublicUrl.mockRejectedValue(new Error('s3 down'));
+
+    await uploadCurrentUserAvatar(
+      'user-1',
+      new File(['png'], 'avatar.png', { type: 'image/png' }),
+      headers,
+    );
+
+    expect(logger.warn).toHaveBeenCalled();
+  });
+
+  it('keeps the previous avatar when the session cookie cannot be refreshed', async () => {
+    findById.mockResolvedValue(
+      makeUser({ image: 'http://avatars.example/old.png' }),
+    );
+    updateUserApi.mockRejectedValue(new Error('origin'));
+
+    await expect(
+      uploadCurrentUserAvatar(
+        'user-1',
+        new File(['png'], 'avatar.png', { type: 'image/png' }),
+        headers,
+      ),
+    ).rejects.toMatchObject({
+      message: '头像已保存，但登录态未更新',
+      code: ERROR_CODES.USER_SESSION_REFRESH_FAILED,
+    });
+    expect(updateImage).toHaveBeenCalled();
+    expect(storageDeletePublicUrl).not.toHaveBeenCalled();
+  });
+
+  it('maps storage failures to an internal error', async () => {
+    storageUpload.mockRejectedValue(new Error('s3 down'));
+
+    await expect(
+      uploadCurrentUserAvatar(
+        'user-1',
+        new File(['png'], 'avatar.png', { type: 'image/png' }),
+        headers,
+      ),
+    ).rejects.toMatchObject({
+      message: '头像上传失败',
+      code: ERROR_CODES.STORAGE_UPLOAD_FAILED,
+    });
+    expect(logger.error).toHaveBeenCalled();
+    expect(updateImage).not.toHaveBeenCalled();
+  });
+});
+
+describe('changeCurrentUserPassword', () => {
+  beforeEach(() => {
+    changePasswordApi.mockReset();
+    logger.error.mockReset();
+    logger.info.mockReset();
+    changePasswordApi.mockResolvedValue({ status: true });
+  });
+
+  it('changes the password and revokes other sessions', async () => {
+    await changeCurrentUserPassword(
+      'user-1',
+      { currentPassword: 'old-pass1', newPassword: 'new-pass1' },
+      headers,
+    );
+
+    expect(changePasswordApi).toHaveBeenCalledWith({
+      body: {
+        currentPassword: 'old-pass1',
+        newPassword: 'new-pass1',
+        revokeOtherSessions: true,
+      },
+      headers,
+    });
+  });
+
+  it('maps an invalid current password', async () => {
+    changePasswordApi.mockRejectedValue({
+      body: { code: 'INVALID_PASSWORD' },
+    });
+
+    await expect(
+      changeCurrentUserPassword(
+        'user-1',
+        { currentPassword: 'wrong', newPassword: 'new-pass1' },
+        headers,
+      ),
+    ).rejects.toMatchObject({
+      message: '当前密码错误',
+      code: ERROR_CODES.USER_INVALID_PASSWORD,
+    });
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  it('maps a missing credential account', async () => {
+    changePasswordApi.mockRejectedValue({
+      code: 'CREDENTIAL_ACCOUNT_NOT_FOUND',
+    });
+
+    await expect(
+      changeCurrentUserPassword(
+        'user-1',
+        { currentPassword: 'old-pass1', newPassword: 'new-pass1' },
+        headers,
+      ),
+    ).rejects.toMatchObject({
+      message: '当前账号未设置密码',
+      code: ERROR_CODES.USER_INVALID_PASSWORD,
+    });
+  });
+
+  it('rethrows unknown Better Auth errors after logging', async () => {
+    const error = { body: { code: 'FAILED' } };
+    changePasswordApi.mockRejectedValue(error);
+
+    await expect(
+      changeCurrentUserPassword(
+        'user-1',
+        { currentPassword: 'old-pass1', newPassword: 'new-pass1' },
+        headers,
+      ),
+    ).rejects.toBe(error);
+    expect(logger.error).toHaveBeenCalled();
   });
 });

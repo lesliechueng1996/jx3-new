@@ -56,3 +56,4 @@ Skip `domain/model/<feature>/` for simple admin CRUD: list/get/create/update/del
 - Add feature-specific codes next to the existing `IDIOM_*` entries.
 - User-facing exception messages may be Chinese; OpenAPI `summary`/`description` stay English.
 - Log with `@api/infrastructure/logger` (LogTape). Never `console.log`.
+- Log **key nodes** in services and infrastructure adapters (`info` success, `warn` recoverable, `error` before rethrow). Do not log expected validation/404s or secrets. See `api-logging.mdc`.

@@ -20,3 +20,26 @@ export async function fetchCachedSession() {
 export function clearSessionQuery() {
   queryClient.removeQueries({ queryKey: sessionQueryKey });
 }
+
+type CachedSession = NonNullable<
+  Awaited<ReturnType<typeof fetchCachedSession>>
+>;
+
+export function patchCachedSessionUser(patch: Partial<CachedSession['user']>) {
+  queryClient.setQueryData(
+    sessionQueryKey,
+    (current: CachedSession | null | undefined) => {
+      if (!current) {
+        return current;
+      }
+
+      return {
+        ...current,
+        user: {
+          ...current.user,
+          ...patch,
+        },
+      };
+    },
+  );
+}

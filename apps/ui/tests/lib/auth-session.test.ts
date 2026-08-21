@@ -1,10 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { getSession, fetchQuery, removeQueries } = vi.hoisted(() => ({
-  getSession: vi.fn(),
-  fetchQuery: vi.fn(),
-  removeQueries: vi.fn(),
-}));
+const { getSession, fetchQuery, removeQueries, setQueryData } = vi.hoisted(
+  () => ({
+    getSession: vi.fn(),
+    fetchQuery: vi.fn(),
+    removeQueries: vi.fn(),
+    setQueryData: vi.fn(),
+  }),
+);
 
 vi.mock('@/lib/auth-client', () => ({
   authClient: {
@@ -18,6 +21,7 @@ vi.mock('@/lib/query-client', () => ({
   queryClient: {
     fetchQuery,
     removeQueries,
+    setQueryData,
   },
 }));
 
@@ -26,6 +30,7 @@ describe('auth-session', () => {
     getSession.mockReset();
     fetchQuery.mockReset();
     removeQueries.mockReset();
+    setQueryData.mockReset();
   });
 
   it('fetches the cached session through react-query', async () => {
@@ -55,5 +60,30 @@ describe('auth-session', () => {
     );
     clearSessionQuery();
     expect(removeQueries).toHaveBeenCalledWith({ queryKey: sessionQueryKey });
+  });
+
+  it('patches the cached session user', async () => {
+    const { patchCachedSessionUser, sessionQueryKey } = await import(
+      '@/lib/auth-session'
+    );
+    patchCachedSessionUser({ image: 'http://cdn/a.png' });
+
+    expect(setQueryData).toHaveBeenCalledWith(
+      sessionQueryKey,
+      expect.any(Function),
+    );
+    const updater = setQueryData.mock.calls[0]?.[1] as (
+      current: unknown,
+    ) => unknown;
+    expect(updater(null)).toBeNull();
+    expect(
+      updater({
+        user: { id: '1', name: 'Alice', image: null },
+        session: { id: 's1' },
+      }),
+    ).toEqual({
+      user: { id: '1', name: 'Alice', image: 'http://cdn/a.png' },
+      session: { id: 's1' },
+    });
   });
 });

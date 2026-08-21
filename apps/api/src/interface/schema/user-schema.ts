@@ -155,3 +155,29 @@ export const banUserBodySchema = t.Object({
 });
 
 export type BanUserBody = Static<typeof banUserBodySchema>;
+
+export const uploadAvatarBodySchema = t.Object({
+  file: t.File({
+    maxSize: '2m',
+    error: () => '头像须为图片且不超过 2MB',
+  }),
+});
+
+export const uploadAvatarResponseSchema = t.Object({
+  imageUrl: t.String(),
+});
+
+export type UploadAvatarResponse = Static<typeof uploadAvatarResponseSchema>;
+
+export const changePasswordBodySchema = t.Object({
+  currentPassword: t.String({
+    minLength: 1,
+    error: () => '请输入当前密码',
+  }),
+  newPassword: t.String({
+    minLength: 8,
+    error: () => '密码至少8位',
+  }),
+});
+
+export type ChangePasswordBody = Static<typeof changePasswordBodySchema>;

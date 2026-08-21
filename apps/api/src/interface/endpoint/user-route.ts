@@ -1,13 +1,16 @@
 import {
   banAdminUser,
+  changeCurrentUserPassword,
   createAdminUser,
   deleteAdminUser,
   getAdminUser,
   listAdminUsers,
   unbanAdminUser,
   updateAdminUser,
+  uploadCurrentUserAvatar,
 } from '@api/application/service/user-service';
-import { roleAdmin } from '@api/shared/util/auth';
+import { roleAdmin, roleUser } from '@api/shared/util/auth';
+import { applySetCookieHeaders } from '@api/shared/util/auth-cookies';
 import {
   AppResponse,
   createSuccessResponseSchema,
@@ -17,10 +20,13 @@ import {
 import {
   adminUserDetailSchema,
   banUserBodySchema,
+  changePasswordBodySchema,
   createUserBodySchema,
   listUsersQuerySchema,
   listUsersResponseSchema,
   updateUserBodySchema,
+  uploadAvatarBodySchema,
+  uploadAvatarResponseSchema,
   userIdParamsSchema,
 } from '../schema/user-schema';
 import { apiRoute } from './api-route';
@@ -61,6 +67,58 @@ export const userRoute = apiRoute.group('/user', (app) =>
           summary: 'Create a user',
           description:
             'Creates a user with email and password. Requires admin role.',
+        },
+      },
+    )
+    .post(
+      '/avatar',
+      async ({ body, request, set, status, user }) => {
+        const { imageUrl, sessionCookies } = await uploadCurrentUserAvatar(
+          user.id,
+          body.file,
+          request.headers,
+        );
+        applySetCookieHeaders(set, sessionCookies);
+        return status(200, AppResponse.success({ imageUrl }).toJson());
+      },
+      {
+        auth: roleUser,
+        body: uploadAvatarBodySchema,
+        response: {
+          200: createSuccessResponseSchema(uploadAvatarResponseSchema),
+          400: errorResponseSchema,
+          401: errorResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [userTag.name],
+          summary: 'Upload current user avatar',
+          description:
+            'Uploads an avatar image for the signed-in user and stores a public URL on the user record.',
+        },
+      },
+    )
+    .post(
+      '/password',
+      async ({ body, request, status, user }) => {
+        await changeCurrentUserPassword(user.id, body, request.headers);
+        return status(200, AppResponse.success().toJson());
+      },
+      {
+        auth: roleUser,
+        body: changePasswordBodySchema,
+        response: {
+          200: emptySuccessResponseSchema,
+          400: errorResponseSchema,
+          401: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [userTag.name],
+          summary: 'Change current user password',
+          description:
+            'Changes the signed-in user password after verifying the current password.',
         },
       },
     )

@@ -47,6 +47,11 @@ const updateAdminUser = mock(async () => userDetail);
 const deleteAdminUser = mock(async () => undefined);
 const banAdminUser = mock(async () => userDetail);
 const unbanAdminUser = mock(async () => userDetail);
+const uploadCurrentUserAvatar = mock(async () => ({
+  imageUrl: 'http://avatars.example/u1.png',
+  sessionCookies: ['better-auth.session_data=token'],
+}));
+const changeCurrentUserPassword = mock(async () => undefined);
 
 mock.module('@api/application/service/user-service', () => ({
   listAdminUsers,
@@ -56,6 +61,8 @@ mock.module('@api/application/service/user-service', () => ({
   deleteAdminUser,
   banAdminUser,
   unbanAdminUser,
+  uploadCurrentUserAvatar,
+  changeCurrentUserPassword,
 }));
 
 mock.module('@api/shared/util/auth', () => ({
@@ -96,6 +103,8 @@ describe('userRoute', () => {
     deleteAdminUser.mockReset();
     banAdminUser.mockReset();
     unbanAdminUser.mockReset();
+    uploadCurrentUserAvatar.mockReset();
+    changeCurrentUserPassword.mockReset();
 
     listAdminUsers.mockResolvedValue({
       items: [
@@ -122,6 +131,11 @@ describe('userRoute', () => {
     deleteAdminUser.mockResolvedValue(undefined);
     banAdminUser.mockResolvedValue(userDetail);
     unbanAdminUser.mockResolvedValue(userDetail);
+    uploadCurrentUserAvatar.mockResolvedValue({
+      imageUrl: 'http://avatars.example/u1.png',
+      sessionCookies: ['better-auth.session_data=token'],
+    });
+    changeCurrentUserPassword.mockResolvedValue(undefined);
   });
 
   it('exports an OpenAPI tag', () => {
@@ -201,5 +215,40 @@ describe('userRoute', () => {
 
     expect(response.status).toBe(200);
     expect(unbanAdminUser).toHaveBeenCalledWith('u1', expect.any(Headers));
+  });
+
+  it('uploads the current user avatar', async () => {
+    const form = new FormData();
+    form.set('file', new File(['png'], 'avatar.png', { type: 'image/png' }));
+
+    const response = await userRoute.handle(
+      new Request('http://localhost/api/v1/user/avatar', {
+        method: 'POST',
+        body: form,
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(uploadCurrentUserAvatar).toHaveBeenCalled();
+    expect(body.data.imageUrl).toBe('http://avatars.example/u1.png');
+    expect(response.headers.getSetCookie()).toEqual([
+      'better-auth.session_data=token',
+    ]);
+  });
+
+  it('changes the current user password', async () => {
+    const response = await jsonRequest('/password', {
+      method: 'POST',
+      body: JSON.stringify({
+        currentPassword: 'old-pass1',
+        newPassword: 'new-pass1',
+      }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(changeCurrentUserPassword).toHaveBeenCalled();
+    expect(body.data).toBeNull();
   });
 });

@@ -69,6 +69,7 @@ vi.mock('@/lib/auth-client', () => ({
       email: vi.fn(),
     },
     signOut: vi.fn(),
+    updateUser: vi.fn(async () => ({ data: {}, error: null })),
   },
   ROLE_ADMIN: 'admin',
   ROLE_USER: 'user',

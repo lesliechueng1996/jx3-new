@@ -1,0 +1,35 @@
+---
+description: LogTape logging at API key nodes — services, adapters, failures
+globs: apps/api/**
+alwaysApply: false
+---
+
+# API logging
+
+Log **key nodes** in application services and infrastructure adapters with `@api/infrastructure/logger` (LogTape). Never `console.log`.
+
+## Where to log
+
+| Node | Level | Example |
+|------|-------|---------|
+| Use case started / succeeded (mutations) | `info` | avatar uploaded, password changed, admin ban |
+| External I/O succeeded (S3, auth admin API) | `info` | object key + public URL; action name |
+| Recoverable failure (best-effort cleanup) | `warn` | delete previous avatar failed |
+| Operation failure before rethrow | `error` | S3 write failed, Better Auth call failed |
+| Expected client errors (validation, 404) | do not log | throw `AppException` only |
+
+HTTP 401/403 stay in `auth-macro`. Route handlers stay thin — **do not** log there.
+
+## How
+
+Structured messages with named placeholders. Do **not** log secrets (passwords, access keys, file bytes).
+
+```typescript
+logger.info('Uploaded avatar for user {userId} to {imageUrl}', {
+  userId,
+  imageUrl,
+});
+logger.error('S3 upload failed, {key}, {error}', { key, error });
+```
+
+Keep `{error}` as the caught value. User-facing exception messages stay Chinese; log messages stay English.

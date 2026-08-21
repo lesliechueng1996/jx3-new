@@ -66,6 +66,13 @@ export class UserRepository {
     const result = await db.select().from(user).where(eq(user.id, id)).limit(1);
     return result[0] ?? null;
   }
+
+  async updateImage(id: string, image: string) {
+    await db
+      .update(user)
+      .set({ image, updatedAt: new Date() })
+      .where(eq(user.id, id));
+  }
 }
 
 export const userRepository = new UserRepository();

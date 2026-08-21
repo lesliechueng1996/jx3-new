@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
-import { LogOutIcon } from 'lucide-react';
+import { useNavigate, useRouter } from '@tanstack/react-router';
+import { LogOutIcon, UserIcon } from 'lucide-react';
+import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,8 +14,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { toast } from '@/components/ui/toast';
+import { changePassword, uploadAvatar } from '@/lib/api/profile-api';
+import { handleApiError } from '@/lib/api-client';
 import { authClient } from '@/lib/auth-client';
-import { clearSessionQuery } from '@/lib/auth-session';
+import { clearSessionQuery, patchCachedSessionUser } from '@/lib/auth-session';
+import type { ProfilePasswordFormValues } from '../-lib/profile-password-schema';
+import { ProfileCenterDialogComponent } from './ProfileCenterDialogComponent';
 
 type AppHeaderUser = {
   name: string;
@@ -33,6 +38,9 @@ function getInitials(name: string, email: string): string {
 
 export function AppHeaderComponent({ user }: { user: AppHeaderUser }) {
   const navigate = useNavigate();
+  const router = useRouter();
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [passwordFormKey, setPasswordFormKey] = useState(0);
 
   const signOutMutation = useMutation({
     mutationFn: async () => {
@@ -53,6 +61,35 @@ export function AppHeaderComponent({ user }: { user: AppHeaderUser }) {
         priority: 'high',
       });
     },
+  });
+
+  const uploadAvatarMutation = useMutation({
+    mutationFn: uploadAvatar,
+    onSuccess: async (result) => {
+      toast.add({
+        type: 'success',
+        title: '头像已更新',
+      });
+      patchCachedSessionUser({ image: result.imageUrl });
+      await router.invalidate();
+    },
+    onError: (error) => handleApiError(error, '上传头像失败'),
+  });
+
+  const changePasswordMutation = useMutation({
+    mutationFn: (values: ProfilePasswordFormValues) =>
+      changePassword({
+        currentPassword: values.currentPassword,
+        newPassword: values.newPassword,
+      }),
+    onSuccess: () => {
+      toast.add({
+        type: 'success',
+        title: '密码已修改',
+      });
+      setPasswordFormKey((current) => current + 1);
+    },
+    onError: (error) => handleApiError(error, '修改密码失败'),
   });
 
   return (
@@ -109,6 +146,10 @@ export function AppHeaderComponent({ user }: { user: AppHeaderUser }) {
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
+            <DropdownMenuItem onClick={() => setProfileOpen(true)}>
+              <UserIcon />
+              个人中心
+            </DropdownMenuItem>
             <DropdownMenuItem
               disabled={signOutMutation.isPending}
               onClick={() => signOutMutation.mutate()}
@@ -119,6 +160,17 @@ export function AppHeaderComponent({ user }: { user: AppHeaderUser }) {
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <ProfileCenterDialogComponent
+        user={user}
+        open={profileOpen}
+        avatarPending={uploadAvatarMutation.isPending}
+        passwordPending={changePasswordMutation.isPending}
+        passwordFormKey={passwordFormKey}
+        onOpenChange={setProfileOpen}
+        onUploadAvatar={(file) => uploadAvatarMutation.mutate(file)}
+        onChangePassword={(values) => changePasswordMutation.mutate(values)}
+      />
     </header>
   );
 }
