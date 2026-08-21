@@ -10,6 +10,8 @@ export type ListKungfusFilters = {
   name?: string;
   schoolId?: string;
   kungfuType?: KungfuType;
+  attackType?: AttackType;
+  attackMethod?: AttackMethod;
   isUnlimited?: boolean;
 };
 
@@ -21,6 +23,8 @@ export const adminListKungfus = async (filters: ListKungfusFilters) => {
       name: filters.name,
       schoolId: filters.schoolId,
       kungfuType: filters.kungfuType,
+      attackType: filters.attackType,
+      attackMethod: filters.attackMethod,
       isUnlimited: filters.isUnlimited,
     },
   });

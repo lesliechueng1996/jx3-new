@@ -14,6 +14,8 @@ describe('kungfusSearchSchema', () => {
         name: '  紫霞功  ',
         schoolId: ' school-1 ',
         kungfuType: 'attack',
+        attackType: 'internal',
+        attackMethod: 'ranged',
         isUnlimited: 'true',
       }),
     ).toEqual({
@@ -22,6 +24,8 @@ describe('kungfusSearchSchema', () => {
       name: '紫霞功',
       schoolId: 'school-1',
       kungfuType: 'attack',
+      attackType: 'internal',
+      attackMethod: 'ranged',
       isUnlimited: 'true',
     });
   });
@@ -46,6 +50,8 @@ describe('kungfusSearchSchema', () => {
       name: undefined,
       schoolId: undefined,
       kungfuType: undefined,
+      attackType: undefined,
+      attackMethod: undefined,
       isUnlimited: undefined,
     });
   });
@@ -59,6 +65,8 @@ describe('toListKungfusFilters', () => {
         name: '紫',
         schoolId: 'school-1',
         kungfuType: 'heal',
+        attackType: 'external',
+        attackMethod: 'melee',
         isUnlimited: 'true',
       }),
     ).toEqual({
@@ -67,6 +75,8 @@ describe('toListKungfusFilters', () => {
       name: '紫',
       schoolId: 'school-1',
       kungfuType: 'heal',
+      attackType: 'external',
+      attackMethod: 'melee',
       isUnlimited: true,
     });
   });

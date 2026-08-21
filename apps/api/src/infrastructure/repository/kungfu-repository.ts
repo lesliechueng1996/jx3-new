@@ -66,6 +66,14 @@ export class KungfuRepository {
       conditions.push(eq(gameKungfu.kungfuType, query.kungfuType));
     }
 
+    if (query.attackType) {
+      conditions.push(eq(gameKungfu.attackType, query.attackType));
+    }
+
+    if (query.attackMethod) {
+      conditions.push(eq(gameKungfu.attackMethod, query.attackMethod));
+    }
+
     if (query.isUnlimited !== undefined) {
       conditions.push(eq(gameKungfu.isUnlimited, query.isUnlimited));
     }

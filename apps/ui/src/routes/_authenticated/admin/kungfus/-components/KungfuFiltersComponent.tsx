@@ -32,7 +32,23 @@ const UNLIMITED_FILTER_ITEMS = [
   { label: '非无界', value: 'false' },
 ];
 
+const ATTACK_TYPE_FILTER_ITEMS = [
+  { label: '全部', value: 'all' },
+  { label: '内功', value: 'internal' },
+  { label: '外功', value: 'external' },
+];
+
+const ATTACK_METHOD_FILTER_ITEMS = [
+  { label: '全部', value: 'all' },
+  { label: '近战', value: 'melee' },
+  { label: '远程', value: 'ranged' },
+];
+
 const typeFilterValue = (type: KungfusSearch['kungfuType']) => type ?? 'all';
+const attackTypeFilterValue = (attackType: KungfusSearch['attackType']) =>
+  attackType ?? 'all';
+const attackMethodFilterValue = (attackMethod: KungfusSearch['attackMethod']) =>
+  attackMethod ?? 'all';
 const unlimitedFilterValue = (isUnlimited: KungfusSearch['isUnlimited']) =>
   isUnlimited ?? 'all';
 
@@ -60,7 +76,7 @@ export function KungfuFiltersComponent({
 
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-border p-4">
-      <FieldGroup className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <FieldGroup className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <Field>
           <FieldLabel htmlFor="filter-kungfu-name">名称</FieldLabel>
           <Input
@@ -106,6 +122,62 @@ export function KungfuFiltersComponent({
             <SelectContent alignItemWithTrigger={false}>
               <SelectGroup>
                 {TYPE_FILTER_ITEMS.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="filter-kungfu-attack-type">攻击类型</FieldLabel>
+          <Select
+            items={ATTACK_TYPE_FILTER_ITEMS}
+            value={attackTypeFilterValue(draft.attackType)}
+            onValueChange={(next) => {
+              if (next === 'internal' || next === 'external') {
+                setDraft((current) => ({ ...current, attackType: next }));
+                return;
+              }
+              setDraft((current) => ({ ...current, attackType: undefined }));
+            }}
+          >
+            <SelectTrigger id="filter-kungfu-attack-type" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent alignItemWithTrigger={false}>
+              <SelectGroup>
+                {ATTACK_TYPE_FILTER_ITEMS.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="filter-kungfu-attack-method">
+            攻击方式
+          </FieldLabel>
+          <Select
+            items={ATTACK_METHOD_FILTER_ITEMS}
+            value={attackMethodFilterValue(draft.attackMethod)}
+            onValueChange={(next) => {
+              if (next === 'melee' || next === 'ranged') {
+                setDraft((current) => ({ ...current, attackMethod: next }));
+                return;
+              }
+              setDraft((current) => ({ ...current, attackMethod: undefined }));
+            }}
+          >
+            <SelectTrigger id="filter-kungfu-attack-method" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent alignItemWithTrigger={false}>
+              <SelectGroup>
+                {ATTACK_METHOD_FILTER_ITEMS.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
                     {item.label}
                   </SelectItem>

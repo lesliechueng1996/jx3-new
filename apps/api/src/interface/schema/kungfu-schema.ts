@@ -88,6 +88,8 @@ export const listKungfusQuerySchema = t.Composite([
     name: t.Optional(t.String()),
     schoolId: t.Optional(schoolIdSchema),
     kungfuType: t.Optional(kungfuTypeSchema),
+    attackType: t.Optional(attackTypeSchema),
+    attackMethod: t.Optional(attackMethodSchema),
     isUnlimited: t.Optional(t.Boolean()),
   }),
 ]);

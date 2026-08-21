@@ -30,6 +30,8 @@ const filters: KungfusSearch = {
   name: '旧',
   schoolId: 'school-1',
   kungfuType: 'attack',
+  attackType: 'internal',
+  attackMethod: 'ranged',
   isUnlimited: 'true',
 };
 
@@ -66,6 +68,8 @@ describe('KungfuFiltersComponent', () => {
     await user.type(nameInput, '紫霞功');
     await chooseSelectOption(user, '门派', '纯阳');
     await chooseSelectOption(user, '心法类型', '治疗');
+    await chooseSelectOption(user, '攻击类型', '外功');
+    await chooseSelectOption(user, '攻击方式', '近战');
     await chooseSelectOption(user, '无界', '非无界');
     await user.click(screen.getByRole('button', { name: '搜索' }));
     expect(onSearch).toHaveBeenCalledWith({
@@ -74,6 +78,8 @@ describe('KungfuFiltersComponent', () => {
       name: '紫霞功',
       schoolId: 'school-1',
       kungfuType: 'heal',
+      attackType: 'external',
+      attackMethod: 'melee',
       isUnlimited: 'false',
     });
 
@@ -94,6 +100,8 @@ describe('KungfuFiltersComponent', () => {
 
     await chooseSelectOption(user, '门派', '全部');
     await chooseSelectOption(user, '心法类型', '全部');
+    await chooseSelectOption(user, '攻击类型', '全部');
+    await chooseSelectOption(user, '攻击方式', '全部');
     await chooseSelectOption(user, '无界', '全部');
     await user.type(screen.getByLabelText('名称'), '{Enter}');
     expect(onSearch).toHaveBeenCalledWith(
@@ -101,6 +109,8 @@ describe('KungfuFiltersComponent', () => {
         page: 1,
         schoolId: undefined,
         kungfuType: undefined,
+        attackType: undefined,
+        attackMethod: undefined,
         isUnlimited: undefined,
       }),
     );
@@ -123,11 +133,15 @@ describe('KungfuFiltersComponent', () => {
     );
 
     await chooseSelectOption(user, '心法类型', '防御');
+    await chooseSelectOption(user, '攻击类型', '内功');
+    await chooseSelectOption(user, '攻击方式', '远程');
     await chooseSelectOption(user, '无界', '无界');
     await user.click(screen.getByRole('button', { name: '搜索' }));
     expect(onSearch).toHaveBeenCalledWith(
       expect.objectContaining({
         kungfuType: 'defense',
+        attackType: 'internal',
+        attackMethod: 'ranged',
         isUnlimited: 'true',
       }),
     );

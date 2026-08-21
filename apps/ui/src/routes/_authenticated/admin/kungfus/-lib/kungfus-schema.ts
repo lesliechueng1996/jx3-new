@@ -16,6 +16,8 @@ export const kungfusSearchSchema = paginationSearchQuerySchema.extend({
     .optional()
     .transform((val) => val?.trim() || undefined),
   kungfuType: z.enum(['defense', 'heal', 'attack']).optional(),
+  attackType: z.enum(['internal', 'external']).optional(),
+  attackMethod: z.enum(['melee', 'ranged']).optional(),
   isUnlimited: z.enum(['true', 'false']).optional(),
 });
 
@@ -27,6 +29,8 @@ export const defaultKungfusSearch: KungfusSearch = {
   name: undefined,
   schoolId: undefined,
   kungfuType: undefined,
+  attackType: undefined,
+  attackMethod: undefined,
   isUnlimited: undefined,
 };
 
@@ -38,6 +42,8 @@ export const toListKungfusFilters = (
   name: search.name,
   schoolId: search.schoolId,
   kungfuType: search.kungfuType,
+  attackType: search.attackType,
+  attackMethod: search.attackMethod,
   isUnlimited:
     search.isUnlimited === 'true'
       ? true

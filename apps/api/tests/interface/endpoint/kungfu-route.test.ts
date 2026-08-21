@@ -93,7 +93,7 @@ describe('kungfuRoute', () => {
 
   it('lists kungfus', async () => {
     const response = await jsonRequest(
-      `?page=1&pageSize=20&name=紫&schoolId=${kungfuDetail.schoolId}&kungfuType=attack&isUnlimited=false`,
+      `?page=1&pageSize=20&name=紫&schoolId=${kungfuDetail.schoolId}&kungfuType=attack&attackType=internal&attackMethod=ranged&isUnlimited=false`,
     );
     const body = await response.json();
 

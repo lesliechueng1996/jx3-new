@@ -198,6 +198,8 @@ describe('kungfu-service', () => {
         name: '紫',
         schoolId: 'school-1',
         kungfuType: 'attack',
+        attackType: 'internal',
+        attackMethod: 'ranged',
         isUnlimited: false,
         page: 2,
         pageSize: 10,
