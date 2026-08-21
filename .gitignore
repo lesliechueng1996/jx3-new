@@ -5,6 +5,13 @@ node_modules
 .pnp
 .pnp.js
 
+# Garage local storage
+/garage/meta/
+/garage/data/
+
+# PostgreSQL local storage
+/postgres/data/
+
 # Local env files
 .env
 .env.local

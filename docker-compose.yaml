@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: jx3
+      POSTGRES_PASSWORD: jx3
+      POSTGRES_DB: jx3-new
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jx3 -d jx3-new"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  garage:
+    image: dxflrs/garage:v2.3.0
+    container_name: garage
+    restart: unless-stopped
+    command: ["/garage", "server", "--single-node"]
+    ports:
+      - "3900:3900" # S3 API
+      - "3901:3901" # RPC
+      - "3902:3902" # Web
+      - "3903:3903" # Admin API
+    volumes:
+      - ./garage/garage.toml:/etc/garage.toml:ro
+      - ./garage/meta:/var/lib/garage/meta
+      - ./garage/data:/var/lib/garage/data
+
+  garage-ui:
+    image: noooste/garage-ui:v0.12.1
+    container_name: garage-ui
+    restart: unless-stopped
+    volumes:
+      - ./garage/config.yaml:/app/config.yaml
+    ports:
+      - "8080:8080"
+    depends_on:
+      - garage
+    environment:
+      # Garage S3 Configuration
+      GARAGE_UI_GARAGE_ENDPOINT: "garage:3900"
+      GARAGE_UI_GARAGE_ADMIN_ENDPOINT: "http://garage:3903"
+
+      # Server Configuration
+      GARAGE_UI_SERVER_HOST: "0.0.0.0"
+      GARAGE_UI_SERVER_PORT: "8080"
+      GARAGE_UI_SERVER_ENVIRONMENT: "production"
+
+      # JWT Configuration
+      # IMPORTANT: Replace this with your own Ed25519 private key in production!
+      # Generate with: openssl genpkey -algorithm ED25519
+      GARAGE_UI_AUTH_JWT_PRIVATE_KEY: |
+        -----BEGIN PRIVATE KEY-----
+        MC4CAQAwBQYDK2VwBCIEIJn0F1x5Svi77YvauTimSy0SbYaJEzlaTROyrj0irabp
+        -----END PRIVATE KEY-----

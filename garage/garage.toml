@@ -1,0 +1,27 @@
+metadata_dir = "/var/lib/garage/meta"
+data_dir = "/var/lib/garage/data"
+db_engine = "sqlite"
+
+replication_factor = 1
+
+rpc_bind_addr = "0.0.0.0:3901"
+rpc_public_addr = "127.0.0.1:3901"
+rpc_secret = "5c65c99eecf945edec54ca36967ee097e8190963234bf5e48486c62a90566701"
+
+# Docker bind-mounts often look world-readable inside the container.
+allow_world_readable_secrets = true
+
+[s3_api]
+s3_region = "garage"
+api_bind_addr = "0.0.0.0:3900"
+root_domain = ".s3.garage.localhost"
+
+[s3_web]
+bind_addr = "0.0.0.0:3902"
+root_domain = ".web.garage.localhost"
+index = "index.html"
+
+[admin]
+api_bind_addr = "0.0.0.0:3903"
+admin_token = "mz6BXvR9siEPn9XbHE+dOhxptmSDNr2UBj/nFk8jIAw="
+metrics_token = "tabeuMVjWHUTlyZBz98QOoXUeJi93NkUxuLoy7UPdXE="

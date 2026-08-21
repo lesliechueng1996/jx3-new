@@ -1,0 +1,5 @@
+# PostgreSQL Docker data
+/postgres/
+
+/garage/meta/
+/garage/data/
