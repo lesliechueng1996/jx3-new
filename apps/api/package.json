@@ -23,6 +23,7 @@
     "@elysia/openapi": "^1.4.15",
     "@elysiajs/cors": "^1.4.2",
     "@jx3/db": "workspace:*",
+    "@jx3/jx3api": "workspace:*",
     "@logtape/drizzle-orm": "^2.3.1",
     "@logtape/elysia": "^2.3.0",
     "@logtape/file": "^2.3.0",

@@ -1,14 +1,19 @@
-/** Raw server detail payload from jx3api `master/search` endpoint. */
+/** Raw server status item from jx3api `server/status/check?type=1`. */
 export interface Jx3apiMasterSearchDataRaw {
-  id: string;
-  center: string;
+  server: string;
+  lasttime: number;
+  shuttime: number;
+  status: number;
   zone: string;
-  name: string;
-  event: number;
-  voice: Record<string, number[]>;
-  alias: string[];
-  slave: string[];
 }
+
+/**
+ * Payload of `server/status/check?type=1`.
+ * A matching server returns an array; a miss returns an empty object.
+ */
+export type Jx3apiServerStatusCheckDataRaw =
+  | Jx3apiMasterSearchDataRaw[]
+  | Record<string, never>;
 
 /** Envelope returned by jx3api.com APIs. */
 export interface Jx3apiEnvelopeRaw<T> {
@@ -18,29 +23,29 @@ export interface Jx3apiEnvelopeRaw<T> {
   time: number;
 }
 
-/** Normalized game server detail used across the monorepo. */
+/** Normalized game server status used across the monorepo. */
 export interface GameServerDetail {
-  id: string;
-  center: string;
   zone: string;
   name: string;
-  event: number;
-  voice: Record<string, number[]>;
-  alias: string[];
-  slaveServers: string[];
+  status: number;
+  lastTime: number;
+  shutTime: number;
+}
+
+export function isServerStatusCheckList(
+  data: Jx3apiServerStatusCheckDataRaw,
+): data is Jx3apiMasterSearchDataRaw[] {
+  return Array.isArray(data);
 }
 
 export function mapMasterSearchData(
   raw: Jx3apiMasterSearchDataRaw,
 ): GameServerDetail {
   return {
-    id: raw.id,
-    center: raw.center,
     zone: raw.zone,
-    name: raw.name,
-    event: raw.event,
-    voice: raw.voice,
-    alias: raw.alias,
-    slaveServers: raw.slave,
+    name: raw.server,
+    status: raw.status,
+    lastTime: raw.lasttime,
+    shutTime: raw.shuttime,
   };
 }

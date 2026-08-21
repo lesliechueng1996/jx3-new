@@ -1,31 +1,36 @@
 import { describe, expect, it } from 'bun:test';
 import {
+  isServerStatusCheckList,
   type Jx3apiMasterSearchDataRaw,
   mapMasterSearchData,
 } from '../../../../src/providers/jx3api/types/master-search';
 
-describe('mapMasterSearchData', () => {
-  it('maps slave servers onto the normalized field', () => {
-    const raw: Jx3apiMasterSearchDataRaw = {
-      id: '42',
-      center: '电信',
-      zone: '电信一区',
-      name: '梦江南',
-      event: 1,
-      voice: { 开服: [8, 30] },
-      alias: ['梦江'],
-      slave: ['绝代天骄', '龙争虎斗'],
-    };
+const raw: Jx3apiMasterSearchDataRaw = {
+  server: '梦江南',
+  lasttime: 1_786_935_237,
+  shuttime: 1_786_919_757,
+  status: 1,
+  zone: '电信区',
+};
 
+describe('isServerStatusCheckList', () => {
+  it('accepts a list of status items', () => {
+    expect(isServerStatusCheckList([raw])).toBe(true);
+  });
+
+  it('rejects an empty object miss payload', () => {
+    expect(isServerStatusCheckList({})).toBe(false);
+  });
+});
+
+describe('mapMasterSearchData', () => {
+  it('maps snake_case timestamps and server onto the normalized fields', () => {
     expect(mapMasterSearchData(raw)).toEqual({
-      id: '42',
-      center: '电信',
-      zone: '电信一区',
+      zone: '电信区',
       name: '梦江南',
-      event: 1,
-      voice: { 开服: [8, 30] },
-      alias: ['梦江'],
-      slaveServers: ['绝代天骄', '龙争虎斗'],
+      status: 1,
+      lastTime: 1_786_935_237,
+      shutTime: 1_786_919_757,
     });
   });
 });

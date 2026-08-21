@@ -1,0 +1,85 @@
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Spinner } from '@/components/ui/spinner';
+import type { AdminGameServerFormValues } from '@/lib/api/admin/admin-game-servers-api';
+import type { GameServerFormValues } from '../-lib/game-servers-form-schema';
+import { parseAliasInput } from '../-lib/game-servers-helpers';
+import {
+  GameServerFormComponent,
+  type GameServerFormFields,
+} from './GameServerFormComponent';
+
+type GameServerCreateDialogComponentProps = {
+  open: boolean;
+  pending: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (values: AdminGameServerFormValues) => void;
+};
+
+const emptyForm = (): GameServerFormFields => ({
+  serverId: '',
+  zone: '',
+  name: '',
+  aliasText: '',
+});
+
+export function GameServerCreateDialogComponent({
+  open,
+  pending,
+  onOpenChange,
+  onSubmit,
+}: GameServerCreateDialogComponentProps) {
+  const handleSubmit = (values: GameServerFormValues) => {
+    onSubmit({
+      serverId: values.serverId,
+      zone: values.zone,
+      name: values.name,
+      alias: parseAliasInput(values.aliasText),
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>新增区服</DialogTitle>
+          <DialogDescription>
+            填写服务器 ID、大区与名称。别名可用中英文逗号分隔。
+          </DialogDescription>
+        </DialogHeader>
+        {open ? (
+          <GameServerFormComponent
+            formId="game-server-create-form"
+            initialValues={emptyForm()}
+            pending={pending}
+            onSubmit={handleSubmit}
+          />
+        ) : null}
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            取消
+          </Button>
+          <Button
+            type="submit"
+            form="game-server-create-form"
+            disabled={pending}
+          >
+            {pending ? <Spinner data-icon="inline-start" /> : null}
+            保存
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

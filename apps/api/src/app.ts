@@ -2,6 +2,7 @@ import { openapi } from '@elysia/openapi';
 import { cors } from '@elysiajs/cors';
 import { Elysia } from 'elysia';
 import { env } from './infrastructure/config/env';
+import { gameServerTag } from './interface/endpoint/game-server-route';
 import { idiomTag } from './interface/endpoint/idiom-route';
 import { kungfuTag } from './interface/endpoint/kungfu-route';
 import { schoolTag } from './interface/endpoint/school-route';
@@ -24,7 +25,7 @@ export const app = new Elysia()
         info: { title: '四堆 API', version: '1.0.0' },
         components: await OpenAPI.components,
         paths: await OpenAPI.getPaths(),
-        tags: [idiomTag, kungfuTag, schoolTag, userTag],
+        tags: [gameServerTag, idiomTag, kungfuTag, schoolTag, userTag],
       },
     }),
   )

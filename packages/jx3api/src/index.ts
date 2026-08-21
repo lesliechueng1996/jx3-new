@@ -2,9 +2,11 @@ export { type FetchJsonOptions, fetchJson } from './client';
 export { Jx3ApiError } from './errors';
 export {
   type GameServerDetail,
+  isServerStatusCheckList,
   JX3API_BASE_URL,
   type Jx3apiEnvelopeRaw,
   type Jx3apiMasterSearchDataRaw,
+  type Jx3apiServerStatusCheckDataRaw,
   mapMasterSearchData,
   type SearchGameServerOptions,
   searchGameServer,

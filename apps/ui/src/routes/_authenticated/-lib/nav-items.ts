@@ -4,6 +4,7 @@ import {
   FlameIcon,
   Gamepad2Icon,
   LayoutDashboardIcon,
+  ServerIcon,
   SwordsIcon,
   UsersIcon,
 } from 'lucide-react';
@@ -30,6 +31,11 @@ export const navItems: NavItem[] = [
     title: '用户管理',
     icon: UsersIcon,
     to: '/admin/users',
+  },
+  {
+    title: '区服管理',
+    icon: ServerIcon,
+    to: '/admin/game-servers',
   },
   {
     title: '门派管理',

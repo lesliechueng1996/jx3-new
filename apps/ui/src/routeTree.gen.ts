@@ -14,6 +14,7 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as ForbiddenIndexRouteImport } from './routes/forbidden/index'
 import { Route as LoginIndexRouteImport } from './routes/login/index'
+import { Route as AuthenticatedAdminGameServersIndexRouteImport } from './routes/_authenticated/admin/game-servers/index'
 import { Route as AuthenticatedAdminIdiomsIndexRouteImport } from './routes/_authenticated/admin/idioms/index'
 import { Route as AuthenticatedAdminKungfusIndexRouteImport } from './routes/_authenticated/admin/kungfus/index'
 import { Route as AuthenticatedAdminSchoolsIndexRouteImport } from './routes/_authenticated/admin/schools/index'
@@ -45,6 +46,12 @@ const LoginIndexRoute = LoginIndexRouteImport.update({
   path: '/login/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminGameServersIndexRoute =
+  AuthenticatedAdminGameServersIndexRouteImport.update({
+    id: '/game-servers/',
+    path: '/game-servers/',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminIdiomsIndexRoute =
   AuthenticatedAdminIdiomsIndexRouteImport.update({
     id: '/idioms/',
@@ -87,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/forbidden/': typeof ForbiddenIndexRoute
   '/login/': typeof LoginIndexRoute
+  '/admin/game-servers/': typeof AuthenticatedAdminGameServersIndexRoute
   '/admin/idioms/': typeof AuthenticatedAdminIdiomsIndexRoute
   '/admin/kungfus/': typeof AuthenticatedAdminKungfusIndexRoute
   '/admin/schools/': typeof AuthenticatedAdminSchoolsIndexRoute
@@ -99,6 +107,7 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/forbidden': typeof ForbiddenIndexRoute
   '/login': typeof LoginIndexRoute
+  '/admin/game-servers': typeof AuthenticatedAdminGameServersIndexRoute
   '/admin/idioms': typeof AuthenticatedAdminIdiomsIndexRoute
   '/admin/kungfus': typeof AuthenticatedAdminKungfusIndexRoute
   '/admin/schools': typeof AuthenticatedAdminSchoolsIndexRoute
@@ -113,6 +122,7 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/forbidden/': typeof ForbiddenIndexRoute
   '/login/': typeof LoginIndexRoute
+  '/_authenticated/admin/game-servers/': typeof AuthenticatedAdminGameServersIndexRoute
   '/_authenticated/admin/idioms/': typeof AuthenticatedAdminIdiomsIndexRoute
   '/_authenticated/admin/kungfus/': typeof AuthenticatedAdminKungfusIndexRoute
   '/_authenticated/admin/schools/': typeof AuthenticatedAdminSchoolsIndexRoute
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/forbidden/'
     | '/login/'
+    | '/admin/game-servers/'
     | '/admin/idioms/'
     | '/admin/kungfus/'
     | '/admin/schools/'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/'
     | '/forbidden'
     | '/login'
+    | '/admin/game-servers'
     | '/admin/idioms'
     | '/admin/kungfus'
     | '/admin/schools'
@@ -152,6 +164,7 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/forbidden/'
     | '/login/'
+    | '/_authenticated/admin/game-servers/'
     | '/_authenticated/admin/idioms/'
     | '/_authenticated/admin/kungfus/'
     | '/_authenticated/admin/schools/'
@@ -203,6 +216,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/game-servers/': {
+      id: '/_authenticated/admin/game-servers/'
+      path: '/game-servers'
+      fullPath: '/admin/game-servers/'
+      preLoaderRoute: typeof AuthenticatedAdminGameServersIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/idioms/': {
       id: '/_authenticated/admin/idioms/'
       path: '/idioms'
@@ -249,6 +269,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminGameServersIndexRoute: typeof AuthenticatedAdminGameServersIndexRoute
   AuthenticatedAdminIdiomsIndexRoute: typeof AuthenticatedAdminIdiomsIndexRoute
   AuthenticatedAdminKungfusIndexRoute: typeof AuthenticatedAdminKungfusIndexRoute
   AuthenticatedAdminSchoolsIndexRoute: typeof AuthenticatedAdminSchoolsIndexRoute
@@ -257,6 +278,8 @@ interface AuthenticatedAdminRouteRouteChildren {
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
+    AuthenticatedAdminGameServersIndexRoute:
+      AuthenticatedAdminGameServersIndexRoute,
     AuthenticatedAdminIdiomsIndexRoute: AuthenticatedAdminIdiomsIndexRoute,
     AuthenticatedAdminKungfusIndexRoute: AuthenticatedAdminKungfusIndexRoute,
     AuthenticatedAdminSchoolsIndexRoute: AuthenticatedAdminSchoolsIndexRoute,

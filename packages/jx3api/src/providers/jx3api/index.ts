@@ -6,7 +6,9 @@ export {
 } from './master-search';
 export {
   type GameServerDetail,
+  isServerStatusCheckList,
   type Jx3apiEnvelopeRaw,
   type Jx3apiMasterSearchDataRaw,
+  type Jx3apiServerStatusCheckDataRaw,
   mapMasterSearchData,
 } from './types/master-search';
