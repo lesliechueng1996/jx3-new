@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   BookOpenTextIcon,
+  CastleIcon,
   FlameIcon,
   Gamepad2Icon,
   LayersIcon,
@@ -42,6 +43,11 @@ export const navItems: NavItem[] = [
     title: '资料片管理',
     icon: LayersIcon,
     to: '/admin/game-expansions',
+  },
+  {
+    title: '副本管理',
+    icon: CastleIcon,
+    to: '/admin/game-dungeons',
   },
   {
     title: '门派管理',
