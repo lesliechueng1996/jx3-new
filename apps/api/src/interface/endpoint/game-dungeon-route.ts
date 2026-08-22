@@ -3,9 +3,10 @@ import {
   deleteAdminGameDungeon,
   getAdminGameDungeon,
   listAdminGameDungeons,
+  searchGameDungeons,
   updateAdminGameDungeon,
 } from '@api/application/service/game-dungeon-service';
-import { roleAdmin } from '@api/shared/util/auth';
+import { roleAdmin, roleUser } from '@api/shared/util/auth';
 import {
   AppResponse,
   createSuccessResponseSchema,
@@ -18,6 +19,8 @@ import {
   gameDungeonIdParamsSchema,
   listGameDungeonsQuerySchema,
   listGameDungeonsResponseSchema,
+  searchGameDungeonsQuerySchema,
+  searchGameDungeonsResponseSchema,
   updateGameDungeonBodySchema,
 } from '../schema/game-dungeon-schema';
 import { apiRoute } from './api-route';
@@ -37,6 +40,29 @@ const gameDungeonDetailResponse = {
 
 export const gameDungeonRoute = apiRoute.group('/game-dungeon', (app) =>
   app
+    .get(
+      '/search',
+      async ({ query, status }) => {
+        const result = await searchGameDungeons(query.name);
+        return status(200, AppResponse.success(result).toJson());
+      },
+      {
+        auth: roleUser,
+        query: searchGameDungeonsQuerySchema,
+        response: {
+          200: createSuccessResponseSchema(searchGameDungeonsResponseSchema),
+          400: errorResponseSchema,
+          403: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [gameDungeonTag.name],
+          summary: 'Search game dungeons by name',
+          description:
+            'Returns up to 10 dungeons matching name. Requires user role.',
+        },
+      },
+    )
     .post(
       '',
       async ({ body, status }) => {

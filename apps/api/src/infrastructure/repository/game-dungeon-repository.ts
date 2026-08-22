@@ -11,6 +11,7 @@ import {
   ilike,
   raidRun,
   type SQL,
+  sql,
 } from '@api/shared/util/db';
 
 type GameDungeonInsert = typeof gameDungeon.$inferInsert;
@@ -69,6 +70,39 @@ export class GameDungeonRepository {
     }
 
     return and(...conditions);
+  }
+
+  searchByName(name: string, limit: number) {
+    const pattern = `%${name}%`;
+    const prefixPattern = `${name}%`;
+
+    return db
+      .select({
+        id: gameDungeon.id,
+        name: gameDungeon.name,
+        expansionId: gameDungeon.expansionId,
+        expansionName: gameExpansion.name,
+        seasonId: gameDungeon.seasonId,
+        seasonName: gameSeason.name,
+        playerLimit: gameDungeon.playerLimit,
+        difficulty: gameDungeon.difficulty,
+        levelRequirement: gameDungeon.levelRequirement,
+        bossCount: gameDungeon.bossCount,
+      })
+      .from(gameDungeon)
+      .innerJoin(gameExpansion, eq(gameDungeon.expansionId, gameExpansion.id))
+      .innerJoin(gameSeason, eq(gameDungeon.seasonId, gameSeason.id))
+      .where(ilike(gameDungeon.name, pattern))
+      .orderBy(
+        sql`case
+          when ${gameDungeon.name} ilike ${name} then 0
+          when ${gameDungeon.name} ilike ${prefixPattern} then 1
+          else 2
+        end`,
+        sql`char_length(${gameDungeon.name})`,
+        gameDungeon.name,
+      )
+      .limit(limit);
   }
 
   listPagination(where: SQL | undefined, limit: number, offset: number) {
