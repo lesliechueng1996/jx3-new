@@ -7,6 +7,7 @@ import {
   eq,
   gameItem,
   ilike,
+  isNull,
   or,
   raidLoot,
   type SQL,
@@ -47,6 +48,10 @@ export class GameItemRepository {
 
     if (query.quality) {
       conditions.push(eq(gameItem.quality, query.quality));
+    }
+
+    if (query.missingIcon) {
+      conditions.push(or(isNull(gameItem.icon), eq(gameItem.icon, '')) as SQL);
     }
 
     if (conditions.length === 0) {

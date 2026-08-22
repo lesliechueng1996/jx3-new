@@ -142,6 +142,7 @@ describe('game-item-service', () => {
         name: '玄',
         type: 'special',
         quality: 'orange',
+        missingIcon: true,
         page: 2,
         pageSize: 10,
       }),

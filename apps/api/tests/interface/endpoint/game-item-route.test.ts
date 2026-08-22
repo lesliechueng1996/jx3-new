@@ -87,7 +87,7 @@ describe('gameItemRoute', () => {
 
   it('lists items', async () => {
     const response = await jsonRequest(
-      '?page=1&pageSize=20&name=玄&type=special&quality=orange',
+      '?page=1&pageSize=20&name=玄&type=special&quality=orange&missingIcon=true',
     );
     const body = await response.json();
 

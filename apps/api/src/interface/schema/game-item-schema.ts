@@ -91,6 +91,7 @@ export const listGameItemsQuerySchema = t.Composite([
     name: t.Optional(t.String()),
     type: t.Optional(itemTypeSchema),
     quality: t.Optional(itemQualitySchema),
+    missingIcon: t.Optional(t.Boolean()),
   }),
 ]);
 

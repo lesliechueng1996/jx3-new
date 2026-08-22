@@ -76,6 +76,7 @@ describe('admin game items route', () => {
           name: undefined,
           type: undefined,
           quality: undefined,
+          missingIcon: undefined,
           page: 1,
         }),
       );

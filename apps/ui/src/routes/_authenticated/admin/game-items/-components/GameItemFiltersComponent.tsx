@@ -38,9 +38,16 @@ const QUALITY_FILTER_ITEMS = [
   })),
 ];
 
+const ICON_FILTER_ITEMS = [
+  { label: '全部', value: 'all' },
+  { label: '无图标', value: 'true' },
+];
+
 const typeFilterValue = (type: GameItemsSearch['type']) => type ?? 'all';
 const qualityFilterValue = (quality: GameItemsSearch['quality']) =>
   quality ?? 'all';
+const iconFilterValue = (missingIcon: GameItemsSearch['missingIcon']) =>
+  missingIcon ?? 'all';
 
 export function GameItemFiltersComponent({
   committedFilters,
@@ -139,6 +146,36 @@ export function GameItemFiltersComponent({
             <SelectContent alignItemWithTrigger={false}>
               <SelectGroup>
                 {QUALITY_FILTER_ITEMS.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="filter-game-item-icon">图标</FieldLabel>
+          <Select
+            items={ICON_FILTER_ITEMS}
+            value={iconFilterValue(draft.missingIcon)}
+            onValueChange={(next) => {
+              if (next === 'true') {
+                setDraft((current) => ({ ...current, missingIcon: 'true' }));
+                return;
+              }
+              setDraft((current) => ({
+                ...current,
+                missingIcon: undefined,
+              }));
+            }}
+          >
+            <SelectTrigger id="filter-game-item-icon" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent alignItemWithTrigger={false}>
+              <SelectGroup>
+                {ICON_FILTER_ITEMS.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
                     {item.label}
                   </SelectItem>

@@ -9,6 +9,7 @@ export type ListGameItemsFilters = {
   name?: string;
   type?: ItemType;
   quality?: ItemQuality;
+  missingIcon?: boolean;
 };
 
 export const adminListGameItems = async (filters: ListGameItemsFilters) => {
@@ -19,6 +20,7 @@ export const adminListGameItems = async (filters: ListGameItemsFilters) => {
       name: filters.name,
       type: filters.type,
       quality: filters.quality,
+      missingIcon: filters.missingIcon,
     },
   });
 

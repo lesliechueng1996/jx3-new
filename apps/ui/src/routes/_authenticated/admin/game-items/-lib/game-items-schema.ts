@@ -28,6 +28,7 @@ export const gameItemsSearchSchema = paginationSearchQuerySchema.extend({
     .transform((val) => val?.trim() ?? undefined),
   type: itemTypeSearchSchema.optional(),
   quality: itemQualitySearchSchema.optional(),
+  missingIcon: z.enum(['true']).optional(),
 });
 
 export type GameItemsSearch = z.infer<typeof gameItemsSearchSchema>;
@@ -38,6 +39,7 @@ export const defaultGameItemsSearch: GameItemsSearch = {
   name: undefined,
   type: undefined,
   quality: undefined,
+  missingIcon: undefined,
 };
 
 export const toListGameItemsFilters = (
@@ -48,4 +50,5 @@ export const toListGameItemsFilters = (
   name: search.name,
   type: search.type,
   quality: search.quality,
+  missingIcon: search.missingIcon === 'true' ? true : undefined,
 });

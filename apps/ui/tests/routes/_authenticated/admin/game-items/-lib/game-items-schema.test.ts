@@ -14,6 +14,7 @@ describe('gameItemsSearchSchema', () => {
         name: '  上品玄晶  ',
         type: 'special',
         quality: 'orange',
+        missingIcon: 'true',
       }),
     ).toEqual({
       page: 2,
@@ -21,6 +22,7 @@ describe('gameItemsSearchSchema', () => {
       name: '上品玄晶',
       type: 'special',
       quality: 'orange',
+      missingIcon: 'true',
     });
   });
 
@@ -38,6 +40,7 @@ describe('gameItemsSearchSchema', () => {
       name: undefined,
       type: undefined,
       quality: undefined,
+      missingIcon: undefined,
     });
   });
 });
@@ -50,6 +53,7 @@ describe('toListGameItemsFilters', () => {
         name: '玄',
         type: 'small_iron',
         quality: 'purple',
+        missingIcon: 'true',
       }),
     ).toEqual({
       page: 1,
@@ -57,6 +61,10 @@ describe('toListGameItemsFilters', () => {
       name: '玄',
       type: 'small_iron',
       quality: 'purple',
+      missingIcon: true,
     });
+    expect(toListGameItemsFilters(defaultGameItemsSearch).missingIcon).toBe(
+      undefined,
+    );
   });
 });

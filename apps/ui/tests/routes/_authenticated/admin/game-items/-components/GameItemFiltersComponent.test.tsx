@@ -40,6 +40,7 @@ describe('GameItemFiltersComponent', () => {
     await user.type(nameInput, '上品玄晶');
     await chooseSelectOption(user, '类型', '特殊');
     await chooseSelectOption(user, '品质', '橙');
+    await chooseSelectOption(user, '图标', '无图标');
     await user.click(screen.getByRole('button', { name: '搜索' }));
     expect(onSearch).toHaveBeenCalledWith({
       page: 1,
@@ -47,6 +48,7 @@ describe('GameItemFiltersComponent', () => {
       name: '上品玄晶',
       type: 'special',
       quality: 'orange',
+      missingIcon: 'true',
     });
 
     await user.click(screen.getByRole('button', { name: '重置' }));
@@ -66,12 +68,14 @@ describe('GameItemFiltersComponent', () => {
 
     await chooseSelectOption(user, '类型', '全部');
     await chooseSelectOption(user, '品质', '全部');
+    await chooseSelectOption(user, '图标', '全部');
     await user.type(screen.getByLabelText('名称'), '{Enter}');
     expect(onSearch).toHaveBeenCalledWith(
       expect.objectContaining({
         page: 1,
         type: undefined,
         quality: undefined,
+        missingIcon: undefined,
       }),
     );
   });
@@ -109,9 +113,10 @@ describe('GameItemFiltersComponent', () => {
     );
 
     await chooseSelectOption(user, '品质', '紫');
+    await chooseSelectOption(user, '图标', '无图标');
     await user.click(screen.getByRole('button', { name: '搜索' }));
     expect(onSearch).toHaveBeenCalledWith(
-      expect.objectContaining({ quality: 'purple' }),
+      expect.objectContaining({ quality: 'purple', missingIcon: 'true' }),
     );
   });
 
@@ -125,11 +130,14 @@ describe('GameItemFiltersComponent', () => {
     );
     rerender(
       <GameItemFiltersComponent
-        committedFilters={{ ...filters, name: '新' }}
+        committedFilters={{ ...filters, name: '新', missingIcon: 'true' }}
         onSearch={vi.fn()}
         onReset={vi.fn()}
       />,
     );
     expect(screen.getByLabelText('名称')).toHaveValue('新');
+    expect(screen.getByRole('combobox', { name: '图标' })).toHaveTextContent(
+      '无图标',
+    );
   });
 });

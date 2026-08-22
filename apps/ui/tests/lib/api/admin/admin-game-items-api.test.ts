@@ -58,6 +58,7 @@ describe('admin-game-items-api', () => {
         name: '玄',
         type: 'special',
         quality: 'orange',
+        missingIcon: true,
       }),
     ).resolves.toEqual(payload);
     expect(itemGet).toHaveBeenCalledWith({
@@ -67,6 +68,7 @@ describe('admin-game-items-api', () => {
         name: '玄',
         type: 'special',
         quality: 'orange',
+        missingIcon: true,
       },
     });
   });
