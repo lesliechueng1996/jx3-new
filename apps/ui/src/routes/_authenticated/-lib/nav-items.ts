@@ -6,6 +6,7 @@ import {
   Gamepad2Icon,
   LayersIcon,
   LayoutDashboardIcon,
+  PackageIcon,
   ServerIcon,
   SwordsIcon,
   UsersIcon,
@@ -48,6 +49,11 @@ export const navItems: NavItem[] = [
     title: '副本管理',
     icon: CastleIcon,
     to: '/admin/game-dungeons',
+  },
+  {
+    title: '物品管理',
+    icon: PackageIcon,
+    to: '/admin/game-items',
   },
   {
     title: '门派管理',

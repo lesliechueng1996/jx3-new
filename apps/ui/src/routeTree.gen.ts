@@ -16,6 +16,7 @@ import { Route as ForbiddenIndexRouteImport } from './routes/forbidden/index'
 import { Route as LoginIndexRouteImport } from './routes/login/index'
 import { Route as AuthenticatedAdminGameDungeonsIndexRouteImport } from './routes/_authenticated/admin/game-dungeons/index'
 import { Route as AuthenticatedAdminGameExpansionsIndexRouteImport } from './routes/_authenticated/admin/game-expansions/index'
+import { Route as AuthenticatedAdminGameItemsIndexRouteImport } from './routes/_authenticated/admin/game-items/index'
 import { Route as AuthenticatedAdminGameServersIndexRouteImport } from './routes/_authenticated/admin/game-servers/index'
 import { Route as AuthenticatedAdminIdiomsIndexRouteImport } from './routes/_authenticated/admin/idioms/index'
 import { Route as AuthenticatedAdminKungfusIndexRouteImport } from './routes/_authenticated/admin/kungfus/index'
@@ -58,6 +59,12 @@ const AuthenticatedAdminGameExpansionsIndexRoute =
   AuthenticatedAdminGameExpansionsIndexRouteImport.update({
     id: '/game-expansions/',
     path: '/game-expansions/',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminGameItemsIndexRoute =
+  AuthenticatedAdminGameItemsIndexRouteImport.update({
+    id: '/game-items/',
+    path: '/game-items/',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 const AuthenticatedAdminGameServersIndexRoute =
@@ -110,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/login/': typeof LoginIndexRoute
   '/admin/game-dungeons/': typeof AuthenticatedAdminGameDungeonsIndexRoute
   '/admin/game-expansions/': typeof AuthenticatedAdminGameExpansionsIndexRoute
+  '/admin/game-items/': typeof AuthenticatedAdminGameItemsIndexRoute
   '/admin/game-servers/': typeof AuthenticatedAdminGameServersIndexRoute
   '/admin/idioms/': typeof AuthenticatedAdminIdiomsIndexRoute
   '/admin/kungfus/': typeof AuthenticatedAdminKungfusIndexRoute
@@ -125,6 +133,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginIndexRoute
   '/admin/game-dungeons': typeof AuthenticatedAdminGameDungeonsIndexRoute
   '/admin/game-expansions': typeof AuthenticatedAdminGameExpansionsIndexRoute
+  '/admin/game-items': typeof AuthenticatedAdminGameItemsIndexRoute
   '/admin/game-servers': typeof AuthenticatedAdminGameServersIndexRoute
   '/admin/idioms': typeof AuthenticatedAdminIdiomsIndexRoute
   '/admin/kungfus': typeof AuthenticatedAdminKungfusIndexRoute
@@ -142,6 +151,7 @@ export interface FileRoutesById {
   '/login/': typeof LoginIndexRoute
   '/_authenticated/admin/game-dungeons/': typeof AuthenticatedAdminGameDungeonsIndexRoute
   '/_authenticated/admin/game-expansions/': typeof AuthenticatedAdminGameExpansionsIndexRoute
+  '/_authenticated/admin/game-items/': typeof AuthenticatedAdminGameItemsIndexRoute
   '/_authenticated/admin/game-servers/': typeof AuthenticatedAdminGameServersIndexRoute
   '/_authenticated/admin/idioms/': typeof AuthenticatedAdminIdiomsIndexRoute
   '/_authenticated/admin/kungfus/': typeof AuthenticatedAdminKungfusIndexRoute
@@ -159,6 +169,7 @@ export interface FileRouteTypes {
     | '/login/'
     | '/admin/game-dungeons/'
     | '/admin/game-expansions/'
+    | '/admin/game-items/'
     | '/admin/game-servers/'
     | '/admin/idioms/'
     | '/admin/kungfus/'
@@ -174,6 +185,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/admin/game-dungeons'
     | '/admin/game-expansions'
+    | '/admin/game-items'
     | '/admin/game-servers'
     | '/admin/idioms'
     | '/admin/kungfus'
@@ -190,6 +202,7 @@ export interface FileRouteTypes {
     | '/login/'
     | '/_authenticated/admin/game-dungeons/'
     | '/_authenticated/admin/game-expansions/'
+    | '/_authenticated/admin/game-items/'
     | '/_authenticated/admin/game-servers/'
     | '/_authenticated/admin/idioms/'
     | '/_authenticated/admin/kungfus/'
@@ -256,6 +269,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminGameExpansionsIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/game-items/': {
+      id: '/_authenticated/admin/game-items/'
+      path: '/game-items'
+      fullPath: '/admin/game-items/'
+      preLoaderRoute: typeof AuthenticatedAdminGameItemsIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/game-servers/': {
       id: '/_authenticated/admin/game-servers/'
       path: '/game-servers'
@@ -311,6 +331,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminGameDungeonsIndexRoute: typeof AuthenticatedAdminGameDungeonsIndexRoute
   AuthenticatedAdminGameExpansionsIndexRoute: typeof AuthenticatedAdminGameExpansionsIndexRoute
+  AuthenticatedAdminGameItemsIndexRoute: typeof AuthenticatedAdminGameItemsIndexRoute
   AuthenticatedAdminGameServersIndexRoute: typeof AuthenticatedAdminGameServersIndexRoute
   AuthenticatedAdminIdiomsIndexRoute: typeof AuthenticatedAdminIdiomsIndexRoute
   AuthenticatedAdminKungfusIndexRoute: typeof AuthenticatedAdminKungfusIndexRoute
@@ -324,6 +345,8 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
       AuthenticatedAdminGameDungeonsIndexRoute,
     AuthenticatedAdminGameExpansionsIndexRoute:
       AuthenticatedAdminGameExpansionsIndexRoute,
+    AuthenticatedAdminGameItemsIndexRoute:
+      AuthenticatedAdminGameItemsIndexRoute,
     AuthenticatedAdminGameServersIndexRoute:
       AuthenticatedAdminGameServersIndexRoute,
     AuthenticatedAdminIdiomsIndexRoute: AuthenticatedAdminIdiomsIndexRoute,

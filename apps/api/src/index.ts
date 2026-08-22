@@ -2,6 +2,7 @@ import { app } from './app';
 import { initializeLogger, logger } from './infrastructure/logger';
 import { gameDungeonRoute } from './interface/endpoint/game-dungeon-route';
 import { gameExpansionRoute } from './interface/endpoint/game-expansion-route';
+import { gameItemRoute } from './interface/endpoint/game-item-route';
 import { gameSeasonRoute } from './interface/endpoint/game-season-route';
 import { gameServerRoute } from './interface/endpoint/game-server-route';
 import { idiomRoute } from './interface/endpoint/idiom-route';
@@ -14,6 +15,7 @@ await initializeLogger();
 const server = app
   .use(gameDungeonRoute)
   .use(gameExpansionRoute)
+  .use(gameItemRoute)
   .use(gameSeasonRoute)
   .use(gameServerRoute)
   .use(idiomRoute)

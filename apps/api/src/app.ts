@@ -4,6 +4,7 @@ import { Elysia } from 'elysia';
 import { env } from './infrastructure/config/env';
 import { gameDungeonTag } from './interface/endpoint/game-dungeon-route';
 import { gameExpansionTag } from './interface/endpoint/game-expansion-route';
+import { gameItemTag } from './interface/endpoint/game-item-route';
 import { gameSeasonTag } from './interface/endpoint/game-season-route';
 import { gameServerTag } from './interface/endpoint/game-server-route';
 import { idiomTag } from './interface/endpoint/idiom-route';
@@ -31,6 +32,7 @@ export const app = new Elysia()
         tags: [
           gameDungeonTag,
           gameExpansionTag,
+          gameItemTag,
           gameSeasonTag,
           gameServerTag,
           idiomTag,
