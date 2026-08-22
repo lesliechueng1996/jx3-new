@@ -4,13 +4,41 @@ import type { IdiomGuessResult } from '../-lib/idiom-guess-schema';
 type SearchResultPanelComponentProps = {
   result: IdiomGuessResult | null;
   searching: boolean;
+  onSelectIdiom: (text: string) => void;
 };
 
 const POSITION_LABELS = ['第 1 字', '第 2 字', '第 3 字', '第 4 字'];
 
+type SelectableIdiomRowProps = {
+  title: string;
+  subtitle: string;
+  selectLabel: string;
+  onSelect: () => void;
+};
+
+const SelectableIdiomRow = ({
+  title,
+  subtitle,
+  selectLabel,
+  onSelect,
+}: SelectableIdiomRowProps) => (
+  <li>
+    <button
+      type="button"
+      className="w-full rounded-md border px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
+      aria-label={selectLabel}
+      onClick={onSelect}
+    >
+      <div className="font-medium">{title}</div>
+      <div className="text-muted-foreground">{subtitle}</div>
+    </button>
+  </li>
+);
+
 const SearchResultPanelComponent = ({
   result,
   searching,
+  onSelectIdiom,
 }: SearchResultPanelComponentProps) => {
   if (searching) {
     return (
@@ -47,14 +75,22 @@ const SearchResultPanelComponent = ({
       ) : null}
 
       {result.items.length > 0 ? (
-        <ul className="space-y-2">
-          {result.items.map((item) => (
-            <li key={item.id} className="rounded-md border px-3 py-2 text-sm">
-              <div className="font-medium">{item.text}</div>
-              <div className="text-muted-foreground">{item.pinyin}</div>
-            </li>
-          ))}
-        </ul>
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">
+            点击候选即可填入下方输入框
+          </p>
+          <ul className="space-y-2">
+            {result.items.map((item) => (
+              <SelectableIdiomRow
+                key={item.id}
+                title={item.text}
+                subtitle={item.pinyin}
+                selectLabel={`将 ${item.text} 填入输入框`}
+                onSelect={() => onSelectIdiom(item.text)}
+              />
+            ))}
+          </ul>
+        </div>
       ) : null}
 
       {result.total > 1 ? (
@@ -95,13 +131,13 @@ const SearchResultPanelComponent = ({
           <h3 className="text-sm font-medium">建议试探词</h3>
           <ul className="space-y-2">
             {result.analysis.suggestedProbes.map((probe) => (
-              <li
+              <SelectableIdiomRow
                 key={probe.text}
-                className="rounded-md border px-3 py-2 text-sm"
-              >
-                <div className="font-medium">{probe.text}</div>
-                <div className="text-muted-foreground">{probe.reason}</div>
-              </li>
+                title={probe.text}
+                subtitle={probe.reason}
+                selectLabel={`将试探词 ${probe.text} 填入输入框`}
+                onSelect={() => onSelectIdiom(probe.text)}
+              />
             ))}
           </ul>
         </div>

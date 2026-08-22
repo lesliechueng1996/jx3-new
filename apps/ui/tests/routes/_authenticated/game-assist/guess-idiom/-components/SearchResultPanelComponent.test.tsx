@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import SearchResultPanelComponent from '@/routes/_authenticated/game-assist/guess-idiom/-components/SearchResultPanelComponent';
 import type { IdiomGuessResult } from '@/routes/_authenticated/game-assist/guess-idiom/-lib/idiom-guess-schema';
 
@@ -40,33 +40,75 @@ const result: IdiomGuessResult = {
 
 describe('SearchResultPanelComponent', () => {
   it('shows searching and empty states', () => {
+    const onSelectIdiom = vi.fn();
     const { rerender } = render(
-      <SearchResultPanelComponent result={null} searching />,
+      <SearchResultPanelComponent
+        result={null}
+        searching
+        onSelectIdiom={onSelectIdiom}
+      />,
     );
     expect(screen.getByText('正在检索成语…')).toBeInTheDocument();
 
-    rerender(<SearchResultPanelComponent result={null} searching={false} />);
+    rerender(
+      <SearchResultPanelComponent
+        result={null}
+        searching={false}
+        onSelectIdiom={onSelectIdiom}
+      />,
+    );
     expect(screen.getByText(/完成标注后点击/)).toBeInTheDocument();
   });
 
   it('renders matches, position analysis, and probes', async () => {
     const user = userEvent.setup();
-    render(<SearchResultPanelComponent result={result} searching={false} />);
+    const onSelectIdiom = vi.fn();
+    render(
+      <SearchResultPanelComponent
+        result={result}
+        searching={false}
+        onSelectIdiom={onSelectIdiom}
+      />,
+    );
 
     expect(screen.getByText('共 2 个候选')).toBeInTheDocument();
     expect(screen.getByText('一心一意')).toBeInTheDocument();
     expect(screen.getByText('还有多个候选')).toBeInTheDocument();
     expect(screen.getByText('真心实意')).toBeInTheDocument();
+    expect(screen.getByText('点击候选即可填入下方输入框')).toBeInTheDocument();
 
     await user.click(screen.getByText('查看位置分析'));
     expect(screen.getByText('第 1 字')).toBeInTheDocument();
     expect(screen.getByText('第 10 字')).toBeInTheDocument();
   });
 
+  it('fills the input when a candidate or probe is clicked', async () => {
+    const user = userEvent.setup();
+    const onSelectIdiom = vi.fn();
+    render(
+      <SearchResultPanelComponent
+        result={result}
+        searching={false}
+        onSelectIdiom={onSelectIdiom}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole('button', { name: '将 一心一意 填入输入框' }),
+    );
+    expect(onSelectIdiom).toHaveBeenCalledWith('一心一意');
+
+    await user.click(
+      screen.getByRole('button', { name: '将试探词 真心实意 填入输入框' }),
+    );
+    expect(onSelectIdiom).toHaveBeenCalledWith('真心实意');
+  });
+
   it('marks a unique match', () => {
     render(
       <SearchResultPanelComponent
         searching={false}
+        onSelectIdiom={vi.fn()}
         result={{
           items: [],
           total: 1,

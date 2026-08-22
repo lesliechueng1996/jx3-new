@@ -140,6 +140,7 @@ function GuessIdiomComponent() {
       <SearchResultPanelComponent
         result={searchResult}
         searching={searchMutation.isPending}
+        onSelectIdiom={setInputText}
       />
 
       <GuessRoundListComponent

@@ -131,6 +131,13 @@ describe('guess-idiom route', () => {
       expect(screen.getByText('唯一匹配')).toBeInTheDocument();
     });
 
+    await user.click(
+      screen.getByRole('button', { name: '将 一心一意 填入输入框' }),
+    );
+    expect(screen.getByPlaceholderText('输入 4 个汉字')).toHaveValue(
+      '一心一意',
+    );
+
     await user.click(screen.getByRole('button', { name: '添加成语到词库' }));
     await user.type(screen.getByLabelText('成语'), '真心实意');
     await user.click(screen.getByRole('button', { name: '保存' }));
