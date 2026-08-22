@@ -10,6 +10,15 @@ import {
   NotFoundException,
 } from '@api/shared/exception';
 
+type GameItemPublicRow = {
+  id: string;
+  name: string;
+  type: 'equipment' | 'special' | 'small_iron' | 'enchantment';
+  quality: 'white' | 'green' | 'blue' | 'purple' | 'orange';
+  icon: string | null;
+  alias: string[];
+};
+
 type GameItemRow = {
   id: string;
   name: string;
@@ -40,9 +49,24 @@ const itemRow = (overrides: Partial<GameItemRow> = {}): GameItemRow => ({
   ...overrides,
 });
 
+const itemPublicRow = (
+  overrides: Partial<GameItemPublicRow> = {},
+): GameItemPublicRow => ({
+  id: 'item-1',
+  name: '上品玄晶',
+  type: 'special',
+  quality: 'orange',
+  icon: '/icons/xuanjing.png',
+  alias: ['大铁'],
+  ...overrides,
+});
+
 const buildWhereClause = mock<(query: ListGameItemsQuery) => unknown>(
   () => undefined,
 );
+const searchByName = mock<
+  (name: string, limit: number) => Promise<GameItemPublicRow[]>
+>(() => Promise.resolve([]));
 const listPagination = mock<
   (where: unknown, limit: number, offset: number) => Promise<GameItemRow[]>
 >(() => Promise.resolve([]));
@@ -68,6 +92,9 @@ const deleteById = mock<(id: string) => Promise<void>>(() => Promise.resolve());
 const isReferenced = mock<(id: string) => Promise<boolean>>(() =>
   Promise.resolve(false),
 );
+const replaceLootItemId = mock<
+  (fromItemId: string, toItemId: string) => Promise<number>
+>(() => Promise.resolve(0));
 const formatDateTime = mock<(date: Date) => string>(
   (date) => `fmt:${date.toISOString()}`,
 );
@@ -75,6 +102,7 @@ const formatDateTime = mock<(date: Date) => string>(
 mock.module('@api/infrastructure/repository/game-item-repository', () => ({
   gameItemRepository: {
     buildWhereClause,
+    searchByName,
     listPagination,
     count,
     findById,
@@ -84,6 +112,7 @@ mock.module('@api/infrastructure/repository/game-item-repository', () => ({
     updateById,
     deleteById,
     isReferenced,
+    replaceLootItemId,
   },
 }));
 
@@ -92,11 +121,13 @@ mock.module('@api/shared/util/date', () => ({
 }));
 
 const {
+  searchGameItems,
   listAdminGameItems,
   getAdminGameItem,
   createAdminGameItem,
   updateAdminGameItem,
   deleteAdminGameItem,
+  replaceAdminGameItemLoot,
 } = await import('@api/application/service/game-item-service');
 
 const listQuery = (
@@ -110,6 +141,7 @@ const listQuery = (
 describe('game-item-service', () => {
   beforeEach(() => {
     buildWhereClause.mockReset();
+    searchByName.mockReset();
     listPagination.mockReset();
     count.mockReset();
     findById.mockReset();
@@ -119,9 +151,11 @@ describe('game-item-service', () => {
     updateById.mockReset();
     deleteById.mockReset();
     isReferenced.mockReset();
+    replaceLootItemId.mockReset();
     formatDateTime.mockClear();
 
     buildWhereClause.mockReturnValue(undefined);
+    searchByName.mockResolvedValue([]);
     listPagination.mockResolvedValue([]);
     count.mockResolvedValue([{ total: 0 }]);
     findById.mockResolvedValue(null);
@@ -131,6 +165,20 @@ describe('game-item-service', () => {
     updateById.mockResolvedValue(itemRow());
     deleteById.mockResolvedValue(undefined);
     isReferenced.mockResolvedValue(false);
+    replaceLootItemId.mockResolvedValue(0);
+  });
+
+  it('searches items by trimmed name with a limit of 15', async () => {
+    const row = itemPublicRow();
+    searchByName.mockResolvedValue([row]);
+
+    await expect(searchGameItems('  玄晶  ')).resolves.toEqual([row]);
+    expect(searchByName).toHaveBeenCalledWith('玄晶', 15);
+  });
+
+  it('returns an empty list when the search name is blank', async () => {
+    await expect(searchGameItems('   ')).resolves.toEqual([]);
+    expect(searchByName).not.toHaveBeenCalled();
   });
 
   it('lists items and maps rows', async () => {
@@ -435,5 +483,46 @@ describe('game-item-service', () => {
     await expect(deleteAdminGameItem('missing')).rejects.toBeInstanceOf(
       NotFoundException,
     );
+  });
+
+  it('replaces loot rows with another item', async () => {
+    findById
+      .mockResolvedValueOnce(itemRow())
+      .mockResolvedValueOnce(itemRow({ id: 'item-2', name: '小铁' }));
+    replaceLootItemId.mockResolvedValue(3);
+
+    await expect(replaceAdminGameItemLoot('item-1', 'item-2')).resolves.toEqual(
+      {
+        replacedCount: 3,
+      },
+    );
+    expect(replaceLootItemId).toHaveBeenCalledWith('item-1', 'item-2');
+  });
+
+  it('rejects replacing an item with itself', async () => {
+    await expect(
+      replaceAdminGameItemLoot('item-1', 'item-1'),
+    ).rejects.toMatchObject({
+      code: ERROR_CODES.GAME_ITEM_REPLACE_SAME_ITEM,
+    });
+    expect(replaceLootItemId).not.toHaveBeenCalled();
+  });
+
+  it('rejects replacing a missing source item', async () => {
+    await expect(
+      replaceAdminGameItemLoot('missing', 'item-2'),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    expect(replaceLootItemId).not.toHaveBeenCalled();
+  });
+
+  it('rejects replacing with a missing target item', async () => {
+    findById.mockResolvedValueOnce(itemRow()).mockResolvedValueOnce(null);
+
+    await expect(
+      replaceAdminGameItemLoot('item-1', 'missing'),
+    ).rejects.toMatchObject({
+      code: ERROR_CODES.GAME_ITEM_NOT_FOUND,
+    });
+    expect(replaceLootItemId).not.toHaveBeenCalled();
   });
 });

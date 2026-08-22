@@ -11,11 +11,13 @@ const {
   adminCreateGameItem,
   adminUpdateGameItem,
   adminDeleteGameItem,
+  adminReplaceGameItemLoot,
 } = vi.hoisted(() => ({
   adminListGameItems: vi.fn(),
   adminCreateGameItem: vi.fn(),
   adminUpdateGameItem: vi.fn(),
   adminDeleteGameItem: vi.fn(),
+  adminReplaceGameItemLoot: vi.fn(),
 }));
 
 vi.mock('@/lib/api/admin/admin-game-items-api', () => ({
@@ -23,6 +25,33 @@ vi.mock('@/lib/api/admin/admin-game-items-api', () => ({
   adminCreateGameItem,
   adminUpdateGameItem,
   adminDeleteGameItem,
+  adminReplaceGameItemLoot,
+}));
+
+vi.mock('@/components/GameItemSearchSelectComponent', () => ({
+  GameItemSearchSelectComponent: ({
+    id,
+    label = '替换为',
+    value,
+    onValueChange,
+  }: {
+    id?: string;
+    label?: string;
+    value?: string;
+    onValueChange: (itemId: string | undefined) => void;
+  }) => (
+    <div>
+      <label htmlFor={id}>{label}</label>
+      <input
+        id={id}
+        aria-label={label}
+        value={value ?? ''}
+        onChange={(event) =>
+          onValueChange(event.target.value ? event.target.value : undefined)
+        }
+      />
+    </div>
+  ),
 }));
 
 const item = {
@@ -48,6 +77,7 @@ describe('admin game items route', () => {
     adminCreateGameItem.mockReset();
     adminUpdateGameItem.mockReset();
     adminDeleteGameItem.mockReset();
+    adminReplaceGameItemLoot.mockReset();
     adminListGameItems.mockResolvedValue({ items: [item], total: 1 });
   });
 
@@ -109,9 +139,10 @@ describe('admin game items route', () => {
     });
   });
 
-  it('edits and deletes items', async () => {
+  it('edits, replaces, and deletes items', async () => {
     const user = userEvent.setup();
     adminUpdateGameItem.mockResolvedValue({ id: 'item-1' });
+    adminReplaceGameItemLoot.mockResolvedValue({ replacedCount: 2 });
     adminDeleteGameItem.mockResolvedValue(undefined);
 
     await renderApp('/admin/game-items');
@@ -122,6 +153,19 @@ describe('admin game items route', () => {
     await user.click(within(editDialog).getByRole('button', { name: '保存' }));
     await waitFor(() => {
       expect(adminUpdateGameItem).toHaveBeenCalled();
+    });
+
+    await user.click(screen.getByRole('button', { name: '替换为' }));
+    const replaceDialog = await screen.findByRole('dialog');
+    await user.type(within(replaceDialog).getByLabelText('替换为'), 'item-2');
+    await user.click(
+      within(replaceDialog).getByRole('button', { name: '确认替换' }),
+    );
+    await waitFor(() => {
+      expect(adminReplaceGameItemLoot).toHaveBeenCalledWith('item-1', 'item-2');
+      expect(toast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: '已替换 2 条掉落记录' }),
+      );
     });
 
     await user.click(screen.getByRole('button', { name: '删除' }));
@@ -137,6 +181,7 @@ describe('admin game items route', () => {
     adminCreateGameItem.mockRejectedValue(new Error('创建失败'));
     adminUpdateGameItem.mockRejectedValue(new Error('更新失败'));
     adminDeleteGameItem.mockRejectedValue(new Error('删除失败'));
+    adminReplaceGameItemLoot.mockRejectedValue(new Error('替换失败'));
 
     await renderApp('/admin/game-items');
     await screen.findByText('上品玄晶');
@@ -165,6 +210,21 @@ describe('admin game items route', () => {
       );
     });
     await user.click(within(editDialog).getByRole('button', { name: '取消' }));
+
+    await user.click(screen.getByRole('button', { name: '替换为' }));
+    const replaceDialog = await screen.findByRole('dialog');
+    await user.type(within(replaceDialog).getByLabelText('替换为'), 'item-2');
+    await user.click(
+      within(replaceDialog).getByRole('button', { name: '确认替换' }),
+    );
+    await waitFor(() => {
+      expect(toast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ description: '替换失败' }),
+      );
+    });
+    await user.click(
+      within(replaceDialog).getByRole('button', { name: '取消' }),
+    );
 
     await user.click(screen.getByRole('button', { name: '删除' }));
     const confirm = await screen.findByRole('alertdialog');

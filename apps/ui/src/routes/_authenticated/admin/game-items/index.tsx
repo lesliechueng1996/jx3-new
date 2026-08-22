@@ -13,12 +13,14 @@ import {
   adminCreateGameItem,
   adminDeleteGameItem,
   adminListGameItems,
+  adminReplaceGameItemLoot,
   adminUpdateGameItem,
 } from '@/lib/api/admin/admin-game-items-api';
 import { handleApiError } from '@/lib/api-client';
 import { GameItemCreateDialogComponent } from './-components/GameItemCreateDialogComponent';
 import { GameItemEditDialogComponent } from './-components/GameItemEditDialogComponent';
 import { GameItemFiltersComponent } from './-components/GameItemFiltersComponent';
+import { GameItemReplaceDialogComponent } from './-components/GameItemReplaceDialogComponent';
 import { GameItemTableComponent } from './-components/GameItemTableComponent';
 import {
   defaultGameItemsSearch,
@@ -41,6 +43,8 @@ function GameItemsComponent() {
     null,
   );
   const [deletingItem, setDeletingItem] =
+    useState<AdminGameItemListItem | null>(null);
+  const [replacingItem, setReplacingItem] =
     useState<AdminGameItemListItem | null>(null);
   const [pendingItemId, setPendingItemId] = useState<string | null>(null);
 
@@ -106,6 +110,26 @@ function GameItemsComponent() {
     onSettled: () => setPendingItemId(null),
   });
 
+  const replaceMutation = useMutation({
+    mutationFn: ({
+      sourceItemId,
+      targetItemId,
+    }: {
+      sourceItemId: string;
+      targetItemId: string;
+    }) => adminReplaceGameItemLoot(sourceItemId, targetItemId),
+    onSuccess: async (result) => {
+      toast.add({
+        type: 'success',
+        title: `已替换 ${result.replacedCount} 条掉落记录`,
+      });
+      setReplacingItem(null);
+      await invalidate();
+    },
+    onError: (error) => handleApiError(error, '替换物品失败'),
+    onSettled: () => setPendingItemId(null),
+  });
+
   return (
     <section className="flex flex-col gap-6">
       <div>
@@ -134,6 +158,7 @@ function GameItemsComponent() {
         isLoading={isFetching}
         pendingItemId={pendingItemId}
         onEdit={setEditingItem}
+        onReplace={setReplacingItem}
         onDelete={setDeletingItem}
       />
 
@@ -161,6 +186,27 @@ function GameItemsComponent() {
           }
           setPendingItemId(deletingItem.id);
           deleteMutation.mutate(deletingItem.id);
+        }}
+      />
+
+      <GameItemReplaceDialogComponent
+        item={replacingItem}
+        open={replacingItem !== null}
+        pending={replaceMutation.isPending}
+        onOpenChange={(open) => {
+          if (!open) {
+            setReplacingItem(null);
+          }
+        }}
+        onConfirm={(targetItemId) => {
+          if (!replacingItem) {
+            return;
+          }
+          setPendingItemId(replacingItem.id);
+          replaceMutation.mutate({
+            sourceItemId: replacingItem.id,
+            targetItemId,
+          });
         }}
       />
 

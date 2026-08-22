@@ -28,18 +28,20 @@ type GameItemUpdate = Partial<
   >
 >;
 
+const nameOrAliasMatches = (name: string): SQL => {
+  const pattern = `%${name}%`;
+  return or(
+    ilike(gameItem.name, pattern),
+    sql`exists (select 1 from unnest(${gameItem.alias}) as alias_value where alias_value ilike ${pattern})`,
+  ) as SQL;
+};
+
 export class GameItemRepository {
   buildWhereClause(query: ListGameItemsQuery): SQL | undefined {
     const conditions: SQL[] = [];
 
     if (query.name) {
-      const pattern = `%${query.name}%`;
-      conditions.push(
-        or(
-          ilike(gameItem.name, pattern),
-          sql`exists (select 1 from unnest(${gameItem.alias}) as alias_value where alias_value ilike ${pattern})`,
-        ) as SQL,
-      );
+      conditions.push(nameOrAliasMatches(query.name));
     }
 
     if (query.type) {
@@ -59,6 +61,32 @@ export class GameItemRepository {
     }
 
     return and(...conditions);
+  }
+
+  searchByName(name: string, limit: number) {
+    const prefixPattern = `${name}%`;
+
+    return db
+      .select({
+        id: gameItem.id,
+        name: gameItem.name,
+        type: gameItem.type,
+        quality: gameItem.quality,
+        icon: gameItem.icon,
+        alias: gameItem.alias,
+      })
+      .from(gameItem)
+      .where(nameOrAliasMatches(name))
+      .orderBy(
+        sql`case
+          when ${gameItem.name} ilike ${name} then 0
+          when ${gameItem.name} ilike ${prefixPattern} then 1
+          else 2
+        end`,
+        sql`char_length(${gameItem.name})`,
+        gameItem.name,
+      )
+      .limit(limit);
   }
 
   listPagination(where: SQL | undefined, limit: number, offset: number) {
@@ -139,6 +167,16 @@ export class GameItemRepository {
       .limit(1);
 
     return Boolean(loot);
+  }
+
+  async replaceLootItemId(fromItemId: string, toItemId: string) {
+    const updated = await db
+      .update(raidLoot)
+      .set({ itemId: toItemId })
+      .where(eq(raidLoot.itemId, fromItemId))
+      .returning({ id: raidLoot.id });
+
+    return updated.length;
   }
 }
 

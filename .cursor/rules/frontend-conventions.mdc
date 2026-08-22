@@ -91,6 +91,10 @@ Do not mix API logic and form rendering in a single component.
 
 - Use `@tanstack/react-query` for all client-side API calls (`useQuery`, `useMutation`, `useQueryClient`).
 
+## Generic React hooks
+
+Prefer `usehooks-ts` for generic React hooks (`useDebounceValue`, `useLocalStorage`, `useMediaQuery`, `useOnClickOutside`, …). Check that library first. Only add `src/hooks/` when there is no equivalent, or the hook is app-specific (`usePaginatedQuery`).
+
 ## TanStack Router
 
 - **Always use directory structure as the URL path.** One folder per route segment; the folder name becomes the URL segment (e.g. `routes/login/index.tsx` → `/login`, `routes/users/$id/index.tsx` → `/users/:id`).

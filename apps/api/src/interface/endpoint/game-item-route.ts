@@ -3,9 +3,11 @@ import {
   deleteAdminGameItem,
   getAdminGameItem,
   listAdminGameItems,
+  replaceAdminGameItemLoot,
+  searchGameItems,
   updateAdminGameItem,
 } from '@api/application/service/game-item-service';
-import { roleAdmin } from '@api/shared/util/auth';
+import { roleAdmin, roleUser } from '@api/shared/util/auth';
 import {
   AppResponse,
   createSuccessResponseSchema,
@@ -18,6 +20,10 @@ import {
   gameItemIdParamsSchema,
   listGameItemsQuerySchema,
   listGameItemsResponseSchema,
+  replaceGameItemBodySchema,
+  replaceGameItemResponseSchema,
+  searchGameItemsQuerySchema,
+  searchGameItemsResponseSchema,
   updateGameItemBodySchema,
 } from '../schema/game-item-schema';
 import { apiRoute } from './api-route';
@@ -37,6 +43,29 @@ const gameItemDetailResponse = {
 
 export const gameItemRoute = apiRoute.group('/game-item', (app) =>
   app
+    .get(
+      '/search',
+      async ({ query, status }) => {
+        const result = await searchGameItems(query.name);
+        return status(200, AppResponse.success(result).toJson());
+      },
+      {
+        auth: roleUser,
+        query: searchGameItemsQuerySchema,
+        response: {
+          200: createSuccessResponseSchema(searchGameItemsResponseSchema),
+          400: errorResponseSchema,
+          403: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [gameItemTag.name],
+          summary: 'Search game items by name',
+          description:
+            'Returns up to 15 items matching name or alias. Requires user role.',
+        },
+      },
+    )
     .post(
       '',
       async ({ body, status }) => {
@@ -74,6 +103,34 @@ export const gameItemRoute = apiRoute.group('/game-item', (app) =>
           tags: [gameItemTag.name],
           summary: 'Get a game item',
           description: 'Returns a game item by id. Requires admin role.',
+        },
+      },
+    )
+    .post(
+      '/:id/replace',
+      async ({ body, params, status }) => {
+        const result = await replaceAdminGameItemLoot(
+          params.id,
+          body.targetItemId,
+        );
+        return status(200, AppResponse.success(result).toJson());
+      },
+      {
+        auth: roleAdmin,
+        params: gameItemIdParamsSchema,
+        body: replaceGameItemBodySchema,
+        response: {
+          200: createSuccessResponseSchema(replaceGameItemResponseSchema),
+          400: errorResponseSchema,
+          403: errorResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [gameItemTag.name],
+          summary: 'Replace raid loot item references',
+          description:
+            'Rewrites raid loot rows from this item to another item. Requires admin role.',
         },
       },
     )

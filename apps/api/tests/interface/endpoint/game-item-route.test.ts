@@ -14,23 +14,36 @@ const itemDetail = {
   updatedAt: '2026-01-02 00:00:00',
 };
 
+const itemPublic = {
+  id: itemDetail.id,
+  name: itemDetail.name,
+  type: itemDetail.type,
+  quality: itemDetail.quality,
+  icon: itemDetail.icon,
+  alias: itemDetail.alias,
+};
+
 const listAdminGameItems = mock(async () => ({
   items: [itemDetail],
   total: 1,
   page: 1,
   pageSize: 20,
 }));
+const searchGameItems = mock(async () => [itemPublic]);
 const createAdminGameItem = mock(async () => itemDetail);
 const getAdminGameItem = mock(async () => itemDetail);
 const updateAdminGameItem = mock(async () => itemDetail);
 const deleteAdminGameItem = mock(async () => undefined);
+const replaceAdminGameItemLoot = mock(async () => ({ replacedCount: 2 }));
 
 mock.module('@api/application/service/game-item-service', () => ({
   listAdminGameItems,
+  searchGameItems,
   createAdminGameItem,
   getAdminGameItem,
   updateAdminGameItem,
   deleteAdminGameItem,
+  replaceAdminGameItemLoot,
 }));
 
 mock.module('@api/shared/util/auth', () => ({
@@ -61,10 +74,12 @@ const jsonRequest = (path: string, init?: RequestInit) =>
 describe('gameItemRoute', () => {
   beforeEach(() => {
     listAdminGameItems.mockReset();
+    searchGameItems.mockReset();
     createAdminGameItem.mockReset();
     getAdminGameItem.mockReset();
     updateAdminGameItem.mockReset();
     deleteAdminGameItem.mockReset();
+    replaceAdminGameItemLoot.mockReset();
 
     listAdminGameItems.mockResolvedValue({
       items: [itemDetail],
@@ -72,10 +87,12 @@ describe('gameItemRoute', () => {
       page: 1,
       pageSize: 20,
     });
+    searchGameItems.mockResolvedValue([itemPublic]);
     createAdminGameItem.mockResolvedValue(itemDetail);
     getAdminGameItem.mockResolvedValue(itemDetail);
     updateAdminGameItem.mockResolvedValue(itemDetail);
     deleteAdminGameItem.mockResolvedValue(undefined);
+    replaceAdminGameItemLoot.mockResolvedValue({ replacedCount: 2 });
   });
 
   it('exports an OpenAPI tag', () => {
@@ -83,6 +100,23 @@ describe('gameItemRoute', () => {
       name: 'game-item',
       description: 'Game item API',
     });
+  });
+
+  it('searches items by name for users', async () => {
+    const response = await jsonRequest('/search?name=玄晶');
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(searchGameItems).toHaveBeenCalledWith('玄晶');
+    expect(body.data).toEqual([itemPublic]);
+    expect(body.code).toBe('SUCCESS');
+  });
+
+  it('rejects search without a name', async () => {
+    const response = await jsonRequest('/search');
+
+    expect(response.status).toBe(422);
+    expect(searchGameItems).not.toHaveBeenCalled();
   });
 
   it('lists items', async () => {
@@ -143,5 +177,18 @@ describe('gameItemRoute', () => {
     expect(response.status).toBe(200);
     expect(deleteAdminGameItem).toHaveBeenCalledWith(itemId);
     expect(body.data).toBeNull();
+  });
+
+  it('replaces loot item references', async () => {
+    const targetItemId = '22222222-2222-4222-8222-222222222222';
+    const response = await jsonRequest(`/${itemId}/replace`, {
+      method: 'POST',
+      body: JSON.stringify({ targetItemId }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(replaceAdminGameItemLoot).toHaveBeenCalledWith(itemId, targetItemId);
+    expect(body.data.replacedCount).toBe(2);
   });
 });

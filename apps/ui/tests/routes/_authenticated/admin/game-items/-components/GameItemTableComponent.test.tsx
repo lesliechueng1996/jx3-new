@@ -24,6 +24,7 @@ describe('GameItemTableComponent', () => {
         items={[]}
         pendingItemId={null}
         onEdit={vi.fn()}
+        onReplace={vi.fn()}
         onDelete={vi.fn()}
       />,
     );
@@ -33,6 +34,7 @@ describe('GameItemTableComponent', () => {
   it('edits and deletes a row, and hides missing optional values', async () => {
     const user = userEvent.setup();
     const onEdit = vi.fn();
+    const onReplace = vi.fn();
     const onDelete = vi.fn();
 
     render(
@@ -52,6 +54,7 @@ describe('GameItemTableComponent', () => {
         ]}
         pendingItemId="2"
         onEdit={onEdit}
+        onReplace={onReplace}
         onDelete={onDelete}
       />,
     );
@@ -69,6 +72,9 @@ describe('GameItemTableComponent', () => {
 
     await user.click(screen.getAllByRole('button', { name: '编辑' })[0]);
     expect(onEdit).toHaveBeenCalledWith(item);
+    await user.click(screen.getAllByRole('button', { name: '替换为' })[0]);
+    expect(onReplace).toHaveBeenCalledWith(item);
+    expect(screen.getAllByRole('button', { name: '替换为' })[1]).toBeDisabled();
     await user.click(screen.getAllByRole('button', { name: '删除' })[0]);
     expect(onDelete).toHaveBeenCalledWith(item);
     expect(screen.getAllByRole('button', { name: '删除' })[1]).toBeDisabled();
@@ -81,6 +87,7 @@ describe('GameItemTableComponent', () => {
         isLoading
         pendingItemId={null}
         onEdit={vi.fn()}
+        onReplace={vi.fn()}
         onDelete={vi.fn()}
       />,
     );

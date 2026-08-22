@@ -22,6 +22,7 @@ type GameItemTableComponentProps = {
   isLoading?: boolean;
   pendingItemId: string | null;
   onEdit: (item: AdminGameItemListItem) => void;
+  onReplace: (item: AdminGameItemListItem) => void;
   onDelete: (item: AdminGameItemListItem) => void;
 };
 
@@ -33,6 +34,7 @@ export function GameItemTableComponent({
   isLoading = false,
   pendingItemId,
   onEdit,
+  onReplace,
   onDelete,
 }: GameItemTableComponentProps) {
   return (
@@ -102,6 +104,15 @@ export function GameItemTableComponent({
                       onClick={() => onEdit(item)}
                     >
                       编辑
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={pendingItemId === item.id}
+                      onClick={() => onReplace(item)}
+                    >
+                      替换为
                     </Button>
                     <Button
                       type="button"

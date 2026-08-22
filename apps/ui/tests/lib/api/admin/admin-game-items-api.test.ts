@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { itemGet, itemPost, itemPatch, itemDelete } = vi.hoisted(() => ({
-  itemGet: vi.fn(),
-  itemPost: vi.fn(),
-  itemPatch: vi.fn(),
-  itemDelete: vi.fn(),
-}));
+const { itemGet, itemPost, itemPatch, itemDelete, itemReplacePost } =
+  vi.hoisted(() => ({
+    itemGet: vi.fn(),
+    itemPost: vi.fn(),
+    itemPatch: vi.fn(),
+    itemDelete: vi.fn(),
+    itemReplacePost: vi.fn(),
+  }));
 
 vi.mock('@/lib/api-client', () => ({
   apiClient: {
@@ -15,6 +17,9 @@ vi.mock('@/lib/api-client', () => ({
           (params: { id: string }) => ({
             patch: (body: unknown) => itemPatch(params, body),
             delete: () => itemDelete(params),
+            replace: {
+              post: (body: unknown) => itemReplacePost(params, body),
+            },
           }),
           {
             get: itemGet,
@@ -42,6 +47,7 @@ describe('admin-game-items-api', () => {
     itemPost.mockReset();
     itemPatch.mockReset();
     itemDelete.mockReset();
+    itemReplacePost.mockReset();
   });
 
   it('lists items and unwraps the envelope', async () => {
@@ -91,6 +97,7 @@ describe('admin-game-items-api', () => {
     itemPost.mockResolvedValue({ error: { value: {} } });
     itemPatch.mockResolvedValue({ error: { value: {} } });
     itemDelete.mockResolvedValue({ error: { value: {} } });
+    itemReplacePost.mockResolvedValue({ error: { value: {} } });
 
     const api = await import('@/lib/api/admin/admin-game-items-api');
 
@@ -104,12 +111,32 @@ describe('admin-game-items-api', () => {
       '更新物品失败',
     );
     await expect(api.adminDeleteGameItem('1')).rejects.toThrow('删除物品失败');
+    await expect(api.adminReplaceGameItemLoot('1', '2')).rejects.toThrow(
+      '替换物品失败',
+    );
+  });
+
+  it('throws the API message when replacing fails', async () => {
+    itemReplacePost.mockResolvedValue({
+      data: null,
+      error: { value: { message: '替换失败' } },
+    });
+    const { adminReplaceGameItemLoot } = await import(
+      '@/lib/api/admin/admin-game-items-api'
+    );
+    await expect(adminReplaceGameItemLoot('1', '2')).rejects.toThrow(
+      '替换失败',
+    );
   });
 
   it('creates, updates, and deletes', async () => {
     itemPost.mockResolvedValue({ data: { data: { id: 'n' } }, error: null });
     itemPatch.mockResolvedValue({ data: { data: { id: '1' } }, error: null });
     itemDelete.mockResolvedValue({ error: null });
+    itemReplacePost.mockResolvedValue({
+      data: { data: { replacedCount: 3 } },
+      error: null,
+    });
 
     const api = await import('@/lib/api/admin/admin-game-items-api');
 
@@ -126,5 +153,12 @@ describe('admin-game-items-api', () => {
       }),
     ).resolves.toEqual({ id: '1' });
     await api.adminDeleteGameItem('1');
+    await expect(api.adminReplaceGameItemLoot('1', '2')).resolves.toEqual({
+      replacedCount: 3,
+    });
+    expect(itemReplacePost).toHaveBeenCalledWith(
+      { id: '1' },
+      { targetItemId: '2' },
+    );
   });
 });

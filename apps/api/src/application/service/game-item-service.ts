@@ -2,10 +2,13 @@ import { gameItemRepository } from '@api/infrastructure/repository/game-item-rep
 import type {
   CreateGameItemBody,
   GameItemDetail,
+  GameItemPublic,
   ListGameItemsQuery,
+  ReplaceGameItemResponse,
   UpdateGameItemBody,
 } from '@api/interface/schema/game-item-schema';
 import {
+  BadRequestException,
   ConflictException,
   ERROR_CODES,
   NotFoundException,
@@ -87,6 +90,19 @@ const assertGameItemIdAvailable = async (
       ERROR_CODES.GAME_ITEM_GAME_ID_ALREADY_EXISTS,
     );
   }
+};
+
+const GAME_ITEM_SEARCH_LIMIT = 15;
+
+export const searchGameItems = async (
+  name: string,
+): Promise<GameItemPublic[]> => {
+  const trimmed = name.trim();
+  if (trimmed.length === 0) {
+    return [];
+  }
+
+  return gameItemRepository.searchByName(trimmed, GAME_ITEM_SEARCH_LIMIT);
 };
 
 export const listAdminGameItems = async (
@@ -204,4 +220,33 @@ export const deleteAdminGameItem = async (id: string): Promise<void> => {
   }
 
   await gameItemRepository.deleteById(id);
+};
+
+export const replaceAdminGameItemLoot = async (
+  sourceItemId: string,
+  targetItemId: string,
+): Promise<ReplaceGameItemResponse> => {
+  if (sourceItemId === targetItemId) {
+    throw new BadRequestException(
+      '不能替换为同一物品',
+      ERROR_CODES.GAME_ITEM_REPLACE_SAME_ITEM,
+    );
+  }
+
+  await findGameItemOrThrow(sourceItemId);
+
+  const target = await gameItemRepository.findById(targetItemId);
+  if (!target) {
+    throw new NotFoundException(
+      '目标物品不存在',
+      ERROR_CODES.GAME_ITEM_NOT_FOUND,
+    );
+  }
+
+  const replacedCount = await gameItemRepository.replaceLootItemId(
+    sourceItemId,
+    targetItemId,
+  );
+
+  return { replacedCount };
 };

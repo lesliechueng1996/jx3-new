@@ -95,3 +95,20 @@ export const adminDeleteGameItem = async (itemId: string) => {
     throw new Error(error.value.message ?? '删除物品失败');
   }
 };
+
+export const adminReplaceGameItemLoot = async (
+  sourceItemId: string,
+  targetItemId: string,
+) => {
+  const { data, error } = await apiClient.api.v1['game-item']({
+    id: sourceItemId,
+  }).replace.post({
+    targetItemId,
+  });
+
+  if (error) {
+    throw new Error(error.value.message ?? '替换物品失败');
+  }
+
+  return data.data;
+};

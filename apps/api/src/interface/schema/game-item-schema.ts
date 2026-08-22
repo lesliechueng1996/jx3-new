@@ -70,6 +70,17 @@ export const gameItemIdParamsSchema = t.Object({
   }),
 });
 
+export const gameItemPublicSchema = t.Object({
+  id: t.String(),
+  name: t.String(),
+  type: itemTypeSchema,
+  quality: itemQualitySchema,
+  icon: t.Nullable(t.String()),
+  alias: t.Array(t.String()),
+});
+
+export type GameItemPublic = Static<typeof gameItemPublicSchema>;
+
 export const gameItemDetailSchema = t.Object({
   id: t.String(),
   name: t.String(),
@@ -84,6 +95,14 @@ export const gameItemDetailSchema = t.Object({
 });
 
 export type GameItemDetail = Static<typeof gameItemDetailSchema>;
+
+export const searchGameItemsQuerySchema = t.Object({
+  name: nameSchema,
+});
+
+export type SearchGameItemsQuery = Static<typeof searchGameItemsQuerySchema>;
+
+export const searchGameItemsResponseSchema = t.Array(gameItemPublicSchema);
 
 export const listGameItemsQuerySchema = t.Composite([
   paginationQuerySchema,
@@ -133,3 +152,20 @@ export const updateGameItemBodySchema = t.Object(
 );
 
 export type UpdateGameItemBody = Static<typeof updateGameItemBodySchema>;
+
+export const replaceGameItemBodySchema = t.Object({
+  targetItemId: t.String({
+    format: 'uuid',
+    error: () => '目标物品ID格式不正确',
+  }),
+});
+
+export type ReplaceGameItemBody = Static<typeof replaceGameItemBodySchema>;
+
+export const replaceGameItemResponseSchema = t.Object({
+  replacedCount: t.Integer(),
+});
+
+export type ReplaceGameItemResponse = Static<
+  typeof replaceGameItemResponseSchema
+>;
