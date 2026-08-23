@@ -163,6 +163,84 @@ export const setRaidSignupKungfu = (
   };
 };
 
+export type RaidSignupCharacterSearchSelection = {
+  characterName: string;
+  serverId?: string;
+  kungfu?: RaidSignupKungfuSelection;
+};
+
+export const raidSignupCharacterSearchSelectionFromItem = (item: {
+  characterName: string;
+  serverId?: string | null;
+  kungfuId?: string | null;
+  schoolId?: string | null;
+  kungfuType?: KungfuTypeColor | null;
+}): RaidSignupCharacterSearchSelection => {
+  const kungfuId = item.kungfuId ?? undefined;
+  const schoolId = item.schoolId ?? undefined;
+  const kungfuType = item.kungfuType ?? undefined;
+
+  return {
+    characterName: item.characterName,
+    serverId: item.serverId ?? undefined,
+    kungfu:
+      kungfuId && schoolId && kungfuType
+        ? {
+            id: kungfuId,
+            schoolId,
+            kungfuType,
+          }
+        : undefined,
+  };
+};
+
+export const applyRaidSignupFromCharacterSearch = (
+  signup: RaidSignup,
+  item: RaidSignupCharacterSearchSelection,
+): RaidSignup => {
+  let next = setRaidSignupCharacterName(signup, item.characterName);
+  if (item.serverId) {
+    next = setRaidSignupServerId(next, item.serverId);
+  }
+  if (item.kungfu) {
+    next = setRaidSignupKungfu(next, item.kungfu);
+  }
+  return next;
+};
+
+export const formatRaidSignupCharacterSearchLabel = (item: {
+  characterName: string;
+  serverName?: string | null;
+  kungfuName?: string | null;
+}): string =>
+  [item.characterName, item.serverName, item.kungfuName]
+    .filter(
+      (part): part is string => typeof part === 'string' && part.length > 0,
+    )
+    .join(' · ');
+
+export const matchesRaidSignupCharacterQuery = (
+  item: {
+    characterName: string;
+    serverName?: string | null;
+    kungfuName?: string | null;
+  },
+  query: string,
+): boolean => {
+  const normalized = query.trim().toLowerCase();
+  if (normalized.length === 0) {
+    return true;
+  }
+
+  if (item.characterName.toLowerCase().includes(normalized)) {
+    return true;
+  }
+  if (item.serverName?.toLowerCase().includes(normalized)) {
+    return true;
+  }
+  return Boolean(item.kungfuName?.toLowerCase().includes(normalized));
+};
+
 export const setRaidSignupRemark = (
   signup: RaidSignup,
   remark: string,

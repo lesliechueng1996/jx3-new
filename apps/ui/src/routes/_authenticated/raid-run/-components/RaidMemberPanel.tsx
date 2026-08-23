@@ -1,7 +1,14 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EraserIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -22,9 +29,12 @@ import {
   updateRaidSignupAt,
 } from '../-lib/raid-run';
 import {
+  applyRaidSignupFromCharacterSearch,
   formatRaidSignupSlotTitle,
   type RaidSignupRole,
+  raidSignupCharacterSearchSelectionFromItem,
   raidSignupRoleItems,
+  resetRaidSignup,
   setRaidSignupCharacterName,
   setRaidSignupKungfu,
   setRaidSignupRemark,
@@ -33,6 +43,7 @@ import {
 } from '../-lib/raid-signup';
 import { GameServerSearchSelectComponent } from './GameServerSearchSelectComponent';
 import { KungfuSearchSelectComponent } from './KungfuSearchSelectComponent';
+import { RaidSignupCharacterSearchSelectComponent } from './RaidSignupCharacterSearchSelectComponent';
 
 type Props = {
   className?: string;
@@ -73,6 +84,17 @@ const RaidMemberPanel = ({ className }: Props) => {
     <Card className={cn(className)}>
       <CardHeader>
         <CardTitle>团员属性</CardTitle>
+        <CardAction>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => updateSignup(resetRaidSignup)}
+          >
+            <EraserIcon data-icon="inline-start" />
+            清空
+          </Button>
+        </CardAction>
       </CardHeader>
       <CardContent>
         <FieldGroup>
@@ -110,19 +132,23 @@ const RaidMemberPanel = ({ className }: Props) => {
             </Select>
           </Field>
 
-          <Field>
-            <FieldLabel htmlFor="raid-signup-character-name">角色名</FieldLabel>
-            <Input
-              id="raid-signup-character-name"
-              value={signup.characterName ?? ''}
-              placeholder="角色名"
-              onChange={(event) =>
-                updateSignup((current) =>
-                  setRaidSignupCharacterName(current, event.target.value),
-                )
-              }
-            />
-          </Field>
+          <RaidSignupCharacterSearchSelectComponent
+            id="raid-signup-character-name"
+            value={signup.characterName ?? ''}
+            onInputValueChange={(characterName) =>
+              updateSignup((current) =>
+                setRaidSignupCharacterName(current, characterName),
+              )
+            }
+            onValueChange={(item) =>
+              updateSignup((current) =>
+                applyRaidSignupFromCharacterSearch(
+                  current,
+                  raidSignupCharacterSearchSelectionFromItem(item),
+                ),
+              )
+            }
+          />
 
           <KungfuSearchSelectComponent
             id="raid-signup-kungfu"

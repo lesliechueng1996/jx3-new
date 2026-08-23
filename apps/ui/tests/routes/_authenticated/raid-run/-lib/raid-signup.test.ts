@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
+  applyRaidSignupFromCharacterSearch,
   createRaidSignup,
+  formatRaidSignupCharacterSearchLabel,
   formatRaidSignupSlotTitle,
   isRaidSignupSlotEmpty,
   kungfuTypeToRaidSignupRole,
+  matchesRaidSignupCharacterQuery,
   RAID_SIGNUP_SLOT_DND_TYPE,
+  raidSignupCharacterSearchSelectionFromItem,
   raidSignupRoleCellClassName,
   raidSignupRoleItems,
   raidSignupRoleMapping,
@@ -159,6 +163,128 @@ describe('raid-signup', () => {
     expect(kungfuTypeToRaidSignupRole('defense')).toBe('tank');
     expect(kungfuTypeToRaidSignupRole('heal')).toBe('healer');
     expect(kungfuTypeToRaidSignupRole('attack')).toBe('dps');
+  });
+
+  it('builds a character search selection from a search item', () => {
+    expect(
+      raidSignupCharacterSearchSelectionFromItem({
+        characterName: '少侠甲',
+        serverId: 'server-1',
+        kungfuId: 'kungfu-1',
+        schoolId: 'school-1',
+        kungfuType: 'defense',
+      }),
+    ).toEqual({
+      characterName: '少侠甲',
+      serverId: 'server-1',
+      kungfu: {
+        id: 'kungfu-1',
+        schoolId: 'school-1',
+        kungfuType: 'defense',
+      },
+    });
+    expect(
+      raidSignupCharacterSearchSelectionFromItem({
+        characterName: '少侠乙',
+        serverId: null,
+        kungfuId: null,
+        schoolId: 'school-1',
+        kungfuType: 'attack',
+      }),
+    ).toEqual({
+      characterName: '少侠乙',
+      serverId: undefined,
+      kungfu: undefined,
+    });
+    expect(
+      raidSignupCharacterSearchSelectionFromItem({
+        characterName: '少侠丙',
+        kungfuId: 'kungfu-1',
+        schoolId: null,
+        kungfuType: 'attack',
+      }),
+    ).toEqual({
+      characterName: '少侠丙',
+      serverId: undefined,
+      kungfu: undefined,
+    });
+    expect(
+      raidSignupCharacterSearchSelectionFromItem({
+        characterName: '少侠丁',
+        kungfuId: 'kungfu-1',
+        schoolId: 'school-1',
+        kungfuType: null,
+      }),
+    ).toEqual({
+      characterName: '少侠丁',
+      serverId: undefined,
+      kungfu: undefined,
+    });
+  });
+
+  it('applies a character search without clearing missing fields', () => {
+    const signup = baseSignup();
+
+    expect(
+      applyRaidSignupFromCharacterSearch(signup, {
+        characterName: '少侠甲',
+        serverId: 'server-2',
+        kungfu: {
+          id: 'kungfu-3',
+          schoolId: 'school-3',
+          kungfuType: 'heal',
+        },
+      }),
+    ).toEqual({
+      ...signup,
+      characterName: '少侠甲',
+      serverId: 'server-2',
+      kungfuId: 'kungfu-3',
+      schoolId: 'school-3',
+      role: 'healer',
+    });
+    expect(
+      applyRaidSignupFromCharacterSearch(signup, {
+        characterName: '新角色',
+      }),
+    ).toEqual({
+      ...signup,
+      characterName: '新角色',
+    });
+  });
+
+  it('formats and matches character search labels', () => {
+    expect(
+      formatRaidSignupCharacterSearchLabel({
+        characterName: '少侠甲',
+        serverName: '梦江南',
+        kungfuName: '紫霞功',
+      }),
+    ).toBe('少侠甲 · 梦江南 · 紫霞功');
+    expect(
+      formatRaidSignupCharacterSearchLabel({
+        characterName: '少侠乙',
+        serverName: null,
+        kungfuName: '',
+      }),
+    ).toBe('少侠乙');
+
+    const item = {
+      characterName: '少侠甲',
+      serverName: '梦江南',
+      kungfuName: '紫霞功',
+    };
+    expect(matchesRaidSignupCharacterQuery(item, '  ')).toBe(true);
+    expect(matchesRaidSignupCharacterQuery(item, '少侠')).toBe(true);
+    expect(matchesRaidSignupCharacterQuery(item, '江南')).toBe(true);
+    expect(matchesRaidSignupCharacterQuery(item, '紫霞')).toBe(true);
+    expect(matchesRaidSignupCharacterQuery(item, '没有')).toBe(false);
+    expect(
+      matchesRaidSignupCharacterQuery(
+        { characterName: '甲', serverName: null, kungfuName: null },
+        '江南',
+      ),
+    ).toBe(false);
   });
 
   it('maps roles to cell colors and select items', () => {

@@ -8,6 +8,7 @@ import { gameServerRoute } from './interface/endpoint/game-server-route';
 import { idiomRoute } from './interface/endpoint/idiom-route';
 import { kungfuRoute } from './interface/endpoint/kungfu-route';
 import { raidRunRoute } from './interface/endpoint/raid-run-route';
+import { raidSignupRoute } from './interface/endpoint/raid-signup-route';
 import { schoolRoute } from './interface/endpoint/school-route';
 import { userRoute } from './interface/endpoint/user-route';
 
@@ -22,6 +23,7 @@ const server = app
   .use(idiomRoute)
   .use(kungfuRoute)
   .use(raidRunRoute)
+  .use(raidSignupRoute)
   .use(schoolRoute)
   .use(userRoute);
 

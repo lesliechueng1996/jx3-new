@@ -4,13 +4,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import RaidMemberPanel from '@/routes/_authenticated/raid-run/-components/RaidMemberPanel';
 import { useRaidRun } from '@/routes/_authenticated/raid-run/-hook/use-raid-run';
 import { createRaidRun } from '@/routes/_authenticated/raid-run/-lib/raid-run';
-import { setRaidSignupIsLeader } from '@/routes/_authenticated/raid-run/-lib/raid-signup';
+import {
+  createRaidSignup,
+  setRaidSignupIsLeader,
+} from '@/routes/_authenticated/raid-run/-lib/raid-signup';
 import { renderWithQueryClient } from '../../../../helpers/render';
 
-const { listAllKungfus, listAllGameServers } = vi.hoisted(() => ({
-  listAllKungfus: vi.fn(),
-  listAllGameServers: vi.fn(),
-}));
+const { listAllKungfus, listAllGameServers, searchRaidSignups } = vi.hoisted(
+  () => ({
+    listAllKungfus: vi.fn(),
+    listAllGameServers: vi.fn(),
+    searchRaidSignups: vi.fn(),
+  }),
+);
 
 vi.mock('@/lib/api/kungfus-api', () => ({
   kungfusAllQueryKey: ['kungfus-all'],
@@ -20,6 +26,11 @@ vi.mock('@/lib/api/kungfus-api', () => ({
 vi.mock('@/lib/api/game-servers-api', () => ({
   gameServersAllQueryKey: ['game-servers-all'],
   listAllGameServers,
+}));
+
+vi.mock('@/lib/api/raid-signups-api', () => ({
+  raidSignupsSearchQueryKey: (name: string) => ['raid-signups-search', name],
+  searchRaidSignups,
 }));
 
 const kungfus = [
@@ -56,8 +67,10 @@ describe('RaidMemberPanel', () => {
   beforeEach(() => {
     listAllKungfus.mockReset();
     listAllGameServers.mockReset();
+    searchRaidSignups.mockReset();
     listAllKungfus.mockResolvedValue(kungfus);
     listAllGameServers.mockResolvedValue(servers);
+    searchRaidSignups.mockResolvedValue([]);
     useRaidRun.setState({
       raidRun: createRaidRun({ id: 'run-1' }),
       selectedSlot: null,
@@ -78,7 +91,9 @@ describe('RaidMemberPanel', () => {
 
     expect(screen.getByText('第2队第3位')).toBeInTheDocument();
 
-    await user.type(screen.getByLabelText('角色名'), '少侠甲');
+    const nameInput = screen.getByLabelText('角色名');
+    await user.click(nameInput);
+    await user.type(nameInput, '少侠甲');
     await user.type(screen.getByLabelText('备注'), '需要奶量');
 
     expect(useRaidRun.getState().raidRun.signups[1][2].characterName).toBe(
@@ -110,6 +125,44 @@ describe('RaidMemberPanel', () => {
     expect(useRaidRun.getState().raidRun.signups[1][2].serverId).toBe(
       'server-1',
     );
+  });
+
+  it('fills name, server, kungfu, and role from a search suggestion', async () => {
+    const user = userEvent.setup();
+    searchRaidSignups.mockResolvedValue([
+      {
+        id: 'signup-hist-1',
+        characterName: '少侠甲',
+        serverId: 'server-1',
+        serverName: '梦江南',
+        kungfuId: 'kungfu-2',
+        kungfuName: '铁牢律',
+        schoolId: 'school-2',
+        kungfuType: 'defense' as const,
+      },
+    ]);
+    useRaidRun.setState({
+      selectedSlot: { groupNumber: 2, positionNumber: 3 },
+    });
+    renderWithQueryClient(<RaidMemberPanel />);
+
+    const nameInput = screen.getByLabelText('角色名');
+    await user.click(nameInput);
+    await user.type(nameInput, '少侠');
+    await user.click(
+      await screen.findByRole('option', {
+        name: '少侠甲 · 梦江南 · 铁牢律',
+      }),
+    );
+
+    expect(useRaidRun.getState().raidRun.signups[1][2]).toMatchObject({
+      characterName: '少侠甲',
+      serverId: 'server-1',
+      kungfuId: 'kungfu-2',
+      schoolId: 'school-2',
+      role: 'tank',
+    });
+    expect(useRaidRun.getState().raidRun.reservedTank).toBe(1);
   });
 
   it('updates role from the selected kungfu type', async () => {
@@ -149,6 +202,50 @@ describe('RaidMemberPanel', () => {
 
     await user.click(screen.getByRole('checkbox', { name: '是否团长' }));
     expect(useRaidRun.getState().raidRun.signups[1][0].isLeader).toBe(false);
+  });
+
+  it('clears mutable fields and keeps the slot identity', async () => {
+    const user = userEvent.setup();
+    const run = createRaidRun({ id: 'run-1' });
+    const slot = run.signups[1][2];
+    run.signups[1][2] = createRaidSignup({
+      id: slot.id,
+      groupNumber: 2,
+      positionNumber: 3,
+      role: 'tank',
+      isLeader: true,
+      isDarkRun: true,
+      isFormationCore: true,
+      serverId: 'server-1',
+      characterName: '少侠甲',
+      schoolId: 'school-2',
+      kungfuId: 'kungfu-2',
+      remark: '需要奶量',
+    });
+    run.reservedTank = 1;
+    useRaidRun.setState({
+      raidRun: run,
+      selectedSlot: { groupNumber: 2, positionNumber: 3 },
+    });
+    renderWithQueryClient(<RaidMemberPanel />);
+
+    await user.click(screen.getByRole('button', { name: '清空' }));
+
+    expect(useRaidRun.getState().raidRun.signups[1][2]).toEqual({
+      id: slot.id,
+      groupNumber: 2,
+      positionNumber: 3,
+      role: 'pending',
+      isLeader: false,
+      isDarkRun: false,
+      isFormationCore: false,
+      serverId: undefined,
+      characterName: undefined,
+      schoolId: undefined,
+      kungfuId: undefined,
+      remark: undefined,
+    });
+    expect(useRaidRun.getState().raidRun.reservedTank).toBe(0);
   });
 
   it('renders nothing when the selected slot is missing', () => {
