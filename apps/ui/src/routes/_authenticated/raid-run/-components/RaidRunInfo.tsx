@@ -190,9 +190,6 @@ const RaidRunInfo = ({ className }: Props) => {
 
           <FieldSet>
             <FieldLegend variant="label">预留人数</FieldLegend>
-            <FieldDescription>
-              合计不超过 {raidRunReservedLimit(raidRun)} 人
-            </FieldDescription>
             <FieldGroup>
               <FieldGroup className="flex-row">
                 <ReservedCountInput
@@ -234,6 +231,9 @@ const RaidRunInfo = ({ className }: Props) => {
                 />
               </FieldGroup>
             </FieldGroup>
+            <FieldDescription>
+              合计不超过 {raidRunReservedLimit(raidRun)} 人
+            </FieldDescription>
           </FieldSet>
 
           <Field>
