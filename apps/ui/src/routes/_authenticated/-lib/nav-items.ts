@@ -109,3 +109,30 @@ export function isNavItemActive(pathname: string, item: NavItem): boolean {
 
   return isNavPathActive(pathname, item.to);
 }
+
+export const APP_DOCUMENT_TITLE = '四堆专用';
+
+export function getActiveNavTitle(pathname: string): string | undefined {
+  for (const item of navItems) {
+    if (item.children?.length) {
+      const child = item.children.find((leaf) =>
+        isNavPathActive(pathname, leaf.to),
+      );
+      if (child) {
+        return child.title;
+      }
+      continue;
+    }
+
+    if (item.to && isNavPathActive(pathname, item.to)) {
+      return item.title;
+    }
+  }
+
+  return undefined;
+}
+
+export function getDocumentTitle(pathname: string): string {
+  const navTitle = getActiveNavTitle(pathname);
+  return navTitle ? `${navTitle} · ${APP_DOCUMENT_TITLE}` : APP_DOCUMENT_TITLE;
+}

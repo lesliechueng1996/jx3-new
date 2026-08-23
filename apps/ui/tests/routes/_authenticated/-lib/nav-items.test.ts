@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  APP_DOCUMENT_TITLE,
+  getActiveNavTitle,
+  getDocumentTitle,
   isNavItemActive,
   isNavPathActive,
   navItems,
@@ -34,5 +37,19 @@ describe('nav-items', () => {
     expect(isNavItemActive('/', { title: '空', icon: navItems[0].icon })).toBe(
       false,
     );
+  });
+
+  it('resolves the active leaf title from the pathname', () => {
+    expect(getActiveNavTitle('/')).toBe('概览');
+    expect(getActiveNavTitle('/raid-run/')).toBe('开团');
+    expect(getActiveNavTitle('/game-assist/guess-idiom')).toBe('猜成语');
+    expect(getActiveNavTitle('/game-assist/minesweeper')).toBe('扫雷');
+    expect(getActiveNavTitle('/admin/idioms')).toBe('成语管理');
+    expect(getActiveNavTitle('/login')).toBeUndefined();
+  });
+
+  it('builds the document title from the active nav item', () => {
+    expect(getDocumentTitle('/raid-run')).toBe(`开团 · ${APP_DOCUMENT_TITLE}`);
+    expect(getDocumentTitle('/unknown')).toBe(APP_DOCUMENT_TITLE);
   });
 });

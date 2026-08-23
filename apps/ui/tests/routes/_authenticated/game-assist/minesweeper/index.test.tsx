@@ -44,7 +44,9 @@ describe('minesweeper route', () => {
   it('starts a game, analyzes, and copies suggestions', async () => {
     const user = userEvent.setup();
     await renderApp('/game-assist/minesweeper');
-    expect(await screen.findByText('扫雷辅助')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: '开始游戏' }),
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: '开始游戏' }));
     expect(await screen.findByText(/已标 0 \/ 80 雷/)).toBeInTheDocument();
@@ -68,7 +70,7 @@ describe('minesweeper route', () => {
     document.execCommand = execCommand;
 
     await renderApp('/game-assist/minesweeper');
-    await screen.findByText('扫雷辅助');
+    await screen.findByRole('button', { name: '开始游戏' });
     await user.click(screen.getByRole('button', { name: '自定义' }));
     await user.clear(screen.getByLabelText('行数'));
     await user.type(screen.getByLabelText('行数'), '2');
@@ -99,7 +101,7 @@ describe('minesweeper route', () => {
   it('shows a custom config error', async () => {
     const user = userEvent.setup();
     await renderApp('/game-assist/minesweeper');
-    await screen.findByText('扫雷辅助');
+    await screen.findByRole('button', { name: '开始游戏' });
     await user.click(screen.getByRole('button', { name: '自定义' }));
     expect(await screen.findByLabelText('行数')).toBeInTheDocument();
     await user.clear(screen.getByLabelText('雷数'));
@@ -111,7 +113,7 @@ describe('minesweeper route', () => {
   it('plays a small board: flag, keyboard, analyze, apply, and reset', async () => {
     const user = userEvent.setup();
     await renderApp('/game-assist/minesweeper');
-    await screen.findByText('扫雷辅助');
+    await screen.findByRole('button', { name: '开始游戏' });
     await startCustomGame(user, '3', '3', '8');
     expect(await screen.findByText(/已标 0 \/ 8 雷/)).toBeInTheDocument();
 
@@ -195,7 +197,7 @@ describe('minesweeper route', () => {
   it('starts the hero preset and ignores clipboard when copy text is empty', async () => {
     const user = userEvent.setup();
     await renderApp('/game-assist/minesweeper');
-    await screen.findByText('扫雷辅助');
+    await screen.findByRole('button', { name: '开始游戏' });
     await user.click(screen.getByRole('button', { name: '英雄' }));
     await user.click(screen.getByRole('button', { name: '开始游戏' }));
     expect(await screen.findByText(/已标 0 \/ 42 雷/)).toBeInTheDocument();

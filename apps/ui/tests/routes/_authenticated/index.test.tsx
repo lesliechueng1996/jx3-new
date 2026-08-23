@@ -14,8 +14,5 @@ describe('home route', () => {
   it('shows the overview copy', async () => {
     await renderApp('/');
     expect(await screen.findByText('欢迎回来')).toBeInTheDocument();
-    expect(
-      screen.getByText(/从左侧菜单进入成语管理与游戏辅助/),
-    ).toBeInTheDocument();
   });
 });

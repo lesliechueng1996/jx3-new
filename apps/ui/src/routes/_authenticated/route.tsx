@@ -1,10 +1,17 @@
-import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
+import {
+  createFileRoute,
+  Outlet,
+  redirect,
+  useRouterState,
+} from '@tanstack/react-router';
+import { useEffect } from 'react';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ROLE_ADMIN } from '@/lib/auth-client';
 import { fetchCachedSession } from '@/lib/auth-session';
 import { AppHeaderComponent } from './-components/AppHeaderComponent';
 import { AppSidebarNavComponent } from './-components/AppSidebarNavComponent';
+import { APP_DOCUMENT_TITLE, getDocumentTitle } from './-lib/nav-items';
 
 export const Route = createFileRoute('/_authenticated')({
   component: RouteComponent,
@@ -24,6 +31,16 @@ export const Route = createFileRoute('/_authenticated')({
 
 function RouteComponent() {
   const { user } = Route.useRouteContext();
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
+
+  useEffect(() => {
+    document.title = getDocumentTitle(pathname);
+    return () => {
+      document.title = APP_DOCUMENT_TITLE;
+    };
+  }, [pathname]);
 
   return (
     <TooltipProvider>

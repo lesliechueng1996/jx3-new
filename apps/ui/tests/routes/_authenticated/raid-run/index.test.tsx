@@ -51,10 +51,8 @@ describe('raid-run route', () => {
     const user = userEvent.setup();
     await renderApp('/raid-run');
 
-    expect(
-      await screen.findByRole('heading', { name: '开团' }),
-    ).toBeInTheDocument();
-    expect(screen.getByText('开团信息')).toBeInTheDocument();
+    expect(await screen.findByText('开团信息')).toBeInTheDocument();
+    expect(document.title).toBe('开团 · 四堆专用');
     expect(screen.getByText('团队布局')).toBeInTheDocument();
     expect(screen.queryByText('团员属性')).not.toBeInTheDocument();
 

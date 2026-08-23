@@ -153,13 +153,6 @@ function UsersComponent() {
 
   return (
     <section className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">用户管理</h1>
-        <p className="text-sm text-muted-foreground">
-          维护账号、角色与封禁状态
-        </p>
-      </div>
-
       <UserFiltersComponent
         committedFilters={search}
         onSearch={setSearch}

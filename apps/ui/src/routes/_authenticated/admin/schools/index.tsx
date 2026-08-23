@@ -106,11 +106,6 @@ function SchoolsComponent() {
 
   return (
     <section className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">门派管理</h1>
-        <p className="text-sm text-muted-foreground">维护游戏门派与流派</p>
-      </div>
-
       <SchoolFiltersComponent
         committedFilters={search}
         onSearch={setSearch}
