@@ -296,3 +296,77 @@ export const updateRaidSignupAt = (
         ),
   ),
 });
+
+export const getRaidSignupAt = (
+  run: RaidRun,
+  groupNumber: number,
+  positionNumber: number,
+): RaidSignup | undefined => run.signups[groupNumber - 1]?.[positionNumber - 1];
+
+const mapSignups = (
+  run: RaidRun,
+  mapper: (signup: RaidSignup) => RaidSignup,
+): RaidRun => ({
+  ...run,
+  signups: run.signups.map((group) => group.map(mapper)),
+});
+
+const isSameSlot = (
+  signup: RaidSignup,
+  groupNumber: number,
+  positionNumber: number,
+) =>
+  signup.groupNumber === groupNumber &&
+  signup.positionNumber === positionNumber;
+
+export const setRaidSignupLeaderExclusive = (
+  run: RaidRun,
+  groupNumber: number,
+  positionNumber: number,
+  isLeader: boolean,
+): RaidRun =>
+  mapSignups(run, (signup) => {
+    if (isSameSlot(signup, groupNumber, positionNumber)) {
+      return { ...signup, isLeader };
+    }
+    if (isLeader && signup.isLeader) {
+      return { ...signup, isLeader: false };
+    }
+    return signup;
+  });
+
+export const setRaidSignupDarkRunExclusive = (
+  run: RaidRun,
+  groupNumber: number,
+  positionNumber: number,
+  isDarkRun: boolean,
+): RaidRun =>
+  mapSignups(run, (signup) => {
+    if (isSameSlot(signup, groupNumber, positionNumber)) {
+      return { ...signup, isDarkRun };
+    }
+    if (isDarkRun && signup.isDarkRun) {
+      return { ...signup, isDarkRun: false };
+    }
+    return signup;
+  });
+
+export const setRaidSignupFormationCoreExclusive = (
+  run: RaidRun,
+  groupNumber: number,
+  positionNumber: number,
+  isFormationCore: boolean,
+): RaidRun =>
+  mapSignups(run, (signup) => {
+    if (isSameSlot(signup, groupNumber, positionNumber)) {
+      return { ...signup, isFormationCore };
+    }
+    if (
+      isFormationCore &&
+      signup.isFormationCore &&
+      signup.groupNumber === groupNumber
+    ) {
+      return { ...signup, isFormationCore: false };
+    }
+    return signup;
+  });

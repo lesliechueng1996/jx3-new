@@ -86,6 +86,22 @@ export class KungfuRepository {
     return and(...conditions);
   }
 
+  listAll() {
+    return db
+      .select({
+        id: gameKungfu.id,
+        name: gameKungfu.name,
+        schoolId: gameKungfu.schoolId,
+        schoolName: gameSchool.name,
+        kungfuType: gameKungfu.kungfuType,
+        icon: gameKungfu.icon,
+        alias: gameKungfu.alias,
+      })
+      .from(gameKungfu)
+      .innerJoin(gameSchool, eq(gameKungfu.schoolId, gameSchool.id))
+      .orderBy(gameKungfu.name);
+  }
+
   listPagination(where: SQL | undefined, limit: number, offset: number) {
     return db
       .select(kungfuSelect)

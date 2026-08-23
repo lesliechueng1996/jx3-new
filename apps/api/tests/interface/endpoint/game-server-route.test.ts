@@ -14,6 +14,14 @@ const gameServerDetail = {
 const listAdminGameServers = mock(async () => ({
   items: [gameServerDetail],
 }));
+const listAllGameServers = mock(async () => [
+  {
+    id: gameServerDetail.id,
+    zone: gameServerDetail.zone,
+    name: gameServerDetail.name,
+    alias: gameServerDetail.alias,
+  },
+]);
 const createAdminGameServer = mock(async () => gameServerDetail);
 const getAdminGameServer = mock(async () => gameServerDetail);
 const updateAdminGameServer = mock(async () => gameServerDetail);
@@ -25,6 +33,7 @@ const syncAdminGameServersFromJx3box = mock(async () => ({
 
 mock.module('@api/application/service/game-server-service', () => ({
   listAdminGameServers,
+  listAllGameServers,
   createAdminGameServer,
   getAdminGameServer,
   updateAdminGameServer,
@@ -60,6 +69,7 @@ const jsonRequest = (path: string, init?: RequestInit) =>
 describe('gameServerRoute', () => {
   beforeEach(() => {
     listAdminGameServers.mockReset();
+    listAllGameServers.mockReset();
     createAdminGameServer.mockReset();
     getAdminGameServer.mockReset();
     updateAdminGameServer.mockReset();
@@ -69,6 +79,14 @@ describe('gameServerRoute', () => {
     listAdminGameServers.mockResolvedValue({
       items: [gameServerDetail],
     });
+    listAllGameServers.mockResolvedValue([
+      {
+        id: gameServerDetail.id,
+        zone: gameServerDetail.zone,
+        name: gameServerDetail.name,
+        alias: gameServerDetail.alias,
+      },
+    ]);
     createAdminGameServer.mockResolvedValue(gameServerDetail);
     getAdminGameServer.mockResolvedValue(gameServerDetail);
     updateAdminGameServer.mockResolvedValue(gameServerDetail);
@@ -84,6 +102,23 @@ describe('gameServerRoute', () => {
       name: 'game-server',
       description: 'Game server API',
     });
+  });
+
+  it('lists all game servers for users', async () => {
+    const response = await jsonRequest('/all');
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(listAllGameServers).toHaveBeenCalled();
+    expect(body.data).toEqual([
+      {
+        id: gameServerId,
+        zone: '电信一区',
+        name: '梦江南',
+        alias: ['梦岛'],
+      },
+    ]);
+    expect(body.code).toBe('SUCCESS');
   });
 
   it('lists game servers', async () => {

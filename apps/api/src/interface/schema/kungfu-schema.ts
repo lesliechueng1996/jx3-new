@@ -82,6 +82,20 @@ export const kungfuDetailSchema = t.Object({
 
 export type KungfuDetail = Static<typeof kungfuDetailSchema>;
 
+export const kungfuPublicSchema = t.Object({
+  id: t.String(),
+  name: t.String(),
+  schoolId: t.String(),
+  schoolName: t.String(),
+  kungfuType: kungfuTypeSchema,
+  icon: t.Nullable(t.String()),
+  alias: t.Array(t.String()),
+});
+
+export type KungfuPublic = Static<typeof kungfuPublicSchema>;
+
+export const listAllKungfusResponseSchema = t.Array(kungfuPublicSchema);
+
 export const listKungfusQuerySchema = t.Composite([
   paginationQuerySchema,
   t.Object({

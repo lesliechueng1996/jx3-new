@@ -26,6 +26,17 @@ const listAdminKungfus = mock(async () => ({
   page: 1,
   pageSize: 20,
 }));
+const listAllKungfus = mock(async () => [
+  {
+    id: kungfuDetail.id,
+    name: kungfuDetail.name,
+    schoolId: kungfuDetail.schoolId,
+    schoolName: kungfuDetail.schoolName,
+    kungfuType: kungfuDetail.kungfuType,
+    icon: kungfuDetail.icon,
+    alias: kungfuDetail.alias,
+  },
+]);
 const createAdminKungfu = mock(async () => kungfuDetail);
 const getAdminKungfu = mock(async () => kungfuDetail);
 const updateAdminKungfu = mock(async () => kungfuDetail);
@@ -33,6 +44,7 @@ const deleteAdminKungfu = mock(async () => undefined);
 
 mock.module('@api/application/service/kungfu-service', () => ({
   listAdminKungfus,
+  listAllKungfus,
   createAdminKungfu,
   getAdminKungfu,
   updateAdminKungfu,
@@ -67,6 +79,7 @@ const jsonRequest = (path: string, init?: RequestInit) =>
 describe('kungfuRoute', () => {
   beforeEach(() => {
     listAdminKungfus.mockReset();
+    listAllKungfus.mockReset();
     createAdminKungfu.mockReset();
     getAdminKungfu.mockReset();
     updateAdminKungfu.mockReset();
@@ -78,6 +91,17 @@ describe('kungfuRoute', () => {
       page: 1,
       pageSize: 20,
     });
+    listAllKungfus.mockResolvedValue([
+      {
+        id: kungfuDetail.id,
+        name: kungfuDetail.name,
+        schoolId: kungfuDetail.schoolId,
+        schoolName: kungfuDetail.schoolName,
+        kungfuType: kungfuDetail.kungfuType,
+        icon: kungfuDetail.icon,
+        alias: kungfuDetail.alias,
+      },
+    ]);
     createAdminKungfu.mockResolvedValue(kungfuDetail);
     getAdminKungfu.mockResolvedValue(kungfuDetail);
     updateAdminKungfu.mockResolvedValue(kungfuDetail);
@@ -89,6 +113,26 @@ describe('kungfuRoute', () => {
       name: 'kungfu',
       description: 'Kungfu API',
     });
+  });
+
+  it('lists all kungfus for users', async () => {
+    const response = await jsonRequest('/all');
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(listAllKungfus).toHaveBeenCalled();
+    expect(body.data).toEqual([
+      {
+        id: kungfuId,
+        name: '紫霞功',
+        schoolId: kungfuDetail.schoolId,
+        schoolName: '纯阳',
+        kungfuType: 'attack',
+        icon: '/icons/zixia.png',
+        alias: ['气纯'],
+      },
+    ]);
+    expect(body.code).toBe('SUCCESS');
   });
 
   it('lists kungfus', async () => {

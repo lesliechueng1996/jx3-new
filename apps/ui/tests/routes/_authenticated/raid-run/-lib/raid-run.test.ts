@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createRaidRun,
   formatRaidDungeonLabel,
+  getRaidSignupAt,
   RAID_RUN_POSITION_COUNT_PER_GROUP,
   RAID_RUN_TOTAL_GROUP_COUNT,
   raidRunStatusMapping,
@@ -22,6 +23,9 @@ import {
   setRaidRunSubsidyAmount,
   setRaidRunTotalIncome,
   setRaidRunWagePerPerson,
+  setRaidSignupDarkRunExclusive,
+  setRaidSignupFormationCoreExclusive,
+  setRaidSignupLeaderExclusive,
   updateRaidSignupAt,
 } from '@/routes/_authenticated/raid-run/-lib/raid-run';
 import { setRaidSignupRole } from '@/routes/_authenticated/raid-run/-lib/raid-signup';
@@ -211,6 +215,73 @@ describe('raid-run', () => {
         setRaidSignupRole(signup, 'boss'),
       ).signups,
     ).toEqual(run.signups);
+  });
+
+  it('looks up a signup by group and position', () => {
+    const run = createRaidRun({ id: 'run-1' });
+
+    expect(getRaidSignupAt(run, 2, 3)).toMatchObject({
+      groupNumber: 2,
+      positionNumber: 3,
+      role: 'pending',
+    });
+    expect(getRaidSignupAt(run, 9, 1)).toBeUndefined();
+    expect(getRaidSignupAt(run, 1, 9)).toBeUndefined();
+  });
+
+  it('keeps leader exclusive across the raid', () => {
+    const run = setRaidSignupLeaderExclusive(
+      createRaidRun({ id: 'run-1' }),
+      1,
+      1,
+      true,
+    );
+    const next = setRaidSignupLeaderExclusive(run, 3, 2, true);
+    const cleared = setRaidSignupLeaderExclusive(next, 3, 2, false);
+
+    expect(run.signups[0][0].isLeader).toBe(true);
+    expect(next.signups[0][0].isLeader).toBe(false);
+    expect(next.signups[2][1].isLeader).toBe(true);
+    expect(cleared.signups[2][1].isLeader).toBe(false);
+    expect(cleared.signups[0][0].isLeader).toBe(false);
+  });
+
+  it('keeps dark-run exclusive across the raid', () => {
+    const run = setRaidSignupDarkRunExclusive(
+      createRaidRun({ id: 'run-1' }),
+      1,
+      1,
+      true,
+    );
+    const next = setRaidSignupDarkRunExclusive(run, 2, 1, true);
+
+    expect(run.signups[0][0].isDarkRun).toBe(true);
+    expect(next.signups[0][0].isDarkRun).toBe(false);
+    expect(next.signups[1][0].isDarkRun).toBe(true);
+    expect(
+      setRaidSignupDarkRunExclusive(next, 2, 1, false).signups[1][0].isDarkRun,
+    ).toBe(false);
+  });
+
+  it('keeps formation core exclusive within a group', () => {
+    const run = setRaidSignupFormationCoreExclusive(
+      createRaidRun({ id: 'run-1' }),
+      1,
+      1,
+      true,
+    );
+    const sameGroup = setRaidSignupFormationCoreExclusive(run, 1, 3, true);
+    const otherGroup = setRaidSignupFormationCoreExclusive(run, 2, 1, true);
+
+    expect(run.signups[0][0].isFormationCore).toBe(true);
+    expect(sameGroup.signups[0][0].isFormationCore).toBe(false);
+    expect(sameGroup.signups[0][2].isFormationCore).toBe(true);
+    expect(otherGroup.signups[0][0].isFormationCore).toBe(true);
+    expect(otherGroup.signups[1][0].isFormationCore).toBe(true);
+    expect(
+      setRaidSignupFormationCoreExclusive(otherGroup, 2, 1, false).signups[1][0]
+        .isFormationCore,
+    ).toBe(false);
   });
 
   it('shrinks the signup grid when the dungeon needs fewer groups', () => {
