@@ -9,6 +9,7 @@ import { gameSeasonTag } from './interface/endpoint/game-season-route';
 import { gameServerTag } from './interface/endpoint/game-server-route';
 import { idiomTag } from './interface/endpoint/idiom-route';
 import { kungfuTag } from './interface/endpoint/kungfu-route';
+import { raidRunTag } from './interface/endpoint/raid-run-route';
 import { schoolTag } from './interface/endpoint/school-route';
 import { userTag } from './interface/endpoint/user-route';
 import { httpLogger } from './interface/plugins/http-logger';
@@ -37,6 +38,7 @@ export const app = new Elysia()
           gameServerTag,
           idiomTag,
           kungfuTag,
+          raidRunTag,
           schoolTag,
           userTag,
         ],

@@ -18,5 +18,8 @@ describe('ERROR_CODES', () => {
       'GAME_ITEM_REPLACE_SAME_ITEM',
     );
     expect(ERROR_CODES.IDION_DB_BROKEN_DATA).toBe('IDION_DB_BROKEN_DATA');
+    expect(ERROR_CODES.RAID_RUN_DUNGEON_NOT_FOUND).toBe(
+      'RAID_RUN_DUNGEON_NOT_FOUND',
+    );
   });
 });

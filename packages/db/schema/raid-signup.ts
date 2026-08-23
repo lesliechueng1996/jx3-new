@@ -1,22 +1,29 @@
 import * as t from 'drizzle-orm/pg-core';
 import { pgEnum, pgTable } from 'drizzle-orm/pg-core';
 
-// 报名位置类型: 待定、坦克、治疗、DPS、老板
-export const raidSignupRoleEnum = pgEnum('raid_signup_role', [
+export const raidSignupRole = [
   'pending',
   'tank',
   'healer',
   'dps',
   'boss',
-]);
+] as const;
 
-// 报名状态: 待审核、已确认、候补、已拒绝
-export const raidSignupStatusEnum = pgEnum('raid_signup_status', [
+// 报名位置类型: 待定、坦克、治疗、DPS、老板
+export const raidSignupRoleEnum = pgEnum('raid_signup_role', raidSignupRole);
+
+export const raidSignupStatus = [
   'pending',
   'confirmed',
   'waitlist',
   'rejected',
-]);
+] as const;
+
+// 报名状态: 待审核、已确认、候补、已拒绝
+export const raidSignupStatusEnum = pgEnum(
+  'raid_signup_status',
+  raidSignupStatus,
+);
 
 export const raidSignup = pgTable(
   'raid_signup',

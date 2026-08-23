@@ -9,6 +9,7 @@ import {
   gameKungfu,
   gameSchool,
   ilike,
+  inArray,
   playerBlocklist,
   raidSignup,
   type SQL,
@@ -126,6 +127,14 @@ export class SchoolRepository {
     ]);
 
     return Boolean(kungfu[0] || character[0] || signup[0] || blocklist[0]);
+  }
+
+  async countByIds(ids: string[]) {
+    const result = await db
+      .select({ total: count() })
+      .from(gameSchool)
+      .where(inArray(gameSchool.id, ids));
+    return result[0]?.total ?? 0;
   }
 }
 

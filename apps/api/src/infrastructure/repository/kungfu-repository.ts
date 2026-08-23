@@ -8,6 +8,7 @@ import {
   gameKungfu,
   gameSchool,
   ilike,
+  inArray,
   raidSignup,
   type SQL,
 } from '@api/shared/util/db';
@@ -110,6 +111,20 @@ export class KungfuRepository {
     return result[0] ?? null;
   }
 
+  async findByIds(ids: string[]) {
+    if (ids.length === 0) {
+      return [];
+    }
+
+    return db
+      .select({
+        id: gameKungfu.id,
+        schoolId: gameKungfu.schoolId,
+      })
+      .from(gameKungfu)
+      .where(inArray(gameKungfu.id, ids));
+  }
+
   async findByName(name: string) {
     const result = await db
       .select()
@@ -161,6 +176,14 @@ export class KungfuRepository {
       .limit(1);
 
     return Boolean(signup);
+  }
+
+  async countByIds(ids: string[]) {
+    const result = await db
+      .select({ total: count() })
+      .from(gameKungfu)
+      .where(inArray(gameKungfu.id, ids));
+    return result[0]?.total ?? 0;
   }
 }
 

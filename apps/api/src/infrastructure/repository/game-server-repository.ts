@@ -1,10 +1,12 @@
 import type { CreateGameServerBody } from '@api/interface/schema/game-server-schema';
 import {
   and,
+  count,
   db,
   eq,
   gameCharacter,
   gameServer,
+  inArray,
   playerBlocklist,
   raidSignup,
 } from '@api/shared/util/db';
@@ -125,6 +127,14 @@ export class GameServerRepository {
         );
       }
     });
+  }
+
+  async countByIds(ids: string[]) {
+    const result = await db
+      .select({ total: count() })
+      .from(gameServer)
+      .where(inArray(gameServer.id, ids));
+    return result[0]?.total ?? 0;
   }
 }
 

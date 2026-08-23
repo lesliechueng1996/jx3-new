@@ -1,0 +1,118 @@
+import { type Static, t } from 'elysia';
+
+const remarkSchema = t.String({
+  maxLength: 512,
+  error: () => '备注最多 512 个字符',
+});
+
+const createRaidRunSignupSchema = t.Object({
+  groupNumber: t.Integer({
+    minimum: 1,
+    maximum: 20,
+    error: () => '小队编号须为1-20之间的整数',
+  }),
+  positionNumber: t.Integer({
+    minimum: 1,
+    maximum: 5,
+    error: () => '位置编号应为1-5之间的整数',
+  }),
+  role: t.Enum(
+    {
+      tank: 'tank',
+      healer: 'healer',
+      dps: 'dps',
+      boss: 'boss',
+    },
+    {
+      error: () => '位置类型不正确',
+    },
+  ),
+  isLeader: t.Boolean({
+    error: () => '是否团长格式不正确',
+  }),
+  isDarkRun: t.Boolean({
+    error: () => '是否黑本格式不正确',
+  }),
+  isFormationCore: t.Boolean({
+    error: () => '是否阵眼格式不正确',
+  }),
+  serverId: t.Optional(
+    t.String({
+      format: 'uuid',
+      error: () => '服务器ID格式不正确',
+    }),
+  ),
+  characterName: t.String({
+    minLength: 1,
+    maxLength: 64,
+    error: () => '角色名不能为空,且不能超过64个字符',
+  }),
+  schoolId: t.Optional(
+    t.String({
+      format: 'uuid',
+      error: () => '门派ID格式不正确',
+    }),
+  ),
+  kungfuId: t.Optional(
+    t.String({
+      format: 'uuid',
+      error: () => '心法ID格式不正确',
+    }),
+  ),
+  remark: t.Optional(remarkSchema),
+});
+
+export const createRaidRunBodySchema = t.Object({
+  name: t.String({
+    minLength: 1,
+    maxLength: 64,
+    error: () => '团队名称不能为空,且不能超过64个字符',
+  }),
+  description: t.Optional(
+    t.String({
+      maxLength: 512,
+      error: () => '描述最多 512 个字符',
+    }),
+  ),
+  dungeonId: t.String({
+    format: 'uuid',
+    error: () => '副本ID格式不正确',
+  }),
+  gatherTime: t.Date({
+    error: () => '集合时间格式不正确',
+  }),
+  startTime: t.Date({
+    error: () => '开团时间格式不正确',
+  }),
+  endTime: t.Date({
+    error: () => '结束时间格式不正确',
+  }),
+  reservedTank: t.Integer({
+    minimum: 0,
+    error: () => '坦克预留人数不能为负数',
+  }),
+  reservedHealer: t.Integer({
+    minimum: 0,
+    error: () => '治疗预留人数不能为负数',
+  }),
+  reservedDps: t.Integer({
+    minimum: 0,
+    error: () => 'DPS预留人数不能为负数',
+  }),
+  reservedBoss: t.Integer({
+    minimum: 0,
+    error: () => '老板预留人数不能为负数',
+  }),
+  remark: t.Optional(remarkSchema),
+  signups: t.Array(createRaidRunSignupSchema, {
+    minItems: 1,
+    maxItems: 100,
+    error: () => '报名人数须为1-100人',
+  }),
+});
+
+export type CreateRaidRunBody = Static<typeof createRaidRunBodySchema>;
+
+export const createRaidRunResponseSchema = t.Object({
+  id: t.String(),
+});
