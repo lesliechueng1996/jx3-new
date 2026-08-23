@@ -89,6 +89,7 @@ describe('RaidMemberPanel', () => {
     await user.click(screen.getByLabelText('职能'));
     await user.click(await screen.findByRole('option', { name: '坦克' }));
     expect(useRaidRun.getState().raidRun.signups[1][2].role).toBe('tank');
+    expect(useRaidRun.getState().raidRun.reservedTank).toBe(1);
 
     const kungfu = await waitFor(() => screen.getByLabelText('心法'));
     await user.click(kungfu);
@@ -98,6 +99,8 @@ describe('RaidMemberPanel', () => {
       schoolId: 'school-1',
       role: 'dps',
     });
+    expect(useRaidRun.getState().raidRun.reservedDps).toBe(1);
+    expect(useRaidRun.getState().raidRun.reservedTank).toBe(0);
 
     const server = screen.getByLabelText('服务器');
     await user.click(server);
@@ -120,6 +123,7 @@ describe('RaidMemberPanel', () => {
     await user.click(kungfu);
     await user.click(await screen.findByRole('option', { name: /铁牢律/ }));
     expect(useRaidRun.getState().raidRun.signups[0][0].role).toBe('tank');
+    expect(useRaidRun.getState().raidRun.reservedTank).toBe(1);
   });
 
   it('keeps leader exclusive across the raid', async () => {

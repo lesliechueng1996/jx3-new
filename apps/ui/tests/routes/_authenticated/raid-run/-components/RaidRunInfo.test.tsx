@@ -28,10 +28,23 @@ const dungeonItem = {
   bossCount: 6,
 };
 
+const tenPlayerDungeonItem = {
+  id: 'dungeon-2',
+  name: '10人普通',
+  expansionId: 'exp-1',
+  expansionName: '资料片',
+  seasonId: 'season-1',
+  seasonName: '赛季',
+  playerLimit: 10,
+  difficulty: 'normal' as const,
+  levelRequirement: 120,
+  bossCount: 3,
+};
+
 describe('RaidRunInfo', () => {
   beforeEach(() => {
     searchGameDungeons.mockReset();
-    searchGameDungeons.mockResolvedValue([dungeonItem]);
+    searchGameDungeons.mockResolvedValue([dungeonItem, tenPlayerDungeonItem]);
     useRaidRun.setState({
       raidRun: createRaidRun({ id: 'run-1', name: '' }),
       selectedSlot: null,
@@ -46,6 +59,7 @@ describe('RaidRunInfo', () => {
 
     await user.type(screen.getByLabelText('团队名称'), '周六英雄团');
     await user.type(screen.getByLabelText('描述'), '开团说明');
+    expect(screen.getByText('合计不超过 25 人')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('坦克预留'), {
       target: { value: '2' },
     });
@@ -87,6 +101,10 @@ describe('RaidRunInfo', () => {
     expect(raidRun.reservedHealer).toBe(3);
     expect(raidRun.reservedDps).toBe(18);
     expect(raidRun.reservedBoss).toBe(2);
+    expect(raidRun.signups[0][0].role).toBe('dps');
+    expect(raidRun.signups[3][3].role).toBe('healer');
+    expect(raidRun.signups[4][1].role).toBe('tank');
+    expect(raidRun.signups[4][4].role).toBe('boss');
     expect(raidRun.remark).toBe('其他补充');
     expect(raidRun.dungeon).toEqual({
       id: 'dungeon-1',
@@ -98,11 +116,49 @@ describe('RaidRunInfo', () => {
     expect(raidRun.gatherTime.getHours()).toBe(20);
   });
 
+  it('normalizes reserved inputs and caps them to the player limit', async () => {
+    const user = userEvent.setup();
+    renderWithQueryClient(<RaidRunInfo />);
+
+    fireEvent.change(screen.getByLabelText('坦克预留'), {
+      target: { value: '02' },
+    });
+    expect(screen.getByLabelText('坦克预留')).toHaveValue('2');
+    expect(useRaidRun.getState().raidRun.reservedTank).toBe(2);
+
+    fireEvent.change(screen.getByLabelText('DPS 预留'), {
+      target: { value: '67' },
+    });
+    expect(screen.getByLabelText('DPS 预留')).toHaveValue('23');
+    expect(useRaidRun.getState().raidRun.reservedDps).toBe(23);
+
+    const dungeon = screen.getByLabelText('副本');
+    await user.type(dungeon, '普通');
+    await user.click(
+      await screen.findByRole(
+        'option',
+        { name: '10人普通（普通 · 10人）' },
+        { timeout: 2000 },
+      ),
+    );
+
+    expect(screen.getByText('合计不超过 10 人')).toBeInTheDocument();
+    expect(useRaidRun.getState().raidRun.reservedDps).toBe(10);
+    expect(useRaidRun.getState().raidRun.reservedTank).toBe(0);
+    expect(screen.getByLabelText('DPS 预留')).toHaveValue('10');
+    expect(screen.getByLabelText('坦克预留')).toHaveValue('0');
+  });
+
   it('ignores invalid reserved counts and empty times', () => {
     renderWithQueryClient(<RaidRunInfo />);
 
     fireEvent.change(screen.getByLabelText('坦克预留'), {
       target: { value: '-1' },
+    });
+    expect(useRaidRun.getState().raidRun.reservedTank).toBe(0);
+
+    fireEvent.change(screen.getByLabelText('坦克预留'), {
+      target: { value: '1.5' },
     });
     expect(useRaidRun.getState().raidRun.reservedTank).toBe(0);
 

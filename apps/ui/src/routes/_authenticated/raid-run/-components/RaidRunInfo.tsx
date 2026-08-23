@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Field,
+  FieldDescription,
   FieldGroup,
   FieldLabel,
   FieldLegend,
@@ -12,7 +13,9 @@ import { cn } from '@/lib/utils';
 import { useRaidRun } from '../-hook/use-raid-run';
 import {
   formatRaidDungeonLabel,
+  parseRaidRunReservedCount,
   type RaidRun,
+  raidRunReservedLimit,
   setRaidRunDescription,
   setRaidRunDungeon,
   setRaidRunDungeonInput,
@@ -46,18 +49,31 @@ const parseDateTimeLocalValue = (value: string) => {
   return Number.isNaN(next.getTime()) ? undefined : next;
 };
 
-const parseReservedCount = (value: string) => {
-  if (value.length === 0) {
-    return 0;
-  }
-
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isInteger(parsed) || parsed < 0) {
-    return undefined;
-  }
-
-  return parsed;
+type ReservedCountInputProps = {
+  id: string;
+  label: string;
+  value: number;
+  onChange: (value: string) => void;
 };
+
+const ReservedCountInput = ({
+  id,
+  label,
+  value,
+  onChange,
+}: ReservedCountInputProps) => (
+  <Field>
+    <FieldLabel htmlFor={id}>{label}</FieldLabel>
+    <Input
+      id={id}
+      type="text"
+      inputMode="numeric"
+      autoComplete="off"
+      value={String(value)}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  </Field>
+);
 
 const RaidRunInfo = ({ className }: Props) => {
   const { raidRun, updateRaidRun } = useRaidRun();
@@ -77,7 +93,7 @@ const RaidRunInfo = ({ className }: Props) => {
     value: string,
     setter: (run: RaidRun, count: number) => RaidRun,
   ) => {
-    const next = parseReservedCount(value);
+    const next = parseRaidRunReservedCount(value);
     if (next === undefined) {
       return;
     }
@@ -174,85 +190,48 @@ const RaidRunInfo = ({ className }: Props) => {
 
           <FieldSet>
             <FieldLegend variant="label">预留人数</FieldLegend>
+            <FieldDescription>
+              合计不超过 {raidRunReservedLimit(raidRun)} 人
+            </FieldDescription>
             <FieldGroup>
               <FieldGroup className="flex-row">
-                <Field>
-                  <FieldLabel htmlFor="raid-run-reserved-tank">
-                    坦克预留
-                  </FieldLabel>
-                  <Input
-                    id="raid-run-reserved-tank"
-                    type="number"
-                    min={0}
-                    step={1}
-                    value={raidRun.reservedTank}
-                    onChange={(event) =>
-                      handleReservedChange(
-                        event.target.value,
-                        setRaidRunReservedTank,
-                      )
-                    }
-                  />
-                </Field>
+                <ReservedCountInput
+                  id="raid-run-reserved-tank"
+                  label="坦克预留"
+                  value={raidRun.reservedTank}
+                  onChange={(value) =>
+                    handleReservedChange(value, setRaidRunReservedTank)
+                  }
+                />
 
-                <Field>
-                  <FieldLabel htmlFor="raid-run-reserved-healer">
-                    治疗预留
-                  </FieldLabel>
-                  <Input
-                    id="raid-run-reserved-healer"
-                    type="number"
-                    min={0}
-                    step={1}
-                    value={raidRun.reservedHealer}
-                    onChange={(event) =>
-                      handleReservedChange(
-                        event.target.value,
-                        setRaidRunReservedHealer,
-                      )
-                    }
-                  />
-                </Field>
+                <ReservedCountInput
+                  id="raid-run-reserved-healer"
+                  label="治疗预留"
+                  value={raidRun.reservedHealer}
+                  onChange={(value) =>
+                    handleReservedChange(value, setRaidRunReservedHealer)
+                  }
+                />
               </FieldGroup>
 
               <FieldGroup className="flex-row">
-                <Field>
-                  <FieldLabel htmlFor="raid-run-reserved-dps">
-                    DPS 预留
-                  </FieldLabel>
-                  <Input
-                    id="raid-run-reserved-dps"
-                    type="number"
-                    min={0}
-                    step={1}
-                    value={raidRun.reservedDps}
-                    onChange={(event) =>
-                      handleReservedChange(
-                        event.target.value,
-                        setRaidRunReservedDps,
-                      )
-                    }
-                  />
-                </Field>
+                <ReservedCountInput
+                  id="raid-run-reserved-dps"
+                  label="DPS 预留"
+                  value={raidRun.reservedDps}
+                  onChange={(value) =>
+                    handleReservedChange(value, setRaidRunReservedDps)
+                  }
+                />
 
-                <Field>
-                  <FieldLabel htmlFor="raid-run-reserved-boss">
-                    老板预留
-                  </FieldLabel>
-                  <Input
-                    id="raid-run-reserved-boss"
-                    type="number"
-                    min={0}
-                    step={1}
-                    value={raidRun.reservedBoss}
-                    onChange={(event) =>
-                      handleReservedChange(
-                        event.target.value,
-                        setRaidRunReservedBoss,
-                      )
-                    }
-                  />
-                </Field>
+                <ReservedCountInput
+                  id="raid-run-reserved-boss"
+                  label="老板预留"
+                  value={raidRun.reservedBoss}
+                  onChange={(value) =>
+                    handleReservedChange(value, setRaidRunReservedBoss)
+                  }
+                />
               </FieldGroup>
             </FieldGroup>
           </FieldSet>

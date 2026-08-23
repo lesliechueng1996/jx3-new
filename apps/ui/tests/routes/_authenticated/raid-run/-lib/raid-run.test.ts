@@ -1,10 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
+  applyRaidRunReservedToSignups,
+  clampRaidRunReservedToLimit,
   createRaidRun,
   formatRaidDungeonLabel,
   getRaidSignupAt,
+  parseRaidRunReservedCount,
+  RAID_RUN_DEFAULT_PLAYER_LIMIT,
   RAID_RUN_POSITION_COUNT_PER_GROUP,
   RAID_RUN_TOTAL_GROUP_COUNT,
+  raidRunReservedLimit,
+  raidRunReservedTotal,
   raidRunStatusMapping,
   setRaidRunDescription,
   setRaidRunDungeon,
@@ -26,9 +32,13 @@ import {
   setRaidSignupDarkRunExclusive,
   setRaidSignupFormationCoreExclusive,
   setRaidSignupLeaderExclusive,
+  syncRaidRunReservedFromSignups,
   updateRaidSignupAt,
 } from '@/routes/_authenticated/raid-run/-lib/raid-run';
-import { setRaidSignupRole } from '@/routes/_authenticated/raid-run/-lib/raid-signup';
+import {
+  setRaidSignupCharacterName,
+  setRaidSignupRole,
+} from '@/routes/_authenticated/raid-run/-lib/raid-signup';
 
 const dungeon = {
   id: 'dungeon-1',
@@ -61,6 +71,9 @@ const onePlayerDungeon = {
   bossCount: 1,
   difficulty: 'normal' as const,
 };
+
+const slotRoles = (run: ReturnType<typeof createRaidRun>) =>
+  run.signups.map((group) => group.map((signup) => signup.role));
 
 describe('raid-run', () => {
   it('maps statuses to Chinese labels', () => {
@@ -131,6 +144,21 @@ describe('raid-run', () => {
     expect(run.gatherTime).toBe(gatherTime);
     expect(run.totalGroupCount).toBe(5);
     expect(run.signups).toHaveLength(5);
+    expect(slotRoles(run)[0]).toEqual(['dps', 'dps', 'dps', 'dps', 'dps']);
+    expect(slotRoles(run)[3]).toEqual([
+      'dps',
+      'dps',
+      'dps',
+      'healer',
+      'healer',
+    ]);
+    expect(slotRoles(run)[4]).toEqual([
+      'healer',
+      'tank',
+      'tank',
+      'boss',
+      'boss',
+    ]);
   });
 
   it('sizes the signup grid from the dungeon player limit on create', () => {
@@ -197,6 +225,229 @@ describe('raid-run', () => {
     expect(setRaidRunStartTime(run, startTime).startTime).toBe(startTime);
     expect(setRaidRunEndTime(run, endTime).endTime).toBe(endTime);
     expect(run.name).toBe('旧名');
+  });
+
+  it('parses reserved count text without keeping leading zeros', () => {
+    expect(parseRaidRunReservedCount('')).toBe(0);
+    expect(parseRaidRunReservedCount('02')).toBe(2);
+    expect(parseRaidRunReservedCount('67')).toBe(67);
+    expect(parseRaidRunReservedCount('-1')).toBeUndefined();
+    expect(parseRaidRunReservedCount('1.5')).toBeUndefined();
+    expect(parseRaidRunReservedCount('abc')).toBeUndefined();
+  });
+
+  it('caps reserved counts to the dungeon player limit', () => {
+    const run = createRaidRun({ id: 'run-1' });
+
+    expect(raidRunReservedLimit(run)).toBe(RAID_RUN_DEFAULT_PLAYER_LIMIT);
+    expect(setRaidRunReservedDps(run, 67).reservedDps).toBe(25);
+    expect(setRaidRunReservedDps(run, Number.NaN)).toBe(run);
+    expect(setRaidRunReservedDps(run, -1)).toBe(run);
+
+    const withOthers = setRaidRunReservedHealer(
+      setRaidRunReservedTank(run, 10),
+      10,
+    );
+    expect(setRaidRunReservedDps(withOthers, 10).reservedDps).toBe(5);
+    expect(raidRunReservedTotal(setRaidRunReservedDps(withOthers, 10))).toBe(
+      25,
+    );
+    expect(setRaidRunReservedTank(run, 67).reservedTank).toBe(25);
+    expect(setRaidRunReservedHealer(run, 67).reservedHealer).toBe(25);
+    expect(setRaidRunReservedBoss(run, 67).reservedBoss).toBe(25);
+    expect(setRaidRunReservedDps(run, 25.8).reservedDps).toBe(25);
+
+    const tenPlayer = createRaidRun({
+      id: 'run-2',
+      dungeon: tenPlayerDungeon,
+    });
+    expect(raidRunReservedLimit(tenPlayer)).toBe(10);
+    expect(setRaidRunReservedDps(tenPlayer, 67).reservedDps).toBe(10);
+  });
+
+  it('clamps reserved counts when a smaller dungeon is selected', () => {
+    const filled = setRaidRunReservedBoss(
+      setRaidRunReservedTank(
+        setRaidRunReservedHealer(
+          setRaidRunReservedDps(createRaidRun({ id: 'run-1' }), 18),
+          3,
+        ),
+        2,
+      ),
+      2,
+    );
+    const next = setRaidRunDungeon(filled, tenPlayerDungeon);
+
+    expect(next).toMatchObject({
+      reservedDps: 10,
+      reservedHealer: 0,
+      reservedTank: 0,
+      reservedBoss: 0,
+    });
+    expect(raidRunReservedTotal(next)).toBe(10);
+    expect(clampRaidRunReservedToLimit(next)).toBe(next);
+  });
+
+  it('clamps reserved counts on create when they exceed the limit', () => {
+    const run = createRaidRun({
+      id: 'run-1',
+      dungeon: tenPlayerDungeon,
+      reservedDps: 18,
+      reservedHealer: 3,
+      reservedTank: 2,
+      reservedBoss: 2,
+    });
+
+    expect(run).toMatchObject({
+      reservedDps: 10,
+      reservedHealer: 0,
+      reservedTank: 0,
+      reservedBoss: 0,
+    });
+
+    expect(
+      createRaidRun({
+        id: 'run-2',
+        dungeon: tenPlayerDungeon,
+        reservedDps: 6,
+        reservedHealer: 8,
+        reservedTank: 5,
+        reservedBoss: 4,
+      }),
+    ).toMatchObject({
+      reservedDps: 6,
+      reservedHealer: 4,
+      reservedTank: 0,
+      reservedBoss: 0,
+    });
+    expect(
+      createRaidRun({
+        id: 'run-3',
+        dungeon: tenPlayerDungeon,
+        reservedDps: 2,
+        reservedHealer: 2,
+        reservedTank: 8,
+        reservedBoss: 5,
+      }),
+    ).toMatchObject({
+      reservedDps: 2,
+      reservedHealer: 2,
+      reservedTank: 6,
+      reservedBoss: 0,
+    });
+    expect(
+      createRaidRun({
+        id: 'run-4',
+        dungeon: tenPlayerDungeon,
+        reservedDps: 2,
+        reservedHealer: 2,
+        reservedTank: 2,
+        reservedBoss: 8,
+      }),
+    ).toMatchObject({
+      reservedDps: 2,
+      reservedHealer: 2,
+      reservedTank: 2,
+      reservedBoss: 4,
+    });
+  });
+
+  it('paints signup roles from reserved counts in column order', () => {
+    const run = setRaidRunReservedBoss(
+      setRaidRunReservedTank(
+        setRaidRunReservedHealer(
+          setRaidRunReservedDps(createRaidRun({ id: 'run-1' }), 6),
+          2,
+        ),
+        3,
+      ),
+      1,
+    );
+
+    expect(slotRoles(run)).toEqual([
+      ['dps', 'dps', 'dps', 'dps', 'dps'],
+      ['dps', 'healer', 'healer', 'tank', 'tank'],
+      ['tank', 'boss', 'pending', 'pending', 'pending'],
+      ['pending', 'pending', 'pending', 'pending', 'pending'],
+      ['pending', 'pending', 'pending', 'pending', 'pending'],
+    ]);
+  });
+
+  it('clears leftover slot roles when reserved counts shrink', () => {
+    const filled = setRaidRunReservedDps(createRaidRun({ id: 'run-1' }), 6);
+    const shrunk = setRaidRunReservedDps(filled, 1);
+
+    expect(slotRoles(shrunk)[0]).toEqual([
+      'dps',
+      'pending',
+      'pending',
+      'pending',
+      'pending',
+    ]);
+    expect(slotRoles(shrunk)[1][0]).toBe('pending');
+  });
+
+  it('keeps member data when applying reserved roles', () => {
+    const named = updateRaidSignupAt(
+      createRaidRun({ id: 'run-1' }),
+      1,
+      1,
+      (signup) => setRaidSignupCharacterName(signup, '少侠甲'),
+    );
+    const next = setRaidRunReservedDps(named, 1);
+
+    expect(next.signups[0][0]).toMatchObject({
+      characterName: '少侠甲',
+      role: 'dps',
+    });
+    expect(applyRaidRunReservedToSignups(next).signups[0][0]).toBe(
+      next.signups[0][0],
+    );
+  });
+
+  it('syncs reserved counts from signup roles', () => {
+    const painted = updateRaidSignupAt(
+      updateRaidSignupAt(
+        updateRaidSignupAt(
+          updateRaidSignupAt(createRaidRun({ id: 'run-1' }), 1, 1, (signup) =>
+            setRaidSignupRole(signup, 'dps'),
+          ),
+          2,
+          1,
+          (signup) => setRaidSignupRole(signup, 'healer'),
+        ),
+        3,
+        1,
+        (signup) => setRaidSignupRole(signup, 'tank'),
+      ),
+      4,
+      1,
+      (signup) => setRaidSignupRole(signup, 'boss'),
+    );
+    const synced = syncRaidRunReservedFromSignups(painted);
+
+    expect(synced).toMatchObject({
+      reservedDps: 1,
+      reservedHealer: 1,
+      reservedTank: 1,
+      reservedBoss: 1,
+    });
+    expect(syncRaidRunReservedFromSignups(synced)).toBe(synced);
+  });
+
+  it('syncs reserved counts without relaying out other slots', () => {
+    const painted = setRaidRunReservedDps(createRaidRun({ id: 'run-1' }), 6);
+    const next = syncRaidRunReservedFromSignups(
+      updateRaidSignupAt(painted, 1, 3, (signup) =>
+        setRaidSignupRole(signup, 'healer'),
+      ),
+    );
+
+    expect(next.reservedDps).toBe(5);
+    expect(next.reservedHealer).toBe(1);
+    expect(next.signups[0][0].role).toBe('dps');
+    expect(next.signups[0][2].role).toBe('healer');
+    expect(next.signups[1][0].role).toBe('dps');
   });
 
   it('updates one signup slot and leaves the rest unchanged', () => {
@@ -328,6 +579,21 @@ describe('raid-run', () => {
     expect(next.dungeon?.id).toBe('dungeon-4');
     expect(next.totalGroupCount).toBe(5);
     expect(next.signups).toBe(run.signups);
+  });
+
+  it('clamps reserved counts when the dungeon keeps the same group count', () => {
+    const filled = setRaidRunReservedDps(createRaidRun({ dungeon }), 25);
+    const next = setRaidRunDungeon(filled, {
+      ...dungeon,
+      id: 'dungeon-21',
+      name: '21人',
+      playerLimit: 21,
+    });
+
+    expect(next.totalGroupCount).toBe(5);
+    expect(next.reservedDps).toBe(21);
+    expect(next.signups[4][0].role).toBe('dps');
+    expect(next.signups[4][1].role).toBe('pending');
   });
 
   it('can shrink and then expand again from the updated group count', () => {

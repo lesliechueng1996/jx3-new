@@ -1,5 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
-import { createRaidSignup, type RaidSignup } from './raid-signup';
+import {
+  createRaidSignup,
+  type RaidSignup,
+  type RaidSignupRole,
+} from './raid-signup';
 
 export const raidRunStatusMapping = {
   pending: '待开始',
@@ -15,6 +19,8 @@ const defaultRaidRunStatus: RaidRunStatus = 'pending';
 
 export const RAID_RUN_TOTAL_GROUP_COUNT = 5;
 export const RAID_RUN_POSITION_COUNT_PER_GROUP = 5;
+export const RAID_RUN_DEFAULT_PLAYER_LIMIT =
+  RAID_RUN_TOTAL_GROUP_COUNT * RAID_RUN_POSITION_COUNT_PER_GROUP;
 
 export type RaidDungeon = {
   id: string;
@@ -32,6 +38,92 @@ const raidDungeonDifficultyLabel = {
 
 export const formatRaidDungeonLabel = (dungeon: RaidDungeon) =>
   `${dungeon.name}（${raidDungeonDifficultyLabel[dungeon.difficulty]} · ${dungeon.playerLimit}人）`;
+
+export const raidRunReservedLimit = (run: Pick<RaidRun, 'dungeon'>): number =>
+  run.dungeon?.playerLimit ?? RAID_RUN_DEFAULT_PLAYER_LIMIT;
+
+export const raidRunReservedTotal = (
+  run: Pick<
+    RaidRun,
+    'reservedTank' | 'reservedHealer' | 'reservedDps' | 'reservedBoss'
+  >,
+): number =>
+  run.reservedTank + run.reservedHealer + run.reservedDps + run.reservedBoss;
+
+export const parseRaidRunReservedCount = (
+  value: string,
+): number | undefined => {
+  if (value.length === 0) {
+    return 0;
+  }
+
+  if (!/^\d+$/.test(value)) {
+    return undefined;
+  }
+
+  return Number.parseInt(value, 10);
+};
+
+type RaidRunReservedField =
+  | 'reservedTank'
+  | 'reservedHealer'
+  | 'reservedDps'
+  | 'reservedBoss';
+
+const reservedCountsClampedToLimit = (run: RaidRun): RaidRun => {
+  const limit = raidRunReservedLimit(run);
+  if (raidRunReservedTotal(run) <= limit) {
+    return run;
+  }
+
+  let remaining = limit;
+  const reservedDps = Math.min(run.reservedDps, remaining);
+  remaining -= reservedDps;
+  const reservedHealer = Math.min(run.reservedHealer, remaining);
+  remaining -= reservedHealer;
+  const reservedTank = Math.min(run.reservedTank, remaining);
+  remaining -= reservedTank;
+  const reservedBoss = Math.min(run.reservedBoss, remaining);
+
+  return {
+    ...run,
+    reservedDps,
+    reservedHealer,
+    reservedTank,
+    reservedBoss,
+  };
+};
+
+export const clampRaidRunReservedToLimit = (run: RaidRun): RaidRun => {
+  const next = reservedCountsClampedToLimit(run);
+  if (
+    next.reservedDps === run.reservedDps &&
+    next.reservedHealer === run.reservedHealer &&
+    next.reservedTank === run.reservedTank &&
+    next.reservedBoss === run.reservedBoss
+  ) {
+    return run;
+  }
+
+  return applyRaidRunReservedToSignups(next);
+};
+
+const setRaidRunReservedField = (
+  run: RaidRun,
+  field: RaidRunReservedField,
+  count: number,
+): RaidRun => {
+  const others = raidRunReservedTotal(run) - run[field];
+  const max = Math.max(0, raidRunReservedLimit(run) - others);
+  const raw = Number.isFinite(count) ? Math.trunc(count) : 0;
+  const next = Math.min(Math.max(0, raw), max);
+
+  if (next === run[field]) {
+    return run;
+  }
+
+  return applyRaidRunReservedToSignups({ ...run, [field]: next });
+};
 
 export type RaidRunProps = {
   id?: string;
@@ -96,34 +188,118 @@ const createEmptySignups = (
     ),
   );
 
+const reservedRoleAtIndex = (
+  run: Pick<
+    RaidRun,
+    'reservedDps' | 'reservedHealer' | 'reservedTank' | 'reservedBoss'
+  >,
+  index: number,
+): RaidSignupRole => {
+  if (index < run.reservedDps) {
+    return 'dps';
+  }
+
+  const healerEnd = run.reservedDps + run.reservedHealer;
+  if (index < healerEnd) {
+    return 'healer';
+  }
+
+  const tankEnd = healerEnd + run.reservedTank;
+  if (index < tankEnd) {
+    return 'tank';
+  }
+
+  const bossEnd = tankEnd + run.reservedBoss;
+  if (index < bossEnd) {
+    return 'boss';
+  }
+
+  return 'pending';
+};
+
+export const applyRaidRunReservedToSignups = (run: RaidRun): RaidRun => {
+  let index = 0;
+
+  return {
+    ...run,
+    signups: run.signups.map((group) =>
+      group.map((signup) => {
+        const role = reservedRoleAtIndex(run, index);
+        index += 1;
+        return signup.role === role ? signup : { ...signup, role };
+      }),
+    ),
+  };
+};
+
+export const syncRaidRunReservedFromSignups = (run: RaidRun): RaidRun => {
+  let reservedDps = 0;
+  let reservedHealer = 0;
+  let reservedTank = 0;
+  let reservedBoss = 0;
+
+  for (const group of run.signups) {
+    for (const signup of group) {
+      if (signup.role === 'dps') {
+        reservedDps += 1;
+      } else if (signup.role === 'healer') {
+        reservedHealer += 1;
+      } else if (signup.role === 'tank') {
+        reservedTank += 1;
+      } else if (signup.role === 'boss') {
+        reservedBoss += 1;
+      }
+    }
+  }
+
+  if (
+    run.reservedDps === reservedDps &&
+    run.reservedHealer === reservedHealer &&
+    run.reservedTank === reservedTank &&
+    run.reservedBoss === reservedBoss
+  ) {
+    return run;
+  }
+
+  return {
+    ...run,
+    reservedDps,
+    reservedHealer,
+    reservedTank,
+    reservedBoss,
+  };
+};
+
 export const createRaidRun = (props: RaidRunProps = {}): RaidRun => {
   const totalGroupCount = props.dungeon
     ? groupCountForPlayerLimit(props.dungeon.playerLimit)
     : RAID_RUN_TOTAL_GROUP_COUNT;
 
-  return {
-    id: props.id ?? uuidv4(),
-    name: props.name,
-    description: props.description,
-    status: props.status ?? defaultRaidRunStatus,
-    gatherTime: props.gatherTime ?? new Date(),
-    startTime: props.startTime ?? new Date(),
-    endTime: props.endTime ?? new Date(),
-    reservedTank: props.reservedTank ?? 0,
-    reservedHealer: props.reservedHealer ?? 0,
-    reservedDps: props.reservedDps ?? 0,
-    reservedBoss: props.reservedBoss ?? 0,
-    remark: props.remark,
-    totalIncome: props.totalIncome ?? 0,
-    wagePerPerson: props.wagePerPerson ?? 0,
-    subsidyAmount: props.subsidyAmount ?? 0,
-    gameRaidId: props.gameRaidId,
-    dungeonInput: props.dungeonInput,
-    dungeon: props.dungeon,
-    totalGroupCount,
-    positionCountPerGroup: RAID_RUN_POSITION_COUNT_PER_GROUP,
-    signups: createEmptySignups(totalGroupCount),
-  };
+  return applyRaidRunReservedToSignups(
+    reservedCountsClampedToLimit({
+      id: props.id ?? uuidv4(),
+      name: props.name,
+      description: props.description,
+      status: props.status ?? defaultRaidRunStatus,
+      gatherTime: props.gatherTime ?? new Date(),
+      startTime: props.startTime ?? new Date(),
+      endTime: props.endTime ?? new Date(),
+      reservedTank: props.reservedTank ?? 0,
+      reservedHealer: props.reservedHealer ?? 0,
+      reservedDps: props.reservedDps ?? 0,
+      reservedBoss: props.reservedBoss ?? 0,
+      remark: props.remark,
+      totalIncome: props.totalIncome ?? 0,
+      wagePerPerson: props.wagePerPerson ?? 0,
+      subsidyAmount: props.subsidyAmount ?? 0,
+      gameRaidId: props.gameRaidId,
+      dungeonInput: props.dungeonInput,
+      dungeon: props.dungeon,
+      totalGroupCount,
+      positionCountPerGroup: RAID_RUN_POSITION_COUNT_PER_GROUP,
+      signups: createEmptySignups(totalGroupCount),
+    }),
+  );
 };
 
 export const setRaidRunName = (run: RaidRun, name: string): RaidRun => ({
@@ -162,22 +338,22 @@ export const setRaidRunDungeon = (
   const newTotalGroupCount = groupCountForPlayerLimit(dungeon.playerLimit);
 
   if (newTotalGroupCount === run.totalGroupCount) {
-    return {
+    return clampRaidRunReservedToLimit({
       ...run,
       dungeon,
-    };
+    });
   }
 
   if (newTotalGroupCount < run.totalGroupCount) {
-    return {
+    return clampRaidRunReservedToLimit({
       ...run,
       dungeon,
       totalGroupCount: newTotalGroupCount,
       signups: run.signups.slice(0, newTotalGroupCount),
-    };
+    });
   }
 
-  return {
+  return clampRaidRunReservedToLimit({
     ...run,
     dungeon,
     totalGroupCount: newTotalGroupCount,
@@ -188,40 +364,28 @@ export const setRaidRunDungeon = (
         run.totalGroupCount + 1,
       ),
     ],
-  };
+  });
 };
 
 export const setRaidRunReservedTank = (
   run: RaidRun,
   reservedTank: number,
-): RaidRun => ({
-  ...run,
-  reservedTank,
-});
+): RaidRun => setRaidRunReservedField(run, 'reservedTank', reservedTank);
 
 export const setRaidRunReservedHealer = (
   run: RaidRun,
   reservedHealer: number,
-): RaidRun => ({
-  ...run,
-  reservedHealer,
-});
+): RaidRun => setRaidRunReservedField(run, 'reservedHealer', reservedHealer);
 
 export const setRaidRunReservedDps = (
   run: RaidRun,
   reservedDps: number,
-): RaidRun => ({
-  ...run,
-  reservedDps,
-});
+): RaidRun => setRaidRunReservedField(run, 'reservedDps', reservedDps);
 
 export const setRaidRunReservedBoss = (
   run: RaidRun,
   reservedBoss: number,
-): RaidRun => ({
-  ...run,
-  reservedBoss,
-});
+): RaidRun => setRaidRunReservedField(run, 'reservedBoss', reservedBoss);
 
 export const setRaidRunRemark = (run: RaidRun, remark: string): RaidRun => ({
   ...run,

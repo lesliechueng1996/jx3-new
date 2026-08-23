@@ -18,6 +18,7 @@ import {
   setRaidSignupDarkRunExclusive,
   setRaidSignupFormationCoreExclusive,
   setRaidSignupLeaderExclusive,
+  syncRaidRunReservedFromSignups,
   updateRaidSignupAt,
 } from '../-lib/raid-run';
 import {
@@ -57,11 +58,13 @@ const RaidMemberPanel = ({ className }: Props) => {
 
   const updateSignup = (updater: Parameters<typeof updateRaidSignupAt>[3]) => {
     updateRaidRun((run) =>
-      updateRaidSignupAt(
-        run,
-        selectedSlot.groupNumber,
-        selectedSlot.positionNumber,
-        updater,
+      syncRaidRunReservedFromSignups(
+        updateRaidSignupAt(
+          run,
+          selectedSlot.groupNumber,
+          selectedSlot.positionNumber,
+          updater,
+        ),
       ),
     );
   };
