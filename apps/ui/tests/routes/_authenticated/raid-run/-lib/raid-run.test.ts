@@ -34,6 +34,22 @@ const dungeon = {
   difficulty: 'heroic' as const,
 };
 
+const tenPlayerDungeon = {
+  id: 'dungeon-2',
+  name: '10人普通',
+  playerLimit: 10,
+  bossCount: 3,
+  difficulty: 'normal' as const,
+};
+
+const thirtyFivePlayerDungeon = {
+  id: 'dungeon-3',
+  name: '35人挑战',
+  playerLimit: 35,
+  bossCount: 8,
+  difficulty: 'challenge' as const,
+};
+
 describe('raid-run', () => {
   it('maps statuses to Chinese labels', () => {
     expect(raidRunStatusMapping.pending).toBe('待开始');
@@ -101,6 +117,20 @@ describe('raid-run', () => {
       dungeon,
     });
     expect(run.gatherTime).toBe(gatherTime);
+    expect(run.totalGroupCount).toBe(5);
+    expect(run.signups).toHaveLength(5);
+  });
+
+  it('sizes the signup grid from the dungeon player limit on create', () => {
+    const run = createRaidRun({ dungeon: tenPlayerDungeon });
+
+    expect(run.totalGroupCount).toBe(2);
+    expect(run.signups).toHaveLength(2);
+    expect(run.signups[1][4]).toMatchObject({
+      groupNumber: 2,
+      positionNumber: 5,
+      role: 'pending',
+    });
   });
 
   it('returns new snapshots from field setters without mutating the original', () => {
@@ -114,6 +144,12 @@ describe('raid-run', () => {
     expect(setRaidRunStatus(run, 'ongoing').status).toBe('ongoing');
     expect(setRaidRunDungeonInput(run, '输入').dungeonInput).toBe('输入');
     expect(formatRaidDungeonLabel(dungeon)).toBe('25人英雄（英雄 · 25人）');
+    expect(formatRaidDungeonLabel(tenPlayerDungeon)).toBe(
+      '10人普通（普通 · 10人）',
+    );
+    expect(formatRaidDungeonLabel(thirtyFivePlayerDungeon)).toBe(
+      '35人挑战（挑战 · 35人）',
+    );
     expect(setRaidRunDungeon(run, dungeon).dungeon).toEqual(dungeon);
     expect(setRaidRunReservedTank(run, 1).reservedTank).toBe(1);
     expect(setRaidRunReservedHealer(run, 2).reservedHealer).toBe(2);
@@ -146,5 +182,64 @@ describe('raid-run', () => {
         setRaidSignupRole(signup, 'boss'),
       ).signups,
     ).toEqual(run.signups);
+  });
+
+  it('shrinks the signup grid when the dungeon needs fewer groups', () => {
+    const run = updateRaidSignupAt(createRaidRun({ dungeon }), 1, 1, (signup) =>
+      setRaidSignupRole(signup, 'tank'),
+    );
+    const next = setRaidRunDungeon(run, tenPlayerDungeon);
+
+    expect(next.dungeon).toEqual(tenPlayerDungeon);
+    expect(next.totalGroupCount).toBe(2);
+    expect(next.signups).toHaveLength(2);
+    expect(next.signups[0][0].role).toBe('tank');
+    expect(next.signups[1][0].groupNumber).toBe(2);
+    expect(run.signups).toHaveLength(5);
+  });
+
+  it('expands the signup grid with continuing group numbers', () => {
+    const run = createRaidRun({ dungeon: tenPlayerDungeon });
+    const next = setRaidRunDungeon(run, thirtyFivePlayerDungeon);
+
+    expect(next.totalGroupCount).toBe(7);
+    expect(next.signups).toHaveLength(7);
+    expect(next.signups[0]).toBe(run.signups[0]);
+    expect(next.signups[2][0]).toMatchObject({
+      groupNumber: 3,
+      positionNumber: 1,
+      role: 'pending',
+    });
+    expect(next.signups[6][4]).toMatchObject({
+      groupNumber: 7,
+      positionNumber: 5,
+      role: 'pending',
+    });
+  });
+
+  it('keeps the signup grid when the dungeon uses the same group count', () => {
+    const run = createRaidRun({ dungeon });
+    const next = setRaidRunDungeon(run, {
+      ...dungeon,
+      id: 'dungeon-4',
+      name: '另一场25人',
+    });
+
+    expect(next.dungeon?.id).toBe('dungeon-4');
+    expect(next.totalGroupCount).toBe(5);
+    expect(next.signups).toBe(run.signups);
+  });
+
+  it('can shrink and then expand again from the updated group count', () => {
+    const shrunk = setRaidRunDungeon(
+      createRaidRun({ dungeon }),
+      tenPlayerDungeon,
+    );
+    const expanded = setRaidRunDungeon(shrunk, dungeon);
+
+    expect(shrunk.totalGroupCount).toBe(2);
+    expect(expanded.totalGroupCount).toBe(5);
+    expect(expanded.signups).toHaveLength(5);
+    expect(expanded.signups[4][0].groupNumber).toBe(5);
   });
 });

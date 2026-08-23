@@ -78,41 +78,53 @@ export type RaidRun = {
   signups: RaidSignup[][];
 };
 
-const createEmptySignups = (): RaidSignup[][] =>
-  Array.from({ length: RAID_RUN_TOTAL_GROUP_COUNT }, (_, groupIndex) =>
+const groupCountForPlayerLimit = (playerLimit: number): number =>
+  Math.ceil(playerLimit / RAID_RUN_POSITION_COUNT_PER_GROUP);
+
+const createEmptySignups = (
+  groupCount: number,
+  startGroupNumber = 1,
+): RaidSignup[][] =>
+  Array.from({ length: groupCount }, (_, groupIndex) =>
     Array.from(
       { length: RAID_RUN_POSITION_COUNT_PER_GROUP },
       (_, positionIndex) =>
         createRaidSignup({
-          groupNumber: groupIndex + 1,
+          groupNumber: startGroupNumber + groupIndex,
           positionNumber: positionIndex + 1,
         }),
     ),
   );
 
-export const createRaidRun = (props: RaidRunProps = {}): RaidRun => ({
-  id: props.id ?? uuidv4(),
-  name: props.name,
-  description: props.description,
-  status: props.status ?? defaultRaidRunStatus,
-  gatherTime: props.gatherTime ?? new Date(),
-  startTime: props.startTime ?? new Date(),
-  endTime: props.endTime ?? new Date(),
-  reservedTank: props.reservedTank ?? 0,
-  reservedHealer: props.reservedHealer ?? 0,
-  reservedDps: props.reservedDps ?? 0,
-  reservedBoss: props.reservedBoss ?? 0,
-  remark: props.remark,
-  totalIncome: props.totalIncome ?? 0,
-  wagePerPerson: props.wagePerPerson ?? 0,
-  subsidyAmount: props.subsidyAmount ?? 0,
-  gameRaidId: props.gameRaidId,
-  dungeonInput: props.dungeonInput,
-  dungeon: props.dungeon,
-  totalGroupCount: RAID_RUN_TOTAL_GROUP_COUNT,
-  positionCountPerGroup: RAID_RUN_POSITION_COUNT_PER_GROUP,
-  signups: createEmptySignups(),
-});
+export const createRaidRun = (props: RaidRunProps = {}): RaidRun => {
+  const totalGroupCount = props.dungeon
+    ? groupCountForPlayerLimit(props.dungeon.playerLimit)
+    : RAID_RUN_TOTAL_GROUP_COUNT;
+
+  return {
+    id: props.id ?? uuidv4(),
+    name: props.name,
+    description: props.description,
+    status: props.status ?? defaultRaidRunStatus,
+    gatherTime: props.gatherTime ?? new Date(),
+    startTime: props.startTime ?? new Date(),
+    endTime: props.endTime ?? new Date(),
+    reservedTank: props.reservedTank ?? 0,
+    reservedHealer: props.reservedHealer ?? 0,
+    reservedDps: props.reservedDps ?? 0,
+    reservedBoss: props.reservedBoss ?? 0,
+    remark: props.remark,
+    totalIncome: props.totalIncome ?? 0,
+    wagePerPerson: props.wagePerPerson ?? 0,
+    subsidyAmount: props.subsidyAmount ?? 0,
+    gameRaidId: props.gameRaidId,
+    dungeonInput: props.dungeonInput,
+    dungeon: props.dungeon,
+    totalGroupCount,
+    positionCountPerGroup: RAID_RUN_POSITION_COUNT_PER_GROUP,
+    signups: createEmptySignups(totalGroupCount),
+  };
+};
 
 export const setRaidRunName = (run: RaidRun, name: string): RaidRun => ({
   ...run,
@@ -146,10 +158,38 @@ export const setRaidRunDungeonInput = (
 export const setRaidRunDungeon = (
   run: RaidRun,
   dungeon: RaidDungeon,
-): RaidRun => ({
-  ...run,
-  dungeon,
-});
+): RaidRun => {
+  const newTotalGroupCount = groupCountForPlayerLimit(dungeon.playerLimit);
+
+  if (newTotalGroupCount === run.totalGroupCount) {
+    return {
+      ...run,
+      dungeon,
+    };
+  }
+
+  if (newTotalGroupCount < run.totalGroupCount) {
+    return {
+      ...run,
+      dungeon,
+      totalGroupCount: newTotalGroupCount,
+      signups: run.signups.slice(0, newTotalGroupCount),
+    };
+  }
+
+  return {
+    ...run,
+    dungeon,
+    totalGroupCount: newTotalGroupCount,
+    signups: [
+      ...run.signups,
+      ...createEmptySignups(
+        newTotalGroupCount - run.totalGroupCount,
+        run.totalGroupCount + 1,
+      ),
+    ],
+  };
+};
 
 export const setRaidRunReservedTank = (
   run: RaidRun,
