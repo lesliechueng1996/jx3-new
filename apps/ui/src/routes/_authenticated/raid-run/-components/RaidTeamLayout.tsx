@@ -139,7 +139,10 @@ const RaidSignupSlotCell = ({
           />
         ) : null}
         {signup.isDarkRun ? (
-          <Wallet className="size-3 text-amber-400" aria-label="黑本" />
+          <Wallet
+            className="size-3 fill-amber-400 text-amber-400"
+            aria-label="黑本"
+          />
         ) : null}
       </span>
       {empty ? (
