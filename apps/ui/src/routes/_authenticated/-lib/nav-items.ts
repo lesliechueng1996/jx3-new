@@ -8,6 +8,7 @@ import {
   LayoutDashboardIcon,
   PackageIcon,
   ServerIcon,
+  SwordIcon,
   SwordsIcon,
   UsersIcon,
 } from 'lucide-react';
@@ -29,6 +30,11 @@ export const navItems: NavItem[] = [
     title: '概览',
     icon: LayoutDashboardIcon,
     to: '/',
+  },
+  {
+    title: '开团',
+    icon: SwordIcon,
+    to: '/raid-run',
   },
   {
     title: '用户管理',
