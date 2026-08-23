@@ -1,3 +1,4 @@
+import { DragDropProvider, useDraggable, useDroppable } from '@dnd-kit/react';
 import { useQuery } from '@tanstack/react-query';
 import { Triangle, Wallet } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,11 +9,15 @@ import {
 import { kungfusAllQueryKey, listAllKungfus } from '@/lib/api/kungfus-api';
 import { cn } from '@/lib/utils';
 import { useRaidRun } from '../-hook/use-raid-run';
+import { swapRaidSignupsAt } from '../-lib/raid-run';
 import {
   formatRaidSignupSlotTitle,
   isRaidSignupSlotEmpty,
+  RAID_SIGNUP_SLOT_DND_TYPE,
   type RaidSignup,
   raidSignupRoleCellClassName,
+  raidSignupSlotId,
+  resolveRaidSignupSwapSlots,
 } from '../-lib/raid-signup';
 
 type Props = {
@@ -20,7 +25,7 @@ type Props = {
 };
 
 const RaidTeamLayout = ({ className }: Props) => {
-  const { raidRun, selectedSlot, selectSlot } = useRaidRun();
+  const { raidRun, selectedSlot, selectSlot, updateRaidRun } = useRaidRun();
   const kungfusQuery = useQuery({
     queryKey: kungfusAllQueryKey,
     queryFn: listAllKungfus,
@@ -43,49 +48,69 @@ const RaidTeamLayout = ({ className }: Props) => {
         <CardTitle>团队布局</CardTitle>
       </CardHeader>
       <CardContent>
-        <div
-          className="grid w-full gap-2"
-          style={{
-            gridTemplateColumns: `repeat(${raidRun.totalGroupCount}, minmax(0, 1fr))`,
+        <DragDropProvider
+          onDragEnd={(event) => {
+            if (event.canceled) {
+              return;
+            }
+
+            const slots = resolveRaidSignupSwapSlots(
+              event.operation.source?.id,
+              event.operation.target?.id,
+            );
+            if (!slots) {
+              return;
+            }
+
+            updateRaidRun((run) =>
+              swapRaidSignupsAt(run, slots.source, slots.target),
+            );
           }}
         >
-          {raidRun.signups.map((group) => (
-            <div
-              key={group[0]?.groupNumber}
-              className="flex min-w-0 flex-col gap-2"
-            >
-              <div className="text-center text-xs text-muted-foreground">
-                {group[0]?.groupNumber}队
+          <div
+            className="grid w-full gap-2"
+            style={{
+              gridTemplateColumns: `repeat(${raidRun.totalGroupCount}, minmax(0, 1fr))`,
+            }}
+          >
+            {raidRun.signups.map((group) => (
+              <div
+                key={group[0]?.groupNumber}
+                className="flex min-w-0 flex-col gap-2"
+              >
+                <div className="text-center text-xs text-muted-foreground">
+                  {group[0]?.groupNumber}队
+                </div>
+                {group.map((signup) => (
+                  <RaidSignupSlotCell
+                    key={signup.id}
+                    signup={signup}
+                    selected={
+                      selectedSlot?.groupNumber === signup.groupNumber &&
+                      selectedSlot.positionNumber === signup.positionNumber
+                    }
+                    kungfu={
+                      signup.kungfuId
+                        ? kungfuById.get(signup.kungfuId)
+                        : undefined
+                    }
+                    serverName={
+                      signup.serverId
+                        ? serverById.get(signup.serverId)?.name
+                        : undefined
+                    }
+                    onSelect={() =>
+                      selectSlot({
+                        groupNumber: signup.groupNumber,
+                        positionNumber: signup.positionNumber,
+                      })
+                    }
+                  />
+                ))}
               </div>
-              {group.map((signup) => (
-                <RaidSignupSlotCell
-                  key={signup.id}
-                  signup={signup}
-                  selected={
-                    selectedSlot?.groupNumber === signup.groupNumber &&
-                    selectedSlot.positionNumber === signup.positionNumber
-                  }
-                  kungfu={
-                    signup.kungfuId
-                      ? kungfuById.get(signup.kungfuId)
-                      : undefined
-                  }
-                  serverName={
-                    signup.serverId
-                      ? serverById.get(signup.serverId)?.name
-                      : undefined
-                  }
-                  onSelect={() =>
-                    selectSlot({
-                      groupNumber: signup.groupNumber,
-                      positionNumber: signup.positionNumber,
-                    })
-                  }
-                />
-              ))}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </DragDropProvider>
       </CardContent>
     </Card>
   );
@@ -111,16 +136,34 @@ const RaidSignupSlotCell = ({
     signup.groupNumber,
     signup.positionNumber,
   );
+  const slotId = raidSignupSlotId(signup.groupNumber, signup.positionNumber);
+  const { ref: setDragRef, isDragging } = useDraggable({
+    id: slotId,
+    type: RAID_SIGNUP_SLOT_DND_TYPE,
+  });
+  const { ref: setDropRef, isDropTarget } = useDroppable({
+    id: slotId,
+    accept: RAID_SIGNUP_SLOT_DND_TYPE,
+    disabled: isDragging,
+  });
 
   return (
     <button
+      ref={(element) => {
+        setDragRef(element);
+        setDropRef(element);
+      }}
       type="button"
       aria-label={title}
       aria-pressed={selected}
+      aria-grabbed={isDragging}
       className={cn(
-        'relative flex min-h-20 w-full flex-col items-stretch justify-center gap-1 rounded-lg border px-2 py-1.5 text-left transition-shadow outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+        'relative flex min-h-20 w-full cursor-grab flex-col items-stretch justify-center gap-1 rounded-lg border px-2 py-1.5 text-left transition-shadow outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:cursor-grabbing',
         raidSignupRoleCellClassName(signup.role),
         selected && 'ring-2 ring-ring ring-offset-2 ring-offset-background',
+        isDropTarget &&
+          'ring-2 ring-primary ring-offset-2 ring-offset-background',
+        isDragging && 'opacity-50',
       )}
       onClick={onSelect}
     >

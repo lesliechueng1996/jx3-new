@@ -4,10 +4,13 @@ import {
   formatRaidSignupSlotTitle,
   isRaidSignupSlotEmpty,
   kungfuTypeToRaidSignupRole,
+  RAID_SIGNUP_SLOT_DND_TYPE,
   raidSignupRoleCellClassName,
   raidSignupRoleItems,
   raidSignupRoleMapping,
+  raidSignupSlotId,
   resetRaidSignup,
+  resolveRaidSignupSwapSlots,
   setRaidSignupCharacterName,
   setRaidSignupIsDarkRun,
   setRaidSignupIsFormationCore,
@@ -18,6 +21,7 @@ import {
   setRaidSignupRole,
   setRaidSignupSchoolId,
   setRaidSignupServerId,
+  swapRaidSignupAttributes,
 } from '@/routes/_authenticated/raid-run/-lib/raid-signup';
 
 const baseSignup = () =>
@@ -169,5 +173,52 @@ describe('raid-signup', () => {
         { value: 'tank', label: '坦克' },
       ]),
     );
+  });
+
+  it('swaps mutable attributes and keeps slot identity', () => {
+    const source = baseSignup();
+    const target = createRaidSignup({
+      id: 'signup-2',
+      groupNumber: 4,
+      positionNumber: 1,
+      role: 'healer',
+      characterName: '乙',
+    });
+    const [nextSource, nextTarget] = swapRaidSignupAttributes(source, target);
+
+    expect(nextSource).toEqual({
+      ...target,
+      id: 'signup-1',
+      groupNumber: 2,
+      positionNumber: 3,
+    });
+    expect(nextTarget).toEqual({
+      ...source,
+      id: 'signup-2',
+      groupNumber: 4,
+      positionNumber: 1,
+    });
+    expect(source.characterName).toBe('角色');
+    expect(target.characterName).toBe('乙');
+  });
+
+  it('resolves swap slots from drag identifiers', () => {
+    expect(RAID_SIGNUP_SLOT_DND_TYPE).toBe('raid-signup-slot');
+    expect(raidSignupSlotId(1, 2)).toBe('1:2');
+    expect(resolveRaidSignupSwapSlots('1:1', '2:3')).toEqual({
+      source: { groupNumber: 1, positionNumber: 1 },
+      target: { groupNumber: 2, positionNumber: 3 },
+    });
+    expect(resolveRaidSignupSwapSlots('1:1', '1:1')).toBeUndefined();
+    expect(resolveRaidSignupSwapSlots(undefined, '2:3')).toBeUndefined();
+    expect(resolveRaidSignupSwapSlots('1:1', undefined)).toBeUndefined();
+    expect(resolveRaidSignupSwapSlots(11, '2:3')).toBeUndefined();
+    expect(resolveRaidSignupSwapSlots('1:', '2:3')).toBeUndefined();
+    expect(resolveRaidSignupSwapSlots(':1', '2:3')).toBeUndefined();
+    expect(resolveRaidSignupSwapSlots('abc:1', '2:3')).toBeUndefined();
+    expect(resolveRaidSignupSwapSlots('1:abc', '2:3')).toBeUndefined();
+    expect(resolveRaidSignupSwapSlots('0:1', '2:3')).toBeUndefined();
+    expect(resolveRaidSignupSwapSlots('1:0', '2:3')).toBeUndefined();
+    expect(resolveRaidSignupSwapSlots('1.5:1', '2:3')).toBeUndefined();
   });
 });

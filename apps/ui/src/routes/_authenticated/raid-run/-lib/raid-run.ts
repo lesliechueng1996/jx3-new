@@ -3,6 +3,8 @@ import {
   createRaidSignup,
   type RaidSignup,
   type RaidSignupRole,
+  type RaidSignupSlotRef,
+  swapRaidSignupAttributes,
 } from './raid-signup';
 
 export const raidRunStatusMapping = {
@@ -466,6 +468,50 @@ export const getRaidSignupAt = (
   groupNumber: number,
   positionNumber: number,
 ): RaidSignup | undefined => run.signups[groupNumber - 1]?.[positionNumber - 1];
+
+export const swapRaidSignupsAt = (
+  run: RaidRun,
+  source: RaidSignupSlotRef,
+  target: RaidSignupSlotRef,
+): RaidRun => {
+  if (
+    source.groupNumber === target.groupNumber &&
+    source.positionNumber === target.positionNumber
+  ) {
+    return run;
+  }
+
+  const sourceSignup = getRaidSignupAt(
+    run,
+    source.groupNumber,
+    source.positionNumber,
+  );
+  const targetSignup = getRaidSignupAt(
+    run,
+    target.groupNumber,
+    target.positionNumber,
+  );
+  if (!sourceSignup || !targetSignup) {
+    return run;
+  }
+
+  const [nextSource, nextTarget] = swapRaidSignupAttributes(
+    sourceSignup,
+    targetSignup,
+  );
+
+  return updateRaidSignupAt(
+    updateRaidSignupAt(
+      run,
+      source.groupNumber,
+      source.positionNumber,
+      () => nextSource,
+    ),
+    target.groupNumber,
+    target.positionNumber,
+    () => nextTarget,
+  );
+};
 
 const mapSignups = (
   run: RaidRun,

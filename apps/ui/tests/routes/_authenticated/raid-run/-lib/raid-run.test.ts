@@ -32,6 +32,7 @@ import {
   setRaidSignupDarkRunExclusive,
   setRaidSignupFormationCoreExclusive,
   setRaidSignupLeaderExclusive,
+  swapRaidSignupsAt,
   syncRaidRunReservedFromSignups,
   updateRaidSignupAt,
 } from '@/routes/_authenticated/raid-run/-lib/raid-run';
@@ -478,6 +479,82 @@ describe('raid-run', () => {
     });
     expect(getRaidSignupAt(run, 9, 1)).toBeUndefined();
     expect(getRaidSignupAt(run, 1, 9)).toBeUndefined();
+  });
+
+  it('swaps signup attributes between two slots', () => {
+    const run = updateRaidSignupAt(
+      updateRaidSignupAt(createRaidRun({ id: 'run-1' }), 1, 1, (signup) =>
+        setRaidSignupCharacterName(setRaidSignupRole(signup, 'tank'), '少侠甲'),
+      ),
+      2,
+      3,
+      (signup) =>
+        setRaidSignupCharacterName(
+          setRaidSignupRole(signup, 'healer'),
+          '少侠乙',
+        ),
+    );
+    const sourceId = run.signups[0][0].id;
+    const targetId = run.signups[1][2].id;
+    const next = swapRaidSignupsAt(
+      run,
+      { groupNumber: 1, positionNumber: 1 },
+      { groupNumber: 2, positionNumber: 3 },
+    );
+
+    expect(next.signups[0][0]).toMatchObject({
+      id: sourceId,
+      groupNumber: 1,
+      positionNumber: 1,
+      characterName: '少侠乙',
+      role: 'healer',
+    });
+    expect(next.signups[1][2]).toMatchObject({
+      id: targetId,
+      groupNumber: 2,
+      positionNumber: 3,
+      characterName: '少侠甲',
+      role: 'tank',
+    });
+    expect(run.signups[0][0].characterName).toBe('少侠甲');
+  });
+
+  it('swaps two slots in the same group and ignores invalid swaps', () => {
+    const run = updateRaidSignupAt(
+      createRaidRun({ id: 'run-1' }),
+      1,
+      1,
+      (signup) => setRaidSignupRole(signup, 'dps'),
+    );
+    const sameGroup = swapRaidSignupsAt(
+      run,
+      { groupNumber: 1, positionNumber: 1 },
+      { groupNumber: 1, positionNumber: 5 },
+    );
+
+    expect(sameGroup.signups[0][0].role).toBe('pending');
+    expect(sameGroup.signups[0][4].role).toBe('dps');
+    expect(
+      swapRaidSignupsAt(
+        run,
+        { groupNumber: 1, positionNumber: 1 },
+        { groupNumber: 1, positionNumber: 1 },
+      ),
+    ).toBe(run);
+    expect(
+      swapRaidSignupsAt(
+        run,
+        { groupNumber: 9, positionNumber: 1 },
+        { groupNumber: 1, positionNumber: 1 },
+      ),
+    ).toBe(run);
+    expect(
+      swapRaidSignupsAt(
+        run,
+        { groupNumber: 1, positionNumber: 1 },
+        { groupNumber: 1, positionNumber: 9 },
+      ),
+    ).toBe(run);
   });
 
   it('keeps leader exclusive across the raid', () => {

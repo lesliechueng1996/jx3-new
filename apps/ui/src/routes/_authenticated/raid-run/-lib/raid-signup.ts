@@ -184,6 +184,80 @@ export const resetRaidSignup = (signup: RaidSignup): RaidSignup => ({
   remark: undefined,
 });
 
+export const RAID_SIGNUP_SLOT_DND_TYPE = 'raid-signup-slot';
+
+export type RaidSignupSlotRef = {
+  groupNumber: number;
+  positionNumber: number;
+};
+
+export const raidSignupSlotId = (groupNumber: number, positionNumber: number) =>
+  `${groupNumber}:${positionNumber}`;
+
+const parseRaidSignupSlotId = (
+  id: string | number | undefined,
+): RaidSignupSlotRef | undefined => {
+  if (typeof id !== 'string') {
+    return undefined;
+  }
+
+  const separatorIndex = id.indexOf(':');
+  if (separatorIndex <= 0 || separatorIndex === id.length - 1) {
+    return undefined;
+  }
+
+  const groupNumber = Number(id.slice(0, separatorIndex));
+  const positionNumber = Number(id.slice(separatorIndex + 1));
+  if (
+    !Number.isInteger(groupNumber) ||
+    !Number.isInteger(positionNumber) ||
+    groupNumber < 1 ||
+    positionNumber < 1
+  ) {
+    return undefined;
+  }
+
+  return { groupNumber, positionNumber };
+};
+
+export const resolveRaidSignupSwapSlots = (
+  sourceId: string | number | undefined,
+  targetId: string | number | undefined,
+): { source: RaidSignupSlotRef; target: RaidSignupSlotRef } | undefined => {
+  const source = parseRaidSignupSlotId(sourceId);
+  const target = parseRaidSignupSlotId(targetId);
+  if (!source || !target) {
+    return undefined;
+  }
+
+  if (
+    source.groupNumber === target.groupNumber &&
+    source.positionNumber === target.positionNumber
+  ) {
+    return undefined;
+  }
+
+  return { source, target };
+};
+
+export const swapRaidSignupAttributes = (
+  source: RaidSignup,
+  target: RaidSignup,
+): [RaidSignup, RaidSignup] => [
+  {
+    ...target,
+    id: source.id,
+    groupNumber: source.groupNumber,
+    positionNumber: source.positionNumber,
+  },
+  {
+    ...source,
+    id: target.id,
+    groupNumber: target.groupNumber,
+    positionNumber: target.positionNumber,
+  },
+];
+
 export const raidSignupRoleItems = (
   Object.entries(raidSignupRoleMapping) as [RaidSignupRole, string][]
 ).map(([value, label]) => ({ value, label }));
