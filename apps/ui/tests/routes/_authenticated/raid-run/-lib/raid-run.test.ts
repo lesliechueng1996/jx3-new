@@ -154,12 +154,12 @@ describe('raid-run', () => {
     expect(emptyLimit.signups).toHaveLength(1);
   });
 
-  it('clamps the signup grid to at most five groups', () => {
+  it('allows more than five groups when the dungeon needs them', () => {
     const run = createRaidRun({ dungeon: thirtyFivePlayerDungeon });
 
-    expect(run.totalGroupCount).toBe(5);
-    expect(run.signups).toHaveLength(5);
-    expect(run.signups[4][4].groupNumber).toBe(5);
+    expect(run.totalGroupCount).toBe(7);
+    expect(run.signups).toHaveLength(7);
+    expect(run.signups[6][4].groupNumber).toBe(7);
   });
 
   it('returns new snapshots from field setters without mutating the original', () => {
@@ -229,18 +229,18 @@ describe('raid-run', () => {
 
   it('expands the signup grid with continuing group numbers', () => {
     const run = createRaidRun({ dungeon: tenPlayerDungeon });
-    const next = setRaidRunDungeon(run, dungeon);
+    const next = setRaidRunDungeon(run, thirtyFivePlayerDungeon);
 
-    expect(next.totalGroupCount).toBe(5);
-    expect(next.signups).toHaveLength(5);
+    expect(next.totalGroupCount).toBe(7);
+    expect(next.signups).toHaveLength(7);
     expect(next.signups[0]).toBe(run.signups[0]);
     expect(next.signups[2][0]).toMatchObject({
       groupNumber: 3,
       positionNumber: 1,
       role: 'pending',
     });
-    expect(next.signups[4][4]).toMatchObject({
-      groupNumber: 5,
+    expect(next.signups[6][4]).toMatchObject({
+      groupNumber: 7,
       positionNumber: 5,
       role: 'pending',
     });

@@ -79,10 +79,7 @@ export type RaidRun = {
 };
 
 const groupCountForPlayerLimit = (playerLimit: number): number =>
-  Math.min(
-    RAID_RUN_TOTAL_GROUP_COUNT,
-    Math.max(1, Math.ceil(playerLimit / RAID_RUN_POSITION_COUNT_PER_GROUP)),
-  );
+  Math.max(1, Math.ceil(playerLimit / RAID_RUN_POSITION_COUNT_PER_GROUP));
 
 const createEmptySignups = (
   groupCount: number,
