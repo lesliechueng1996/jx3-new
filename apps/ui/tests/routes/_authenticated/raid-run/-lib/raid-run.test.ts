@@ -50,6 +50,14 @@ const thirtyFivePlayerDungeon = {
   difficulty: 'challenge' as const,
 };
 
+const onePlayerDungeon = {
+  id: 'dungeon-5',
+  name: '单人',
+  playerLimit: 1,
+  bossCount: 1,
+  difficulty: 'normal' as const,
+};
+
 describe('raid-run', () => {
   it('maps statuses to Chinese labels', () => {
     expect(raidRunStatusMapping.pending).toBe('待开始');
@@ -133,6 +141,27 @@ describe('raid-run', () => {
     });
   });
 
+  it('clamps the signup grid to at least one group', () => {
+    const run = createRaidRun({ dungeon: onePlayerDungeon });
+    const emptyLimit = createRaidRun({
+      dungeon: { ...onePlayerDungeon, playerLimit: 0 },
+    });
+
+    expect(run.totalGroupCount).toBe(1);
+    expect(run.signups).toHaveLength(1);
+    expect(run.signups[0][0].groupNumber).toBe(1);
+    expect(emptyLimit.totalGroupCount).toBe(1);
+    expect(emptyLimit.signups).toHaveLength(1);
+  });
+
+  it('clamps the signup grid to at most five groups', () => {
+    const run = createRaidRun({ dungeon: thirtyFivePlayerDungeon });
+
+    expect(run.totalGroupCount).toBe(5);
+    expect(run.signups).toHaveLength(5);
+    expect(run.signups[4][4].groupNumber).toBe(5);
+  });
+
   it('returns new snapshots from field setters without mutating the original', () => {
     const run = createRaidRun({ id: 'run-1', name: '旧名' });
     const gatherTime = new Date('2026-08-24T12:00:00.000Z');
@@ -200,18 +229,18 @@ describe('raid-run', () => {
 
   it('expands the signup grid with continuing group numbers', () => {
     const run = createRaidRun({ dungeon: tenPlayerDungeon });
-    const next = setRaidRunDungeon(run, thirtyFivePlayerDungeon);
+    const next = setRaidRunDungeon(run, dungeon);
 
-    expect(next.totalGroupCount).toBe(7);
-    expect(next.signups).toHaveLength(7);
+    expect(next.totalGroupCount).toBe(5);
+    expect(next.signups).toHaveLength(5);
     expect(next.signups[0]).toBe(run.signups[0]);
     expect(next.signups[2][0]).toMatchObject({
       groupNumber: 3,
       positionNumber: 1,
       role: 'pending',
     });
-    expect(next.signups[6][4]).toMatchObject({
-      groupNumber: 7,
+    expect(next.signups[4][4]).toMatchObject({
+      groupNumber: 5,
       positionNumber: 5,
       role: 'pending',
     });

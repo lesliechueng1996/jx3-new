@@ -31,9 +31,9 @@ export const raidSignup = pgTable(
     id: t.uuid('id').primaryKey().defaultRandom(),
     // 开团记录 ID (关联 raid_run, 应用层校验)
     raidRunId: t.uuid('raid_run_id').notNull(),
-    // 小队编号
+    // 小队编号 (1-5)
     groupNumber: t.integer('group_number'),
-    // 小队位置编号
+    // 小队位置编号 (1-5)
     positionNumber: t.integer('position_number'),
     // 位置类型
     role: raidSignupRoleEnum('role').notNull().default('pending'),
