@@ -6,12 +6,12 @@ export type RaidRunSaveSignup = {
   id?: string;
   groupNumber: number;
   positionNumber: number;
-  role: 'tank' | 'healer' | 'dps' | 'boss';
+  role: 'pending' | 'tank' | 'healer' | 'dps' | 'boss';
   isLeader: boolean;
   isDarkRun: boolean;
   isFormationCore: boolean;
   serverId?: string;
-  characterName: string;
+  characterName?: string;
   schoolId?: string;
   kungfuId?: string;
   remark?: string;

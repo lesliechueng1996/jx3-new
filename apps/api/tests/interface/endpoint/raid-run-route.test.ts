@@ -223,7 +223,7 @@ describe('raidRunRoute', () => {
     expect(body.data.signups).toHaveLength(1);
   });
 
-  it('rejects a pending signup role', async () => {
+  it('accepts a pending signup role', async () => {
     const response = await jsonRequest('', {
       method: 'POST',
       body: JSON.stringify({
@@ -232,13 +232,47 @@ describe('raidRunRoute', () => {
           {
             ...validBody.signups[0],
             role: 'pending',
+            characterName: undefined,
+            isLeader: false,
+            isDarkRun: false,
+            isFormationCore: false,
           },
         ],
       }),
     });
 
-    expect(response.status).toBe(422);
-    expect(createRaidRun).not.toHaveBeenCalled();
+    expect(response.status).toBe(201);
+    expect(createRaidRun).toHaveBeenCalledTimes(1);
+  });
+
+  it('accepts a reserved tank without a character name', async () => {
+    const response = await jsonRequest('', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...validBody,
+        reservedTank: 1,
+        reservedDps: 1,
+        signups: [
+          {
+            groupNumber: 1,
+            positionNumber: 1,
+            role: 'tank',
+            isLeader: false,
+            isDarkRun: false,
+            isFormationCore: false,
+          },
+          {
+            ...validBody.signups[0],
+            positionNumber: 2,
+            role: 'dps',
+            characterName: '输出',
+          },
+        ],
+      }),
+    });
+
+    expect(response.status).toBe(201);
+    expect(createRaidRun).toHaveBeenCalledTimes(1);
   });
 
   it('rejects an empty signup list', async () => {

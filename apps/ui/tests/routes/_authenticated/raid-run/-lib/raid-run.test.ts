@@ -517,14 +517,14 @@ describe('raid-run', () => {
     );
 
     expect(next.signups[0][0]).toMatchObject({
-      id: sourceId,
+      id: targetId,
       groupNumber: 1,
       positionNumber: 1,
       characterName: '少侠乙',
       role: 'healer',
     });
     expect(next.signups[1][2]).toMatchObject({
-      id: targetId,
+      id: sourceId,
       groupNumber: 2,
       positionNumber: 3,
       characterName: '少侠甲',

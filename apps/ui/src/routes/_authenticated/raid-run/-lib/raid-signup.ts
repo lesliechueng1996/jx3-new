@@ -324,13 +324,11 @@ export const swapRaidSignupAttributes = (
 ): [RaidSignup, RaidSignup] => [
   {
     ...target,
-    id: source.id,
     groupNumber: source.groupNumber,
     positionNumber: source.positionNumber,
   },
   {
     ...source,
-    id: target.id,
     groupNumber: target.groupNumber,
     positionNumber: target.positionNumber,
   },

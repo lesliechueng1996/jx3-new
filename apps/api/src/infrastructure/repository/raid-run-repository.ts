@@ -47,6 +47,7 @@ type SignupWriteFields = Pick<
   | 'schoolId'
   | 'kungfuId'
   | 'remark'
+  | 'id'
 >;
 
 export type RaidSignupSync = {

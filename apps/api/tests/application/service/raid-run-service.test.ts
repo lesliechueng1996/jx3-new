@@ -128,21 +128,64 @@ const signup = (overrides: Partial<SignupInput> = {}): SignupInput => ({
   ...overrides,
 });
 
+const pendingSlot = (
+  groupNumber: number,
+  positionNumber: number,
+): SignupInput =>
+  signup({
+    groupNumber,
+    positionNumber,
+    role: 'pending',
+    isLeader: false,
+    isDarkRun: false,
+    isFormationCore: false,
+    characterName: undefined,
+  });
+
+const fullRoster = (filled: SignupInput[], playerLimit = 25): SignupInput[] => {
+  const byKey = new Map(
+    filled.map((item) => [`${item.groupNumber}:${item.positionNumber}`, item]),
+  );
+  const slots: SignupInput[] = [];
+  let groupNumber = 1;
+  let positionNumber = 1;
+  while (slots.length < playerLimit) {
+    slots.push(
+      byKey.get(`${groupNumber}:${positionNumber}`) ??
+        pendingSlot(groupNumber, positionNumber),
+    );
+    positionNumber += 1;
+    if (positionNumber > 5) {
+      positionNumber = 1;
+      groupNumber += 1;
+    }
+  }
+  return slots;
+};
+
 const validBody = (
   overrides: Partial<CreateRaidRunBody> = {},
-): CreateRaidRunBody => ({
-  name: '周六团',
-  dungeonId,
-  gatherTime,
-  startTime,
-  endTime,
-  reservedTank: 1,
-  reservedHealer: 0,
-  reservedDps: 0,
-  reservedBoss: 0,
-  signups: [signup()],
-  ...overrides,
-});
+  playerLimit = 25,
+): CreateRaidRunBody => {
+  const { signups, ...rest } = overrides;
+  const roster =
+    signups && signups.length === playerLimit
+      ? signups
+      : fullRoster(signups ?? [signup()], playerLimit);
+  return {
+    name: '周六团',
+    dungeonId,
+    gatherTime,
+    startTime,
+    endTime,
+    reservedTank: 1,
+    reservedHealer: 0,
+    reservedDps: 0,
+    reservedBoss: 0,
+    signups: roster,
+    ...rest,
+  };
+};
 
 mock.module('@api/infrastructure/logger', () => ({
   logger,
@@ -251,9 +294,15 @@ describe('createRaidRun', () => {
     expect(createWithSignups).toHaveBeenCalledWith(
       expect.objectContaining({
         createdBy: userId,
-        signups: [expect.objectContaining({ isReserved: false })],
+        signups: expect.arrayContaining([
+          expect.objectContaining({
+            isReserved: false,
+            characterName: '团长',
+          }),
+        ]),
       }),
     );
+    expect(createWithSignups.mock.calls[0]?.[0].signups).toHaveLength(25);
     const createdSignups = createWithSignups.mock.calls[0]?.[0].signups ?? [];
     expect(
       (createdSignups[0] as { id?: string } | undefined)?.id,
@@ -333,23 +382,26 @@ describe('createRaidRun', () => {
     findDungeonById.mockResolvedValue(dungeonRow({ playerLimit: 1 }));
 
     await expectBadRequest(
-      validBody({
-        reservedTank: 1,
-        reservedHealer: 1,
-        signups: [
-          signup(),
-          signup({
-            positionNumber: 2,
-            role: 'healer',
-            isLeader: false,
-            isDarkRun: false,
-            isFormationCore: false,
-            characterName: '治疗',
-          }),
-        ],
-      }),
+      validBody(
+        {
+          reservedTank: 1,
+          reservedHealer: 1,
+          signups: [
+            signup(),
+            signup({
+              positionNumber: 2,
+              role: 'healer',
+              isLeader: false,
+              isDarkRun: false,
+              isFormationCore: false,
+              characterName: '治疗',
+            }),
+          ],
+        },
+        2,
+      ),
       ERROR_CODES.RAID_RUN_PLAYER_LIMIT_EXCEEDED,
-      '超出副本人数限制',
+      '报名人数须与副本人数上限一致',
     );
   });
 
@@ -357,9 +409,18 @@ describe('createRaidRun', () => {
     findDungeonById.mockResolvedValue(dungeonRow({ playerLimit: 5 }));
 
     await expectBadRequest(
-      validBody({
-        signups: [signup({ groupNumber: 2 })],
-      }),
+      validBody(
+        {
+          signups: [
+            signup({ groupNumber: 2 }),
+            pendingSlot(1, 2),
+            pendingSlot(1, 3),
+            pendingSlot(1, 4),
+            pendingSlot(1, 5),
+          ],
+        },
+        5,
+      ),
       ERROR_CODES.RAID_RUN_GROUP_NUMBER_INVALID,
       '小队编号超出副本人数对应的小队数',
     );
@@ -371,6 +432,57 @@ describe('createRaidRun', () => {
       ERROR_CODES.RAID_RUN_RESERVED_TANK_MISMATCH,
       '坦克预留人数不匹配',
     );
+  });
+
+  it('creates a raid run with empty reserved tank slots', async () => {
+    const result = await createRaidRun(
+      validBody({
+        reservedTank: 2,
+        reservedDps: 1,
+        signups: [
+          signup({
+            isLeader: false,
+            isDarkRun: false,
+            isFormationCore: false,
+            characterName: undefined,
+          }),
+          signup({
+            positionNumber: 2,
+            isLeader: false,
+            isDarkRun: false,
+            isFormationCore: false,
+            characterName: undefined,
+          }),
+          signup({
+            positionNumber: 3,
+            role: 'dps',
+            characterName: '输出',
+          }),
+        ],
+      }),
+      userId,
+    );
+
+    expect(result.id).toBe('raid-run-1');
+    expect(createWithSignups).toHaveBeenCalledWith(
+      expect.objectContaining({
+        signups: expect.arrayContaining([
+          expect.objectContaining({
+            role: 'tank',
+            characterName: null,
+          }),
+          expect.objectContaining({
+            role: 'tank',
+            characterName: null,
+          }),
+          expect.objectContaining({
+            role: 'dps',
+            characterName: '输出',
+          }),
+        ]),
+      }),
+    );
+    expect(createWithSignups.mock.calls[0]?.[0].signups).toHaveLength(25);
   });
 
   it('rejects a healer reserved count mismatch', async () => {
@@ -398,21 +510,26 @@ describe('createRaidRun', () => {
   });
 
   it('rejects duplicate group and position pairs', async () => {
+    findDungeonById.mockResolvedValue(dungeonRow({ playerLimit: 2 }));
+
     await expectBadRequest(
-      validBody({
-        reservedTank: 1,
-        reservedHealer: 1,
-        signups: [
-          signup(),
-          signup({
-            role: 'healer',
-            isLeader: false,
-            isDarkRun: false,
-            isFormationCore: false,
-            characterName: '治疗',
-          }),
-        ],
-      }),
+      validBody(
+        {
+          reservedTank: 1,
+          reservedHealer: 1,
+          signups: [
+            signup(),
+            signup({
+              role: 'healer',
+              isLeader: false,
+              isDarkRun: false,
+              isFormationCore: false,
+              characterName: '治疗',
+            }),
+          ],
+        },
+        2,
+      ),
       ERROR_CODES.RAID_RUN_DUPLICATE_POSITION,
       '小队位置重复',
     );
@@ -988,10 +1105,16 @@ describe('saveRaidRun', () => {
             characterName: '团长',
           }),
         ],
-        toInsert: [],
+        toInsert: expect.arrayContaining([
+          expect.objectContaining({
+            createdBy: userId,
+            role: 'pending',
+          }),
+        ]),
         toDeleteIds: [],
       },
     );
+    expect(updateWithSignups.mock.calls[0]?.[2].toInsert).toHaveLength(24);
     expect(logger.info).toHaveBeenCalled();
   });
 
@@ -1003,15 +1126,16 @@ describe('saveRaidRun', () => {
       expect.objectContaining({ name: '周六团' }),
       {
         toUpdate: [],
-        toInsert: [
+        toInsert: expect.arrayContaining([
           expect.objectContaining({
             createdBy: userId,
             characterName: '团长',
           }),
-        ],
+        ]),
         toDeleteIds: [signupId],
       },
     );
+    expect(updateWithSignups.mock.calls[0]?.[2].toInsert).toHaveLength(25);
   });
 
   it('rejects signup ids that belong to another raid run', async () => {

@@ -301,7 +301,7 @@ describe('raid-signup', () => {
     );
   });
 
-  it('swaps mutable attributes and keeps slot identity', () => {
+  it('swaps coordinates and keeps each signup identity', () => {
     const source = baseSignup();
     const target = createRaidSignup({
       id: 'signup-2',
@@ -314,16 +314,16 @@ describe('raid-signup', () => {
 
     expect(nextSource).toEqual({
       ...target,
-      id: 'signup-1',
       groupNumber: 2,
       positionNumber: 3,
     });
     expect(nextTarget).toEqual({
       ...source,
-      id: 'signup-2',
       groupNumber: 4,
       positionNumber: 1,
     });
+    expect(nextSource.id).toBe('signup-2');
+    expect(nextTarget.id).toBe('signup-1');
     expect(source.characterName).toBe('角色');
     expect(target.characterName).toBe('乙');
   });

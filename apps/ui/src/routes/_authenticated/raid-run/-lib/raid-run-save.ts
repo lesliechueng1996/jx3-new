@@ -10,52 +10,38 @@ import {
   type RaidRun,
   updateRaidSignupAt,
 } from './raid-run';
-import {
-  createRaidSignup,
-  type RaidSignup,
-  type RaidSignupRole,
-} from './raid-signup';
-
-const saveRoles = ['tank', 'healer', 'dps', 'boss'] as const;
-
-type SaveRole = (typeof saveRoles)[number];
-
-const isSaveRole = (role: RaidSignupRole): role is SaveRole =>
-  saveRoles.includes(role as SaveRole);
+import { createRaidSignup, type RaidSignup } from './raid-signup';
 
 export const flattenRaidSignups = (
   run: Pick<RaidRun, 'signups'>,
 ): RaidSignup[] => run.signups.flat();
 
 export const raidSignupsForSave = (
-  run: Pick<RaidRun, 'signups'>,
-): RaidSignup[] =>
-  flattenRaidSignups(run).filter(
-    (signup) =>
-      Boolean(signup.characterName?.trim()) && isSaveRole(signup.role),
-  );
+  run: Pick<RaidRun, 'signups' | 'dungeon'>,
+): RaidSignup[] => {
+  const slots = flattenRaidSignups(run);
+  const playerLimit = run.dungeon?.playerLimit ?? slots.length;
+  return slots.slice(0, playerLimit);
+};
 
 const optionalText = (value: string | undefined) => {
   const trimmed = value?.trim();
   return trimmed && trimmed.length > 0 ? trimmed : undefined;
 };
 
-export const toRaidRunSaveBody = (
-  run: RaidRun,
-  options: { includeSignupIds: boolean },
-): RaidRunSaveBody => {
+export const toRaidRunSaveBody = (run: RaidRun): RaidRunSaveBody => {
   const dungeonId = run.dungeon?.id ?? '';
   const signups: RaidRunSaveSignup[] = raidSignupsForSave(run).map(
     (signup) => ({
-      ...(options.includeSignupIds ? { id: signup.id } : {}),
+      id: signup.id,
       groupNumber: signup.groupNumber,
       positionNumber: signup.positionNumber,
-      role: signup.role as SaveRole,
+      role: signup.role,
       isLeader: signup.isLeader,
       isDarkRun: signup.isDarkRun,
       isFormationCore: signup.isFormationCore,
       serverId: signup.serverId,
-      characterName: signup.characterName?.trim() ?? '',
+      characterName: optionalText(signup.characterName),
       schoolId: signup.schoolId,
       kungfuId: signup.kungfuId,
       remark: optionalText(signup.remark),
@@ -114,12 +100,8 @@ export const validateRaidRunForSave = (
   }
 
   const signups = raidSignupsForSave(run);
-  if (signups.length < 1 || signups.length > 100) {
-    return '报名人数须为1-100人';
-  }
-
-  if (dungeon.playerLimit < signups.length) {
-    return '超出副本人数限制';
+  if (signups.length !== dungeon.playerLimit) {
+    return '报名人数须与副本人数上限一致';
   }
 
   const maxGroupNumber = Math.ceil(
@@ -185,9 +167,18 @@ export const validateRaidRunForSave = (
     ...new Set(signups.map((signup) => signup.groupNumber)),
   ];
   for (const groupNumber of groupNumbers) {
-    const coreCount = signups.filter(
-      (signup) => signup.groupNumber === groupNumber && signup.isFormationCore,
+    const groupSignups = signups.filter(
+      (signup) => signup.groupNumber === groupNumber,
+    );
+    const occupiedCount = groupSignups.filter((signup) =>
+      Boolean(signup.characterName?.trim()),
     ).length;
+    const coreCount = groupSignups.filter(
+      (signup) => signup.isFormationCore,
+    ).length;
+    if (occupiedCount === 0) {
+      continue;
+    }
     if (coreCount !== 1) {
       return '阵眼人数不匹配，每个小队应只有1个阵眼';
     }

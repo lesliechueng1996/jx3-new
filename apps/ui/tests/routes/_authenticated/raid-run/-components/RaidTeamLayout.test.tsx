@@ -176,6 +176,7 @@ describe('RaidTeamLayout', () => {
       '少侠乙',
     );
     useRaidRun.setState({ raidRun: run, selectedSlot: null });
+    const targetId = run.signups[1][2].id;
     renderWithQueryClient(<RaidTeamLayout />);
 
     dndKit.onDragEnd?.({
@@ -188,13 +189,14 @@ describe('RaidTeamLayout', () => {
 
     const next = useRaidRun.getState().raidRun;
     expect(next.signups[0][0]).toMatchObject({
-      id: filledSignup.id,
+      id: targetId,
       groupNumber: 1,
       positionNumber: 1,
       characterName: '少侠乙',
       role: 'healer',
     });
     expect(next.signups[1][2]).toMatchObject({
+      id: filledSignup.id,
       groupNumber: 2,
       positionNumber: 3,
       characterName: '少侠甲',

@@ -122,14 +122,46 @@ describe('validateRaidRunForSave', () => {
       dungeon,
     );
     expect(validateRaidRunForSave(setRaidRunName(run, '周六团'))).toBe(
-      '报名人数须为1-100人',
+      '团长人数不匹配，应为1人',
     );
   });
 
-  it('rejects tank reserved mismatch', () => {
-    expect(validateRaidRunForSave(setRaidRunReservedTank(validRun(), 2))).toBe(
-      '坦克预留人数不匹配',
+  it('accepts empty reserved tank slots', () => {
+    expect(
+      validateRaidRunForSave(setRaidRunReservedTank(validRun(), 2)),
+    ).toBeUndefined();
+  });
+
+  it('accepts a dps signup with empty reserved tank slots', () => {
+    let run = createRaidRun({
+      name: '周六团',
+      dungeon,
+      gatherTime,
+      startTime,
+      endTime,
+    });
+    run = setRaidRunReservedTank(run, 2);
+    run = updateRaidSignupAt(run, 1, 3, (signup) =>
+      setRaidSignupCharacterName({ ...signup, role: 'dps' }, '输出'),
     );
+    run = {
+      ...run,
+      reservedDps: 1,
+    };
+    run = setRaidSignupLeaderExclusive(run, 1, 3, true);
+    run = setRaidSignupDarkRunExclusive(run, 1, 3, true);
+    run = setRaidSignupFormationCoreExclusive(run, 1, 3, true);
+
+    expect(validateRaidRunForSave(run)).toBeUndefined();
+  });
+
+  it('rejects tank reserved mismatch', () => {
+    expect(
+      validateRaidRunForSave({
+        ...validRun(),
+        reservedTank: 3,
+      }),
+    ).toBe('坦克预留人数不匹配');
   });
 
   it('rejects boss reserved mismatch', () => {
@@ -152,19 +184,23 @@ describe('validateRaidRunForSave', () => {
       validateRaidRunForSave({
         ...run,
         reservedTank: 2,
-        signups: [
-          [
-            slot,
-            {
-              ...slot,
-              id: 'dup',
-              characterName: '另一个',
-              isLeader: false,
-              isDarkRun: false,
-              isFormationCore: false,
-            },
-          ],
-        ],
+        signups: run.signups.map((group, groupIndex) =>
+          groupIndex !== 0
+            ? group
+            : group.map((signup, positionIndex) =>
+                positionIndex !== 1
+                  ? signup
+                  : {
+                      ...slot,
+                      id: 'dup',
+                      positionNumber: 1,
+                      characterName: '另一个',
+                      isLeader: false,
+                      isDarkRun: false,
+                      isFormationCore: false,
+                    },
+              ),
+        ),
       }),
     ).toBe('小队位置重复');
   });
@@ -244,15 +280,14 @@ describe('validateRaidRunForSave', () => {
     ).toBeUndefined();
   });
 
-  it('rejects when submitted players exceed the dungeon limit', () => {
+  it('rejects when the roster does not match the dungeon player limit', () => {
     let run = createRaidRun({
       name: '周六团',
-      dungeon: { ...dungeon, playerLimit: 1 },
+      dungeon,
       gatherTime,
       startTime,
       endTime,
     });
-    run = setRaidRunDungeon(run, { ...dungeon, playerLimit: 1 });
     run = setRaidRunReservedTank(run, 1);
     run = updateRaidSignupAt(run, 1, 1, (signup) =>
       setRaidSignupCharacterName(signup, '团长'),
@@ -284,7 +319,7 @@ describe('validateRaidRunForSave', () => {
       reservedTank: 2,
     };
 
-    expect(validateRaidRunForSave(run)).toBe('超出副本人数限制');
+    expect(validateRaidRunForSave(run)).toBe('报名人数须与副本人数上限一致');
   });
 
   it('rejects a group number beyond the dungeon size', () => {
@@ -298,19 +333,24 @@ describe('validateRaidRunForSave', () => {
     run = {
       ...run,
       dungeon: tenPlayerDungeon,
-      signups: [
-        [
-          {
-            ...firstSlot,
-            groupNumber: 5,
-            characterName: '团长',
-            role: 'tank',
-            isLeader: true,
-            isDarkRun: true,
-            isFormationCore: true,
-          },
-        ],
-      ],
+      signups: Array.from({ length: 2 }, (_, groupIndex) =>
+        Array.from({ length: 5 }, (_, positionIndex) => ({
+          ...firstSlot,
+          id: `${groupIndex}-${positionIndex}`,
+          groupNumber:
+            groupIndex === 0 && positionIndex === 0 ? 5 : groupIndex + 1,
+          positionNumber: positionIndex + 1,
+          characterName:
+            groupIndex === 0 && positionIndex === 0 ? '团长' : undefined,
+          role:
+            groupIndex === 0 && positionIndex === 0
+              ? ('tank' as const)
+              : ('pending' as const),
+          isLeader: groupIndex === 0 && positionIndex === 0,
+          isDarkRun: groupIndex === 0 && positionIndex === 0,
+          isFormationCore: groupIndex === 0 && positionIndex === 0,
+        })),
+      ),
       reservedTank: 1,
       reservedHealer: 0,
       reservedDps: 0,
@@ -324,31 +364,41 @@ describe('validateRaidRunForSave', () => {
 });
 
 describe('toRaidRunSaveBody', () => {
-  it('omits empty slots and optional signup ids', () => {
-    const body = toRaidRunSaveBody(validRun(), { includeSignupIds: false });
+  it('saves the full dungeon roster including empty slots and ids', () => {
+    const run = validRun();
+    const body = toRaidRunSaveBody(run);
 
     expect(body.name).toBe('周六团');
     expect(body.dungeonId).toBe(dungeon.id);
-    expect(body.signups).toHaveLength(1);
-    expect(body.signups[0]?.id).toBeUndefined();
+    expect(body.signups).toHaveLength(25);
+    expect(body.signups[0]?.id).toBe(getRaidSignupAt(run, 1, 1)?.id);
     expect(body.signups[0]?.characterName).toBe('团长');
-    expect(raidSignupsForSave(validRun())).toHaveLength(1);
+    expect(raidSignupsForSave(run)).toHaveLength(25);
+  });
+
+  it('includes reserved slots that have no character name', () => {
+    const run = setRaidRunReservedTank(validRun(), 2);
+    const body = toRaidRunSaveBody(run);
+
+    expect(raidSignupsForSave(run)).toHaveLength(25);
+    expect(body.signups).toHaveLength(25);
+    expect(
+      body.signups.slice(0, 2).map((signup) => signup.characterName),
+    ).toEqual(['团长', undefined]);
   });
 
   it('uses an empty dungeon id when none is selected', () => {
-    const body = toRaidRunSaveBody(createRaidRun({ name: '周六团' }), {
-      includeSignupIds: false,
-    });
+    const body = toRaidRunSaveBody(createRaidRun({ name: '周六团' }));
     expect(body.dungeonId).toBe('');
-    expect(body.signups).toHaveLength(0);
+    expect(body.signups).toHaveLength(25);
   });
 
-  it('includes signup ids when requested and drops blank optional text', () => {
+  it('includes signup ids and drops blank optional text', () => {
     const run = setRaidRunDescription(
       setRaidRunRemark(validRun(), '  '),
       ' 简介 ',
     );
-    const body = toRaidRunSaveBody(run, { includeSignupIds: true });
+    const body = toRaidRunSaveBody(run);
 
     expect(body.description).toBe('简介');
     expect(body.remark).toBeUndefined();

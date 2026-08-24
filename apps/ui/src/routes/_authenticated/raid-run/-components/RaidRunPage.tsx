@@ -78,9 +78,7 @@ const RaidRunPage = ({ raidRunId }: Props) => {
       return undefined;
     }
 
-    const body = toRaidRunSaveBody(raidRun, {
-      includeSignupIds: Boolean(raidRunId),
-    });
+    const body = toRaidRunSaveBody(raidRun);
 
     if (!raidRunId) {
       return createRaidRun(body);

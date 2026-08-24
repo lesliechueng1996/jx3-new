@@ -25,6 +25,7 @@ const createRaidRunSignupSchema = t.Object({
   }),
   role: t.Enum(
     {
+      pending: 'pending',
       tank: 'tank',
       healer: 'healer',
       dps: 'dps',
@@ -49,11 +50,12 @@ const createRaidRunSignupSchema = t.Object({
       error: () => '服务器ID格式不正确',
     }),
   ),
-  characterName: t.String({
-    minLength: 1,
-    maxLength: 64,
-    error: () => '角色名不能为空,且不能超过64个字符',
-  }),
+  characterName: t.Optional(
+    t.String({
+      maxLength: 64,
+      error: () => '角色名不能超过64个字符',
+    }),
+  ),
   schoolId: t.Optional(
     t.String({
       format: 'uuid',

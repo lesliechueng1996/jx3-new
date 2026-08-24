@@ -23,6 +23,30 @@ const uniqueIds = (ids: Array<string | undefined>): string[] => [
   ...new Set(ids.filter((id): id is string => id !== undefined)),
 ];
 
+const signupCharacterName = (characterName: string | undefined) => {
+  const trimmed = characterName?.trim();
+  return trimmed && trimmed.length > 0 ? trimmed : null;
+};
+
+const signupWriteFields = (signup: SaveRaidRunBody['signups'][number]) => {
+  const characterName = signupCharacterName(signup.characterName);
+
+  return {
+    ...(signup.id ? { id: signup.id } : {}),
+    groupNumber: signup.groupNumber,
+    positionNumber: signup.positionNumber,
+    role: signup.role,
+    isLeader: signup.isLeader,
+    isDarkRun: signup.isDarkRun,
+    isFormationCore: signup.isFormationCore,
+    serverId: signup.serverId,
+    characterName,
+    schoolId: signup.schoolId,
+    kungfuId: signup.kungfuId,
+    remark: signup.remark,
+  };
+};
+
 const countExistingByIds = async (
   ids: string[],
   countByIds: (ids: string[]) => Promise<number>,
@@ -55,9 +79,9 @@ const validateCreateRaidRunBody = async (data: CreateRaidRunBody) => {
     );
   }
 
-  if (dungeon.playerLimit < data.signups.length) {
+  if (data.signups.length !== dungeon.playerLimit) {
     throw new BadRequestException(
-      '超出副本人数限制',
+      '报名人数须与副本人数上限一致',
       ERROR_CODES.RAID_RUN_PLAYER_LIMIT_EXCEEDED,
     );
   }
@@ -197,9 +221,18 @@ const validateCreateRaidRunBody = async (data: CreateRaidRunBody) => {
 
   const groupNumbers = [...new Set(data.signups.map((s) => s.groupNumber))];
   for (const groupNumber of groupNumbers) {
-    const coreCount = data.signups.filter(
-      (signup) => signup.groupNumber === groupNumber && signup.isFormationCore,
+    const groupSignups = data.signups.filter(
+      (signup) => signup.groupNumber === groupNumber,
+    );
+    const occupiedCount = groupSignups.filter((signup) =>
+      Boolean(signupCharacterName(signup.characterName)),
     ).length;
+    const coreCount = groupSignups.filter(
+      (signup) => signup.isFormationCore,
+    ).length;
+    if (occupiedCount === 0) {
+      continue;
+    }
     if (coreCount !== 1) {
       throw new BadRequestException(
         '阵眼人数不匹配，每个小队应只有1个阵眼',
@@ -219,14 +252,11 @@ export const createRaidRun = async (
     const raidRun = await raidRunRepository.createWithSignups({
       ...data,
       createdBy: userId,
-      signups: data.signups.map((signup) => {
-        const { id: _id, ...signupValues } = signup;
-        return {
-          ...signupValues,
-          createdBy: userId,
-          isReserved: false,
-        };
-      }),
+      signups: data.signups.map((signup) => ({
+        ...signupWriteFields(signup),
+        createdBy: userId,
+        isReserved: false,
+      })),
     });
 
     logger.info(
@@ -440,20 +470,6 @@ export const getRaidRun = async (id: string): Promise<RaidRunDetail> => {
 
   return mapRaidRunDetail(detail);
 };
-
-const signupWriteFields = (signup: SaveRaidRunBody['signups'][number]) => ({
-  groupNumber: signup.groupNumber,
-  positionNumber: signup.positionNumber,
-  role: signup.role,
-  isLeader: signup.isLeader,
-  isDarkRun: signup.isDarkRun,
-  isFormationCore: signup.isFormationCore,
-  serverId: signup.serverId,
-  characterName: signup.characterName,
-  schoolId: signup.schoolId,
-  kungfuId: signup.kungfuId,
-  remark: signup.remark,
-});
 
 const raidRunSaveValues = (data: SaveRaidRunBody) => ({
   name: data.name,
