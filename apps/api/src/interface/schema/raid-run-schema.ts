@@ -1,4 +1,5 @@
 import { type Static, t } from 'elysia';
+import { dungeonDifficultySchema } from './game-dungeon-schema';
 
 const remarkSchema = t.String({
   maxLength: 512,
@@ -6,6 +7,12 @@ const remarkSchema = t.String({
 });
 
 const createRaidRunSignupSchema = t.Object({
+  id: t.Optional(
+    t.String({
+      format: 'uuid',
+      error: () => '报名ID格式不正确',
+    }),
+  ),
   groupNumber: t.Integer({
     minimum: 1,
     maximum: 20,
@@ -112,10 +119,79 @@ export const createRaidRunBodySchema = t.Object({
 });
 
 export type CreateRaidRunBody = Static<typeof createRaidRunBodySchema>;
+export type SaveRaidRunBody = CreateRaidRunBody;
 
-export const createRaidRunResponseSchema = t.Object({
+export const raidRunStatusSchema = t.Enum(
+  {
+    pending: 'pending',
+    recruiting: 'recruiting',
+    ongoing: 'ongoing',
+    completed: 'completed',
+    cancelled: 'cancelled',
+  },
+  {
+    error: () => '开团状态不正确',
+  },
+);
+
+export type RaidRunStatus = Static<typeof raidRunStatusSchema>;
+
+const nullableString = t.Nullable(t.String());
+
+export const raidRunSignupDetailSchema = t.Object({
   id: t.String(),
+  groupNumber: t.Nullable(t.Integer()),
+  positionNumber: t.Nullable(t.Integer()),
+  role: t.Enum({
+    pending: 'pending',
+    tank: 'tank',
+    healer: 'healer',
+    dps: 'dps',
+    boss: 'boss',
+  }),
+  isLeader: t.Boolean(),
+  isDarkRun: t.Boolean(),
+  isFormationCore: t.Boolean(),
+  serverId: nullableString,
+  characterName: nullableString,
+  schoolId: nullableString,
+  kungfuId: nullableString,
+  remark: nullableString,
 });
+
+export const raidRunDungeonDetailSchema = t.Object({
+  id: t.String(),
+  name: t.String(),
+  playerLimit: t.Integer(),
+  bossCount: t.Integer(),
+  difficulty: dungeonDifficultySchema,
+});
+
+export const raidRunDetailSchema = t.Object({
+  id: t.String(),
+  name: t.String(),
+  description: nullableString,
+  status: raidRunStatusSchema,
+  dungeonId: t.String(),
+  dungeon: raidRunDungeonDetailSchema,
+  gatherTime: nullableString,
+  startTime: t.String(),
+  endTime: nullableString,
+  reservedTank: t.Integer(),
+  reservedHealer: t.Integer(),
+  reservedDps: t.Integer(),
+  reservedBoss: t.Integer(),
+  remark: nullableString,
+  gameRaidId: nullableString,
+  totalIncome: t.Integer(),
+  subsidyAmount: t.Integer(),
+  wagePerPerson: t.Integer(),
+  signups: t.Array(raidRunSignupDetailSchema),
+});
+
+export type RaidRunDetail = Static<typeof raidRunDetailSchema>;
+
+export const createRaidRunResponseSchema = raidRunDetailSchema;
 
 export const raidRunIdParamsSchema = t.Object({
   id: t.String({
@@ -160,4 +236,16 @@ export const updateRaidRunWagesResponseSchema = t.Object({
   totalIncome: t.Integer(),
   subsidyAmount: t.Integer(),
   wagePerPerson: t.Integer(),
+});
+
+export const updateRaidRunStatusBodySchema = t.Object({
+  status: raidRunStatusSchema,
+});
+
+export type UpdateRaidRunStatusBody = Static<
+  typeof updateRaidRunStatusBodySchema
+>;
+
+export const updateRaidRunStatusResponseSchema = t.Object({
+  status: raidRunStatusSchema,
 });

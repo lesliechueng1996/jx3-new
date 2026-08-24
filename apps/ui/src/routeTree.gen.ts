@@ -15,6 +15,7 @@ import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authentic
 import { Route as ForbiddenIndexRouteImport } from './routes/forbidden/index'
 import { Route as LoginIndexRouteImport } from './routes/login/index'
 import { Route as AuthenticatedRaidRunIndexRouteImport } from './routes/_authenticated/raid-run/index'
+import { Route as AuthenticatedRaidRunIdRouteImport } from './routes/_authenticated/raid-run/$id'
 import { Route as AuthenticatedAdminGameDungeonsIndexRouteImport } from './routes/_authenticated/admin/game-dungeons/index'
 import { Route as AuthenticatedAdminGameExpansionsIndexRouteImport } from './routes/_authenticated/admin/game-expansions/index'
 import { Route as AuthenticatedAdminGameItemsIndexRouteImport } from './routes/_authenticated/admin/game-items/index'
@@ -56,6 +57,11 @@ const AuthenticatedRaidRunIndexRoute =
     path: '/raid-run/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedRaidRunIdRoute = AuthenticatedRaidRunIdRouteImport.update({
+  id: '/raid-run/$id',
+  path: '/raid-run/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminGameDungeonsIndexRoute =
   AuthenticatedAdminGameDungeonsIndexRouteImport.update({
     id: '/game-dungeons/',
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/forbidden/': typeof ForbiddenIndexRoute
   '/login/': typeof LoginIndexRoute
+  '/raid-run/$id': typeof AuthenticatedRaidRunIdRoute
   '/raid-run/': typeof AuthenticatedRaidRunIndexRoute
   '/admin/game-dungeons/': typeof AuthenticatedAdminGameDungeonsIndexRoute
   '/admin/game-expansions/': typeof AuthenticatedAdminGameExpansionsIndexRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/forbidden': typeof ForbiddenIndexRoute
   '/login': typeof LoginIndexRoute
+  '/raid-run/$id': typeof AuthenticatedRaidRunIdRoute
   '/raid-run': typeof AuthenticatedRaidRunIndexRoute
   '/admin/game-dungeons': typeof AuthenticatedAdminGameDungeonsIndexRoute
   '/admin/game-expansions': typeof AuthenticatedAdminGameExpansionsIndexRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/forbidden/': typeof ForbiddenIndexRoute
   '/login/': typeof LoginIndexRoute
+  '/_authenticated/raid-run/$id': typeof AuthenticatedRaidRunIdRoute
   '/_authenticated/raid-run/': typeof AuthenticatedRaidRunIndexRoute
   '/_authenticated/admin/game-dungeons/': typeof AuthenticatedAdminGameDungeonsIndexRoute
   '/_authenticated/admin/game-expansions/': typeof AuthenticatedAdminGameExpansionsIndexRoute
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/forbidden/'
     | '/login/'
+    | '/raid-run/$id'
     | '/raid-run/'
     | '/admin/game-dungeons/'
     | '/admin/game-expansions/'
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
     | '/'
     | '/forbidden'
     | '/login'
+    | '/raid-run/$id'
     | '/raid-run'
     | '/admin/game-dungeons'
     | '/admin/game-expansions'
@@ -212,6 +223,7 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/forbidden/'
     | '/login/'
+    | '/_authenticated/raid-run/$id'
     | '/_authenticated/raid-run/'
     | '/_authenticated/admin/game-dungeons/'
     | '/_authenticated/admin/game-expansions/'
@@ -273,6 +285,13 @@ declare module '@tanstack/react-router' {
       path: '/raid-run'
       fullPath: '/raid-run/'
       preLoaderRoute: typeof AuthenticatedRaidRunIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/raid-run/$id': {
+      id: '/_authenticated/raid-run/$id'
+      path: '/raid-run/$id'
+      fullPath: '/raid-run/$id'
+      preLoaderRoute: typeof AuthenticatedRaidRunIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/game-dungeons/': {
@@ -383,6 +402,7 @@ const AuthenticatedAdminRouteRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedRaidRunIdRoute: typeof AuthenticatedRaidRunIdRoute
   AuthenticatedRaidRunIndexRoute: typeof AuthenticatedRaidRunIndexRoute
   AuthenticatedGameAssistGuessIdiomIndexRoute: typeof AuthenticatedGameAssistGuessIdiomIndexRoute
   AuthenticatedGameAssistMinesweeperIndexRoute: typeof AuthenticatedGameAssistMinesweeperIndexRoute
@@ -391,6 +411,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedRaidRunIdRoute: AuthenticatedRaidRunIdRoute,
   AuthenticatedRaidRunIndexRoute: AuthenticatedRaidRunIndexRoute,
   AuthenticatedGameAssistGuessIdiomIndexRoute:
     AuthenticatedGameAssistGuessIdiomIndexRoute,

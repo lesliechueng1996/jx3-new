@@ -1,9 +1,64 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import { Elysia } from 'elysia';
 
+const raidRunId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+const dungeonId = '11111111-1111-4111-8111-111111111111';
+
+const raidRunDetail = {
+  id: raidRunId,
+  name: '周六团',
+  description: null,
+  status: 'pending' as const,
+  dungeonId,
+  dungeon: {
+    id: dungeonId,
+    name: '25人英雄',
+    playerLimit: 25,
+    bossCount: 6,
+    difficulty: 'heroic' as const,
+  },
+  gatherTime: '2026-08-22T12:00:00.000Z',
+  startTime: '2026-08-22T13:00:00.000Z',
+  endTime: '2026-08-22T16:00:00.000Z',
+  reservedTank: 1,
+  reservedHealer: 0,
+  reservedDps: 0,
+  reservedBoss: 0,
+  remark: null,
+  gameRaidId: null,
+  totalIncome: 0,
+  subsidyAmount: 0,
+  wagePerPerson: 0,
+  signups: [
+    {
+      id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+      groupNumber: 1,
+      positionNumber: 1,
+      role: 'tank' as const,
+      isLeader: true,
+      isDarkRun: true,
+      isFormationCore: true,
+      serverId: null,
+      characterName: '团长',
+      schoolId: null,
+      kungfuId: null,
+      remark: null,
+    },
+  ],
+};
+
 const createRaidRun = mock<
   (body: unknown, userId: string) => Promise<{ id: string }>
->(() => Promise.resolve({ id: 'raid-run-1' }));
+>(() => Promise.resolve({ id: raidRunId }));
+const getRaidRun = mock<(id: string) => Promise<typeof raidRunDetail>>(() =>
+  Promise.resolve(raidRunDetail),
+);
+const saveRaidRun = mock<
+  (id: string, body: unknown, userId: string) => Promise<typeof raidRunDetail>
+>(() => Promise.resolve(raidRunDetail));
+const updateRaidRunStatus = mock<
+  (id: string, body: { status: string }) => Promise<{ status: string }>
+>(() => Promise.resolve({ status: 'recruiting' }));
 const updateRaidRunGameRaidId = mock<
   (id: string, gameRaidId: string) => Promise<{ gameRaidId: string }>
 >(() => Promise.resolve({ gameRaidId: 'game-1' }));
@@ -30,6 +85,9 @@ const updateRaidRunWages = mock<
 
 mock.module('@api/application/service/raid-run-service', () => ({
   createRaidRun,
+  getRaidRun,
+  saveRaidRun,
+  updateRaidRunStatus,
   updateRaidRunGameRaidId,
   updateRaidRunWages,
 }));
@@ -53,8 +111,6 @@ mock.module('@api/interface/endpoint/api-route', () => ({
 const { raidRunRoute, raidRunTag } = await import(
   '@api/interface/endpoint/raid-run-route'
 );
-
-const dungeonId = '11111111-1111-4111-8111-111111111111';
 
 const validBody = {
   name: '周六团',
@@ -88,11 +144,15 @@ const jsonRequest = (path: string, init?: RequestInit) =>
   );
 
 describe('raidRunRoute', () => {
-  const raidRunId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
-
   beforeEach(() => {
     createRaidRun.mockReset();
-    createRaidRun.mockResolvedValue({ id: 'raid-run-1' });
+    createRaidRun.mockResolvedValue({ id: raidRunId });
+    getRaidRun.mockReset();
+    getRaidRun.mockResolvedValue(raidRunDetail);
+    saveRaidRun.mockReset();
+    saveRaidRun.mockResolvedValue(raidRunDetail);
+    updateRaidRunStatus.mockReset();
+    updateRaidRunStatus.mockResolvedValue({ status: 'recruiting' });
     updateRaidRunGameRaidId.mockReset();
     updateRaidRunGameRaidId.mockResolvedValue({ gameRaidId: 'game-1' });
     updateRaidRunWages.mockReset();
@@ -110,7 +170,7 @@ describe('raidRunRoute', () => {
     });
   });
 
-  it('creates a raid run', async () => {
+  it('creates a raid run and returns the detail', async () => {
     const response = await jsonRequest('', {
       method: 'POST',
       body: JSON.stringify(validBody),
@@ -120,8 +180,10 @@ describe('raidRunRoute', () => {
     expect(response.status).toBe(201);
     expect(createRaidRun).toHaveBeenCalledTimes(1);
     expect(createRaidRun).toHaveBeenCalledWith(expect.anything(), 'actor-1');
+    expect(getRaidRun).toHaveBeenCalledWith(raidRunId);
     expect(body.code).toBe('SUCCESS');
-    expect(body.data.id).toBe('raid-run-1');
+    expect(body.data.id).toBe(raidRunId);
+    expect(body.data.signups).toHaveLength(1);
   });
 
   it('rejects a pending signup role', async () => {
@@ -153,6 +215,56 @@ describe('raidRunRoute', () => {
 
     expect(response.status).toBe(422);
     expect(createRaidRun).not.toHaveBeenCalled();
+  });
+
+  it('gets a raid run', async () => {
+    const response = await jsonRequest(`/${raidRunId}`);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(getRaidRun).toHaveBeenCalledWith(raidRunId);
+    expect(body.data.id).toBe(raidRunId);
+    expect(body.data.dungeon.name).toBe('25人英雄');
+  });
+
+  it('saves a raid run', async () => {
+    const response = await jsonRequest(`/${raidRunId}`, {
+      method: 'PUT',
+      body: JSON.stringify(validBody),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(saveRaidRun).toHaveBeenCalledWith(
+      raidRunId,
+      expect.anything(),
+      'actor-1',
+    );
+    expect(body.data.id).toBe(raidRunId);
+  });
+
+  it('updates status', async () => {
+    const response = await jsonRequest(`/${raidRunId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'recruiting' }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(updateRaidRunStatus).toHaveBeenCalledWith(raidRunId, {
+      status: 'recruiting',
+    });
+    expect(body.data.status).toBe('recruiting');
+  });
+
+  it('rejects an invalid status', async () => {
+    const response = await jsonRequest(`/${raidRunId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'unknown' }),
+    });
+
+    expect(response.status).toBe(422);
+    expect(updateRaidRunStatus).not.toHaveBeenCalled();
   });
 
   it('updates the game raid id', async () => {

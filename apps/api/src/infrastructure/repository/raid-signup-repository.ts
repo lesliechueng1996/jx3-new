@@ -6,12 +6,28 @@ import {
   gameKungfu,
   gameServer,
   ilike,
+  inArray,
   isNotNull,
   raidSignup,
   sql,
 } from '@api/shared/util/db';
 
 export class RaidSignupRepository {
+  async findByRaidRunId(raidRunId: string) {
+    return db
+      .select()
+      .from(raidSignup)
+      .where(eq(raidSignup.raidRunId, raidRunId));
+  }
+
+  async findByIds(ids: string[]) {
+    if (ids.length === 0) {
+      return [];
+    }
+
+    return db.select().from(raidSignup).where(inArray(raidSignup.id, ids));
+  }
+
   searchByCharacterName(name: string, limit: number) {
     const pattern = `%${name}%`;
     const prefixPattern = `${name}%`;

@@ -3,9 +3,14 @@ import { gameDungeonRepository } from '@api/infrastructure/repository/game-dunge
 import { gameServerRepository } from '@api/infrastructure/repository/game-server-repository';
 import { kungfuRepository } from '@api/infrastructure/repository/kungfu-repository';
 import { raidRunRepository } from '@api/infrastructure/repository/raid-run-repository';
+import { raidSignupRepository } from '@api/infrastructure/repository/raid-signup-repository';
 import { schoolRepository } from '@api/infrastructure/repository/school-repository';
 import type {
   CreateRaidRunBody,
+  RaidRunDetail,
+  RaidRunStatus,
+  SaveRaidRunBody,
+  UpdateRaidRunStatusBody,
   UpdateRaidRunWagesBody,
 } from '@api/interface/schema/raid-run-schema';
 import {
@@ -214,11 +219,14 @@ export const createRaidRun = async (
     const raidRun = await raidRunRepository.createWithSignups({
       ...data,
       createdBy: userId,
-      signups: data.signups.map((signup) => ({
-        ...signup,
-        createdBy: userId,
-        isReserved: false,
-      })),
+      signups: data.signups.map((signup) => {
+        const { id: _id, ...signupValues } = signup;
+        return {
+          ...signupValues,
+          createdBy: userId,
+          isReserved: false,
+        };
+      }),
     });
 
     logger.info(
@@ -351,6 +359,262 @@ export const updateRaidRunWages = async (
     }
 
     logger.error('Update raid run wages failed, {raidRunId}, {error}', {
+      raidRunId: id,
+      error,
+    });
+    throw error;
+  }
+};
+
+const toIsoString = (value: Date | null): string | null => {
+  if (!value) {
+    return null;
+  }
+
+  return value.toISOString();
+};
+
+const mapRaidRunDetail = (
+  detail: NonNullable<
+    Awaited<ReturnType<typeof raidRunRepository.findDetailById>>
+  >,
+): RaidRunDetail => {
+  const { run, dungeon, signups } = detail;
+  if (!dungeon) {
+    throw new NotFoundException(
+      '相关副本不存在',
+      ERROR_CODES.RAID_RUN_DUNGEON_NOT_FOUND,
+    );
+  }
+
+  return {
+    id: run.id,
+    name: run.name,
+    description: run.description,
+    status: run.status,
+    dungeonId: run.dungeonId,
+    dungeon: {
+      id: dungeon.id,
+      name: dungeon.name,
+      playerLimit: dungeon.playerLimit,
+      bossCount: dungeon.bossCount,
+      difficulty: dungeon.difficulty,
+    },
+    gatherTime: toIsoString(run.gatherTime),
+    startTime: run.startTime.toISOString(),
+    endTime: toIsoString(run.endTime),
+    reservedTank: run.reservedTank,
+    reservedHealer: run.reservedHealer,
+    reservedDps: run.reservedDps,
+    reservedBoss: run.reservedBoss,
+    remark: run.remark,
+    gameRaidId: run.gameRaidId,
+    totalIncome: numericToGoldInteger(run.totalIncome),
+    subsidyAmount: numericToGoldInteger(run.subsidyAmount),
+    wagePerPerson: numericToGoldInteger(run.wagePerPerson),
+    signups: signups.map((signup) => ({
+      id: signup.id,
+      groupNumber: signup.groupNumber,
+      positionNumber: signup.positionNumber,
+      role: signup.role,
+      isLeader: signup.isLeader,
+      isDarkRun: signup.isDarkRun,
+      isFormationCore: signup.isFormationCore,
+      serverId: signup.serverId,
+      characterName: signup.characterName,
+      schoolId: signup.schoolId,
+      kungfuId: signup.kungfuId,
+      remark: signup.remark,
+    })),
+  };
+};
+
+export const getRaidRun = async (id: string): Promise<RaidRunDetail> => {
+  const detail = await raidRunRepository.findDetailById(id);
+  if (!detail) {
+    throw new NotFoundException(
+      '开团记录不存在',
+      ERROR_CODES.RAID_RUN_NOT_FOUND,
+    );
+  }
+
+  return mapRaidRunDetail(detail);
+};
+
+const signupWriteFields = (signup: SaveRaidRunBody['signups'][number]) => ({
+  groupNumber: signup.groupNumber,
+  positionNumber: signup.positionNumber,
+  role: signup.role,
+  isLeader: signup.isLeader,
+  isDarkRun: signup.isDarkRun,
+  isFormationCore: signup.isFormationCore,
+  serverId: signup.serverId,
+  characterName: signup.characterName,
+  schoolId: signup.schoolId,
+  kungfuId: signup.kungfuId,
+  remark: signup.remark,
+});
+
+const raidRunSaveValues = (data: SaveRaidRunBody) => ({
+  name: data.name,
+  description: data.description ?? null,
+  dungeonId: data.dungeonId,
+  gatherTime: data.gatherTime,
+  startTime: data.startTime,
+  endTime: data.endTime,
+  reservedTank: data.reservedTank,
+  reservedHealer: data.reservedHealer,
+  reservedDps: data.reservedDps,
+  reservedBoss: data.reservedBoss,
+  remark: data.remark ?? null,
+});
+
+export const saveRaidRun = async (
+  id: string,
+  data: SaveRaidRunBody,
+  userId: string,
+): Promise<RaidRunDetail> => {
+  await findRaidRunOrThrow(id);
+  await validateCreateRaidRunBody(data);
+
+  const incomingIds = data.signups
+    .map((signup) => signup.id)
+    .filter((signupId): signupId is string => signupId !== undefined);
+  const uniqueIncomingIds = new Set(incomingIds);
+  if (uniqueIncomingIds.size !== incomingIds.length) {
+    throw new BadRequestException('报名ID重复', ERROR_CODES.BAD_REQUEST);
+  }
+
+  const currentSignups = await raidSignupRepository.findByRaidRunId(id);
+  const currentIds = new Set(currentSignups.map((signup) => signup.id));
+  const unknownIds = incomingIds.filter(
+    (signupId) => !currentIds.has(signupId),
+  );
+  if (unknownIds.length > 0) {
+    const foundElsewhere = await raidSignupRepository.findByIds(unknownIds);
+    if (foundElsewhere.length > 0) {
+      throw new BadRequestException(
+        '报名记录不属于该开团',
+        ERROR_CODES.RAID_RUN_SIGNUP_NOT_FOUND,
+      );
+    }
+  }
+
+  const toUpdate = data.signups.flatMap((signup) => {
+    if (!signup.id || !currentIds.has(signup.id)) {
+      return [];
+    }
+
+    return [
+      {
+        id: signup.id,
+        ...signupWriteFields(signup),
+      },
+    ];
+  });
+  const toInsert = data.signups.flatMap((signup) => {
+    if (signup.id && currentIds.has(signup.id)) {
+      return [];
+    }
+
+    return [
+      {
+        ...signupWriteFields(signup),
+        createdBy: userId,
+      },
+    ];
+  });
+  const keptIds = new Set(toUpdate.map((signup) => signup.id));
+  const toDeleteIds = currentSignups
+    .filter((signup) => !keptIds.has(signup.id))
+    .map((signup) => signup.id);
+
+  try {
+    const updated = await raidRunRepository.updateWithSignups(
+      id,
+      raidRunSaveValues(data),
+      {
+        toUpdate,
+        toInsert,
+        toDeleteIds,
+      },
+    );
+    if (!updated) {
+      throw new NotFoundException(
+        '开团记录不存在',
+        ERROR_CODES.RAID_RUN_NOT_FOUND,
+      );
+    }
+
+    logger.info(
+      'Saved raid run {raidRunId} for user {userId} with {signupCount} signups',
+      {
+        raidRunId: id,
+        userId,
+        signupCount: data.signups.length,
+      },
+    );
+
+    return getRaidRun(id);
+  } catch (error) {
+    if (error instanceof NotFoundException) {
+      throw error;
+    }
+
+    logger.error('Save raid run failed, {raidRunId}, {error}', {
+      raidRunId: id,
+      error,
+    });
+    throw error;
+  }
+};
+
+const allowedStatusTransitions: Record<RaidRunStatus, RaidRunStatus[]> = {
+  pending: ['recruiting'],
+  recruiting: ['ongoing'],
+  ongoing: ['completed'],
+  completed: [],
+  cancelled: [],
+};
+
+export const updateRaidRunStatus = async (
+  id: string,
+  data: UpdateRaidRunStatusBody,
+) => {
+  const existing = await findRaidRunOrThrow(id);
+  const allowed = allowedStatusTransitions[existing.status];
+  if (!allowed.includes(data.status)) {
+    throw new BadRequestException(
+      '开团状态不能这样变更',
+      ERROR_CODES.RAID_RUN_STATUS_TRANSITION_INVALID,
+    );
+  }
+
+  try {
+    const updated = await raidRunRepository.updateById(id, {
+      status: data.status,
+    });
+    if (!updated) {
+      throw new NotFoundException(
+        '开团记录不存在',
+        ERROR_CODES.RAID_RUN_NOT_FOUND,
+      );
+    }
+
+    logger.info('Updated raid run {raidRunId} status to {status}', {
+      raidRunId: id,
+      status: data.status,
+    });
+
+    return {
+      status: updated.status,
+    };
+  } catch (error) {
+    if (error instanceof NotFoundException) {
+      throw error;
+    }
+
+    logger.error('Update raid run status failed, {raidRunId}, {error}', {
       raidRunId: id,
       error,
     });

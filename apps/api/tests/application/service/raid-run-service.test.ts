@@ -24,11 +24,74 @@ const createWithSignups = mock<
     signups: Array<{ isReserved: boolean }>;
   }) => Promise<{ id: string }>
 >(() => Promise.resolve({ id: 'raid-run-1' }));
-const findById = mock(async (_id: string) => null as { id: string } | null);
+const findById = mock(async (_id: string) => null as RaidRunRow | null);
+const findDetailById = mock(async (_id: string) => null as DetailRow | null);
 const updateById = mock(
   async (_id: string, _values: Record<string, string>) =>
     null as Record<string, string | null> | null,
 );
+const updateWithSignups = mock(
+  async (
+    _id: string,
+    _values: Record<string, unknown>,
+    _sync: Record<string, unknown>,
+  ) => null as { id: string } | null,
+);
+const findSignupsByRaidRunId = mock(async (_id: string) => [] as SignupRow[]);
+const findSignupsByIds = mock(async (_ids: string[]) => [] as SignupRow[]);
+
+type RaidRunRow = {
+  id: string;
+  status?: 'pending' | 'recruiting' | 'ongoing' | 'completed' | 'cancelled';
+};
+
+type SignupRow = {
+  id: string;
+  raidRunId: string;
+};
+
+type DetailRow = {
+  run: {
+    id: string;
+    name: string;
+    description: string | null;
+    status: 'pending' | 'recruiting' | 'ongoing' | 'completed' | 'cancelled';
+    dungeonId: string;
+    gatherTime: Date | null;
+    startTime: Date;
+    endTime: Date | null;
+    reservedTank: number;
+    reservedHealer: number;
+    reservedDps: number;
+    reservedBoss: number;
+    remark: string | null;
+    gameRaidId: string | null;
+    totalIncome: string | null;
+    subsidyAmount: string | null;
+    wagePerPerson: string | null;
+  };
+  dungeon: {
+    id: string;
+    name: string;
+    playerLimit: number;
+    bossCount: number;
+    difficulty: 'normal' | 'heroic' | 'challenge';
+  } | null;
+  signups: Array<{
+    id: string;
+    groupNumber: number | null;
+    positionNumber: number | null;
+    role: 'pending' | 'tank' | 'healer' | 'dps' | 'boss';
+    isLeader: boolean;
+    isDarkRun: boolean;
+    isFormationCore: boolean;
+    serverId: string | null;
+    characterName: string | null;
+    schoolId: string | null;
+    kungfuId: string | null;
+    remark: string | null;
+  }>;
+};
 
 type DungeonRow = {
   id: string;
@@ -114,12 +177,27 @@ mock.module('@api/infrastructure/repository/raid-run-repository', () => ({
   raidRunRepository: {
     createWithSignups,
     findById,
+    findDetailById,
     updateById,
+    updateWithSignups,
   },
 }));
 
-const { createRaidRun, updateRaidRunGameRaidId, updateRaidRunWages } =
-  await import('@api/application/service/raid-run-service');
+mock.module('@api/infrastructure/repository/raid-signup-repository', () => ({
+  raidSignupRepository: {
+    findByRaidRunId: findSignupsByRaidRunId,
+    findByIds: findSignupsByIds,
+  },
+}));
+
+const {
+  createRaidRun,
+  getRaidRun,
+  saveRaidRun,
+  updateRaidRunGameRaidId,
+  updateRaidRunStatus,
+  updateRaidRunWages,
+} = await import('@api/application/service/raid-run-service');
 
 const expectBadRequest = async (
   body: CreateRaidRunBody,
@@ -145,7 +223,11 @@ describe('createRaidRun', () => {
     findKungfusByIds.mockReset();
     createWithSignups.mockReset();
     findById.mockReset();
+    findDetailById.mockReset();
     updateById.mockReset();
+    updateWithSignups.mockReset();
+    findSignupsByRaidRunId.mockReset();
+    findSignupsByIds.mockReset();
     logger.info.mockReset();
     logger.error.mockReset();
 
@@ -172,6 +254,10 @@ describe('createRaidRun', () => {
         signups: [expect.objectContaining({ isReserved: false })],
       }),
     );
+    const createdSignups = createWithSignups.mock.calls[0]?.[0].signups ?? [];
+    expect(
+      (createdSignups[0] as { id?: string } | undefined)?.id,
+    ).toBeUndefined();
     expect(logger.info).toHaveBeenCalled();
   });
 
@@ -721,6 +807,439 @@ describe('updateRaidRunWages', () => {
         subsidyAmount: 0,
         wagePerPerson: 0,
       });
+      throw new Error('expected repository error');
+    } catch (error) {
+      expect(error).toBe(failure);
+      expect(logger.error).toHaveBeenCalled();
+    }
+  });
+});
+
+const signupId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+const otherSignupId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+
+const defaultDetailRun = {
+  id: raidRunId,
+  name: '周六团',
+  description: null as string | null,
+  status: 'pending' as const,
+  dungeonId,
+  gatherTime,
+  startTime,
+  endTime,
+  reservedTank: 1,
+  reservedHealer: 0,
+  reservedDps: 0,
+  reservedBoss: 0,
+  remark: null as string | null,
+  gameRaidId: null as string | null,
+  totalIncome: null as string | null,
+  subsidyAmount: '0' as string | null,
+  wagePerPerson: '' as string | null,
+};
+
+const defaultDetailDungeon = {
+  id: dungeonId,
+  name: '25人英雄',
+  playerLimit: 25,
+  bossCount: 6,
+  difficulty: 'heroic' as const,
+};
+
+const defaultDetailSignup = {
+  id: signupId,
+  groupNumber: 1 as number | null,
+  positionNumber: 1 as number | null,
+  role: 'tank' as const,
+  isLeader: true,
+  isDarkRun: true,
+  isFormationCore: true,
+  serverId: null as string | null,
+  characterName: '团长' as string | null,
+  schoolId: null as string | null,
+  kungfuId: null as string | null,
+  remark: null as string | null,
+};
+
+const detailRow = (overrides: Partial<DetailRow> = {}): DetailRow => ({
+  run: {
+    ...defaultDetailRun,
+    ...overrides.run,
+  },
+  dungeon:
+    overrides.dungeon === undefined ? defaultDetailDungeon : overrides.dungeon,
+  signups: overrides.signups ?? [defaultDetailSignup],
+});
+
+describe('getRaidRun', () => {
+  beforeEach(() => {
+    findDetailById.mockReset();
+    findDetailById.mockResolvedValue(detailRow());
+  });
+
+  it('returns a mapped raid run detail', async () => {
+    const result = await getRaidRun(raidRunId);
+
+    expect(result.id).toBe(raidRunId);
+    expect(result.status).toBe('pending');
+    expect(result.dungeon.name).toBe('25人英雄');
+    expect(result.gatherTime).toBe(gatherTime.toISOString());
+    expect(result.startTime).toBe(startTime.toISOString());
+    expect(result.endTime).toBe(endTime.toISOString());
+    expect(result.totalIncome).toBe(0);
+    expect(result.subsidyAmount).toBe(0);
+    expect(result.wagePerPerson).toBe(0);
+    expect(result.signups).toHaveLength(1);
+    expect(result.signups[0]?.id).toBe(signupId);
+  });
+
+  it('throws when the raid run is missing', async () => {
+    findDetailById.mockResolvedValue(null);
+
+    try {
+      await getRaidRun(raidRunId);
+      throw new Error('expected NotFoundException');
+    } catch (error) {
+      expect(error).toBeInstanceOf(NotFoundException);
+      expect((error as NotFoundException).code).toBe(
+        ERROR_CODES.RAID_RUN_NOT_FOUND,
+      );
+    }
+  });
+
+  it('throws when the dungeon is missing', async () => {
+    findDetailById.mockResolvedValue(
+      detailRow({
+        dungeon: null,
+      }),
+    );
+
+    try {
+      await getRaidRun(raidRunId);
+      throw new Error('expected NotFoundException');
+    } catch (error) {
+      expect(error).toBeInstanceOf(NotFoundException);
+      expect((error as NotFoundException).code).toBe(
+        ERROR_CODES.RAID_RUN_DUNGEON_NOT_FOUND,
+      );
+    }
+  });
+
+  it('maps null times and truncates invalid gold', async () => {
+    findDetailById.mockResolvedValue(
+      detailRow({
+        run: {
+          ...defaultDetailRun,
+          gatherTime: null,
+          endTime: null,
+          wagePerPerson: 'not-a-number',
+        },
+      }),
+    );
+
+    const result = await getRaidRun(raidRunId);
+
+    expect(result.gatherTime).toBeNull();
+    expect(result.endTime).toBeNull();
+    expect(result.wagePerPerson).toBe(0);
+  });
+});
+
+describe('saveRaidRun', () => {
+  beforeEach(() => {
+    findDungeonById.mockReset();
+    countServersByIds.mockReset();
+    countSchoolsByIds.mockReset();
+    countKungfusByIds.mockReset();
+    findKungfusByIds.mockReset();
+    findById.mockReset();
+    findDetailById.mockReset();
+    updateWithSignups.mockReset();
+    findSignupsByRaidRunId.mockReset();
+    findSignupsByIds.mockReset();
+    logger.info.mockReset();
+    logger.error.mockReset();
+
+    findDungeonById.mockResolvedValue(dungeonRow());
+    findById.mockResolvedValue({ id: raidRunId });
+    findDetailById.mockResolvedValue(detailRow());
+    updateWithSignups.mockResolvedValue({ id: raidRunId });
+    findSignupsByRaidRunId.mockResolvedValue([{ id: signupId, raidRunId }]);
+    findSignupsByIds.mockResolvedValue([]);
+  });
+
+  it('updates matching signups and keeps their ids', async () => {
+    const result = await saveRaidRun(
+      raidRunId,
+      validBody({
+        signups: [signup({ id: signupId })],
+      }),
+      userId,
+    );
+
+    expect(result.id).toBe(raidRunId);
+    expect(updateWithSignups).toHaveBeenCalledWith(
+      raidRunId,
+      expect.not.objectContaining({ status: expect.anything() }),
+      {
+        toUpdate: [
+          expect.objectContaining({
+            id: signupId,
+            characterName: '团长',
+          }),
+        ],
+        toInsert: [],
+        toDeleteIds: [],
+      },
+    );
+    expect(logger.info).toHaveBeenCalled();
+  });
+
+  it('inserts unknown ids and deletes missing current signups', async () => {
+    await saveRaidRun(raidRunId, validBody(), userId);
+
+    expect(updateWithSignups).toHaveBeenCalledWith(
+      raidRunId,
+      expect.objectContaining({ name: '周六团' }),
+      {
+        toUpdate: [],
+        toInsert: [
+          expect.objectContaining({
+            createdBy: userId,
+            characterName: '团长',
+          }),
+        ],
+        toDeleteIds: [signupId],
+      },
+    );
+  });
+
+  it('rejects signup ids that belong to another raid run', async () => {
+    findSignupsByIds.mockResolvedValue([
+      { id: otherSignupId, raidRunId: 'other-run' },
+    ]);
+
+    try {
+      await saveRaidRun(
+        raidRunId,
+        validBody({
+          signups: [signup({ id: otherSignupId })],
+        }),
+        userId,
+      );
+      throw new Error('expected BadRequestException');
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect((error as BadRequestException).code).toBe(
+        ERROR_CODES.RAID_RUN_SIGNUP_NOT_FOUND,
+      );
+      expect(updateWithSignups).not.toHaveBeenCalled();
+    }
+  });
+
+  it('rejects duplicate incoming signup ids', async () => {
+    try {
+      await saveRaidRun(
+        raidRunId,
+        validBody({
+          reservedTank: 2,
+          signups: [
+            signup({ id: signupId, positionNumber: 1 }),
+            signup({
+              id: signupId,
+              positionNumber: 2,
+              isLeader: false,
+              isDarkRun: false,
+              isFormationCore: false,
+              characterName: '坦克',
+            }),
+          ],
+        }),
+        userId,
+      );
+      throw new Error('expected BadRequestException');
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect((error as BadRequestException).code).toBe(ERROR_CODES.BAD_REQUEST);
+    }
+  });
+
+  it('throws when the raid run is missing', async () => {
+    findById.mockResolvedValue(null);
+
+    try {
+      await saveRaidRun(raidRunId, validBody(), userId);
+      throw new Error('expected NotFoundException');
+    } catch (error) {
+      expect(error).toBeInstanceOf(NotFoundException);
+      expect((error as NotFoundException).code).toBe(
+        ERROR_CODES.RAID_RUN_NOT_FOUND,
+      );
+    }
+  });
+
+  it('throws when the update returns no row', async () => {
+    updateWithSignups.mockResolvedValue(null);
+
+    try {
+      await saveRaidRun(raidRunId, validBody(), userId);
+      throw new Error('expected NotFoundException');
+    } catch (error) {
+      expect(error).toBeInstanceOf(NotFoundException);
+      expect((error as NotFoundException).code).toBe(
+        ERROR_CODES.RAID_RUN_NOT_FOUND,
+      );
+    }
+  });
+
+  it('logs and rethrows repository failures', async () => {
+    const failure = new Error('db down');
+    updateWithSignups.mockRejectedValue(failure);
+
+    try {
+      await saveRaidRun(raidRunId, validBody(), userId);
+      throw new Error('expected repository error');
+    } catch (error) {
+      expect(error).toBe(failure);
+      expect(logger.error).toHaveBeenCalled();
+    }
+  });
+
+  it('rejects an incomplete roster', async () => {
+    try {
+      await saveRaidRun(
+        raidRunId,
+        validBody({
+          signups: [
+            signup({
+              isLeader: false,
+            }),
+          ],
+        }),
+        userId,
+      );
+      throw new Error('expected BadRequestException');
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect((error as BadRequestException).code).toBe(
+        ERROR_CODES.RAID_RUN_LEADER_COUNT_INVALID,
+      );
+      expect(updateWithSignups).not.toHaveBeenCalled();
+    }
+  });
+});
+
+describe('updateRaidRunStatus', () => {
+  beforeEach(() => {
+    findById.mockReset();
+    updateById.mockReset();
+    logger.info.mockReset();
+    logger.error.mockReset();
+    findById.mockResolvedValue({ id: raidRunId, status: 'pending' });
+    updateById.mockResolvedValue({ status: 'recruiting' });
+  });
+
+  it('allows pending to recruiting', async () => {
+    const result = await updateRaidRunStatus(raidRunId, {
+      status: 'recruiting',
+    });
+
+    expect(result).toEqual({ status: 'recruiting' });
+    expect(updateById).toHaveBeenCalledWith(raidRunId, {
+      status: 'recruiting',
+    });
+    expect(logger.info).toHaveBeenCalled();
+  });
+
+  it('allows recruiting to ongoing', async () => {
+    findById.mockResolvedValue({ id: raidRunId, status: 'recruiting' });
+    updateById.mockResolvedValue({ status: 'ongoing' });
+
+    const result = await updateRaidRunStatus(raidRunId, { status: 'ongoing' });
+
+    expect(result).toEqual({ status: 'ongoing' });
+  });
+
+  it('allows ongoing to completed', async () => {
+    findById.mockResolvedValue({ id: raidRunId, status: 'ongoing' });
+    updateById.mockResolvedValue({ status: 'completed' });
+
+    const result = await updateRaidRunStatus(raidRunId, {
+      status: 'completed',
+    });
+
+    expect(result).toEqual({ status: 'completed' });
+  });
+
+  it('rejects an illegal transition', async () => {
+    try {
+      await updateRaidRunStatus(raidRunId, { status: 'ongoing' });
+      throw new Error('expected BadRequestException');
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect((error as BadRequestException).code).toBe(
+        ERROR_CODES.RAID_RUN_STATUS_TRANSITION_INVALID,
+      );
+      expect(updateById).not.toHaveBeenCalled();
+    }
+  });
+
+  it('rejects transitions from completed', async () => {
+    findById.mockResolvedValue({ id: raidRunId, status: 'completed' });
+
+    try {
+      await updateRaidRunStatus(raidRunId, { status: 'recruiting' });
+      throw new Error('expected BadRequestException');
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect((error as BadRequestException).code).toBe(
+        ERROR_CODES.RAID_RUN_STATUS_TRANSITION_INVALID,
+      );
+    }
+  });
+
+  it('rejects transitions from cancelled', async () => {
+    findById.mockResolvedValue({ id: raidRunId, status: 'cancelled' });
+
+    try {
+      await updateRaidRunStatus(raidRunId, { status: 'pending' });
+      throw new Error('expected BadRequestException');
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect((error as BadRequestException).code).toBe(
+        ERROR_CODES.RAID_RUN_STATUS_TRANSITION_INVALID,
+      );
+    }
+  });
+
+  it('throws when the raid run is missing', async () => {
+    findById.mockResolvedValue(null);
+
+    try {
+      await updateRaidRunStatus(raidRunId, { status: 'recruiting' });
+      throw new Error('expected NotFoundException');
+    } catch (error) {
+      expect(error).toBeInstanceOf(NotFoundException);
+    }
+  });
+
+  it('throws when the update returns no row', async () => {
+    updateById.mockResolvedValue(null);
+
+    try {
+      await updateRaidRunStatus(raidRunId, { status: 'recruiting' });
+      throw new Error('expected NotFoundException');
+    } catch (error) {
+      expect(error).toBeInstanceOf(NotFoundException);
+    }
+  });
+
+  it('logs and rethrows repository failures', async () => {
+    const failure = new Error('db down');
+    updateById.mockRejectedValue(failure);
+
+    try {
+      await updateRaidRunStatus(raidRunId, { status: 'recruiting' });
       throw new Error('expected repository error');
     } catch (error) {
       expect(error).toBe(failure);

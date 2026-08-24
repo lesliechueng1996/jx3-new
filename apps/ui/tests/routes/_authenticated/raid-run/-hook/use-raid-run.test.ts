@@ -3,7 +3,9 @@ import { useRaidRun } from '@/routes/_authenticated/raid-run/-hook/use-raid-run'
 import {
   createRaidRun,
   setRaidRunDungeon,
+  setRaidRunName,
 } from '@/routes/_authenticated/raid-run/-lib/raid-run';
+import { raidRunSaveSnapshot } from '@/routes/_authenticated/raid-run/-lib/raid-run-save';
 
 const tenPlayerDungeon = {
   id: 'dungeon-2',
@@ -15,19 +17,17 @@ const tenPlayerDungeon = {
 
 describe('useRaidRun', () => {
   beforeEach(() => {
-    useRaidRun.setState({
-      raidRun: createRaidRun(),
-      selectedSlot: null,
-    });
+    useRaidRun.getState().resetRaidRun();
   });
 
   it('starts with an empty raid run snapshot', () => {
-    const { raidRun, selectedSlot } = useRaidRun.getState();
+    const { raidRun, selectedSlot, savedSnapshot } = useRaidRun.getState();
 
     expect(raidRun.status).toBe('pending');
     expect(raidRun.signups).toHaveLength(5);
     expect(raidRun.signups[0]).toHaveLength(5);
     expect(selectedSlot).toBeNull();
+    expect(savedSnapshot).toBe(raidRunSaveSnapshot(raidRun));
   });
 
   it('selects a slot and keeps it when the grid still contains it', () => {
@@ -56,5 +56,15 @@ describe('useRaidRun', () => {
 
     expect(useRaidRun.getState().raidRun.totalGroupCount).toBe(2);
     expect(useRaidRun.getState().selectedSlot).toBeNull();
+  });
+
+  it('hydrates a saved run and clears the selection', () => {
+    useRaidRun.getState().selectSlot({ groupNumber: 1, positionNumber: 1 });
+    const next = setRaidRunName(createRaidRun({ id: 'run-1' }), '已保存');
+    useRaidRun.getState().hydrateRaidRun(next);
+
+    expect(useRaidRun.getState().raidRun.name).toBe('已保存');
+    expect(useRaidRun.getState().selectedSlot).toBeNull();
+    expect(useRaidRun.getState().savedSnapshot).toBe(raidRunSaveSnapshot(next));
   });
 });
