@@ -1,9 +1,11 @@
+import { logger } from '@api/infrastructure/logger';
 import { gameItemRepository } from '@api/infrastructure/repository/game-item-repository';
 import type {
   CreateGameItemBody,
   GameItemDetail,
   GameItemPublic,
   ListGameItemsQuery,
+  QuickCreateGameItemBody,
   ReplaceGameItemResponse,
   UpdateGameItemBody,
 } from '@api/interface/schema/game-item-schema';
@@ -47,6 +49,17 @@ const normalizeNullableText = (
   const trimmed = value.trim();
   return trimmed.length === 0 ? null : trimmed;
 };
+
+const toGameItemPublic = (
+  row: Pick<GameItemRow, 'id' | 'name' | 'type' | 'quality' | 'icon' | 'alias'>,
+): GameItemPublic => ({
+  id: row.id,
+  name: row.name,
+  type: row.type,
+  quality: row.quality,
+  icon: row.icon,
+  alias: row.alias,
+});
 
 const toGameItemDetail = (row: GameItemRow): GameItemDetail => ({
   id: row.id,
@@ -156,6 +169,36 @@ export const createAdminGameItem = async (
   });
 
   return toGameItemDetail(created);
+};
+
+export const quickCreateGameItem = async (
+  body: QuickCreateGameItemBody,
+): Promise<GameItemPublic> => {
+  const name = body.name.trim();
+  await assertNameAvailable(name);
+
+  try {
+    const created = await gameItemRepository.create({
+      name,
+      gameItemId: null,
+      type: body.type,
+      quality: body.quality,
+      description: null,
+      icon: null,
+      alias: [],
+    });
+    logger.info('Quick-created game item {itemId} named {name}', {
+      itemId: created.id,
+      name: created.name,
+    });
+    return toGameItemPublic(created);
+  } catch (error) {
+    logger.error('Quick create game item failed, {name}, {error}', {
+      name,
+      error,
+    });
+    throw error;
+  }
 };
 
 export const updateAdminGameItem = async (

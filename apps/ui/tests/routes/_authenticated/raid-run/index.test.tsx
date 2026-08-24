@@ -61,6 +61,20 @@ vi.mock('@/lib/api/raid-runs-api', () => ({
   updateRaidRunWages: vi.fn(),
 }));
 
+vi.mock('@/lib/api/raid-loots-api', () => ({
+  raidRunLootsQueryKey: (id: string) => ['raid-run-loots', id],
+  listRaidRunLoots: vi.fn().mockResolvedValue([]),
+  createRaidRunLoot: vi.fn(),
+  updateRaidRunLoot: vi.fn(),
+  deleteRaidRunLoot: vi.fn(),
+}));
+
+vi.mock('@/lib/api/game-items-api', () => ({
+  gameItemsSearchQueryKey: (name: string) => ['game-items-search', name],
+  searchGameItems: vi.fn().mockResolvedValue([]),
+  createGameItemQuick: vi.fn(),
+}));
+
 const dungeon = {
   id: '11111111-1111-4111-8111-111111111111',
   name: '25人英雄',

@@ -17,17 +17,22 @@ import {
 } from '@/lib/api/game-items-api';
 
 const EMPTY_ITEMS: GameItemSearchItem[] = [];
+const CREATE_ITEM_ID = '__create__';
 
 type GameItemSearchSelectComponentProps = {
   id?: string;
   label?: string;
   value?: string;
+  seedItem?: GameItemSearchItem;
+  creatingName?: string;
   excludeId?: string;
   disabled?: boolean;
   placeholder?: string;
   error?: string;
   debounceMs?: number;
+  allowCreate?: boolean;
   onValueChange: (itemId: string | undefined) => void;
+  onCreateRequest?: (name: string) => void;
 };
 
 const isTypingReason = (reason: string) =>
@@ -46,20 +51,45 @@ const matchesItemQuery = (item: GameItemSearchItem, query: string) => {
   return item.alias.some((alias) => alias.toLowerCase().includes(normalized));
 };
 
+const makeCreateItem = (name: string): GameItemSearchItem => ({
+  id: CREATE_ITEM_ID,
+  name,
+  type: 'equipment',
+  quality: 'purple',
+  icon: null,
+  alias: [],
+});
+
+const isCreateItem = (item: GameItemSearchItem) => item.id === CREATE_ITEM_ID;
+
+const itemOptionLabel = (item: GameItemSearchItem) =>
+  isCreateItem(item) ? `创建【${item.name}】` : item.name;
+
 export function GameItemSearchSelectComponent({
   id,
   label = '替换为',
   value,
+  seedItem,
+  creatingName,
   excludeId,
   disabled = false,
   placeholder = '输入物品名称搜索',
   error,
   debounceMs = 300,
+  allowCreate = false,
   onValueChange,
+  onCreateRequest,
 }: GameItemSearchSelectComponentProps) {
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState(
+    creatingName ?? seedItem?.name ?? '',
+  );
   const [selectedItem, setSelectedItem] = useState<GameItemSearchItem | null>(
-    null,
+    () => {
+      if (creatingName) {
+        return makeCreateItem(creatingName);
+      }
+      return seedItem ?? null;
+    },
   );
   const inputValueRef = useRef(inputValue);
   const isFocusedRef = useRef(false);
@@ -87,27 +117,78 @@ export function GameItemSearchSelectComponent({
     return rows.filter((item) => item.id !== excludeId);
   }, [debouncedQuery, excludeId, searchQuery.data]);
 
-  const items = useMemo(() => {
-    if (selectedItem && !results.some((item) => item.id === selectedItem.id)) {
-      return [selectedItem, ...results];
-    }
-    return results;
-  }, [results, selectedItem]);
+  const isSearchPending =
+    trimmedInput.length > 0 &&
+    (debouncedQuery !== trimmedInput || searchQuery.isFetching);
 
-  const selectedId = value ?? selectedItem?.id;
+  const showCreateOption =
+    allowCreate &&
+    !searchQuery.isError &&
+    !isSearchPending &&
+    debouncedQuery.length > 0 &&
+    results.length === 0 &&
+    Boolean(searchQuery.data);
+
+  const items = useMemo(() => {
+    let next = results;
+    const pinned =
+      selectedItem && !isCreateItem(selectedItem)
+        ? selectedItem
+        : seedItem && seedItem.id === value
+          ? seedItem
+          : null;
+
+    if (pinned && !next.some((item) => item.id === pinned.id)) {
+      next = [pinned, ...next];
+    }
+
+    if (showCreateOption) {
+      const createItem = makeCreateItem(debouncedQuery);
+      if (!next.some((item) => item.id === createItem.id)) {
+        next = [...next, createItem];
+      }
+    }
+
+    return next;
+  }, [
+    debouncedQuery,
+    results,
+    seedItem,
+    selectedItem,
+    showCreateOption,
+    value,
+  ]);
+
+  const selectedId =
+    value ?? (creatingName ? CREATE_ITEM_ID : selectedItem?.id);
   const selectedFromValue =
     items.find((item) => item.id === selectedId) ??
-    (selectedItem?.id === selectedId ? selectedItem : null);
+    (selectedItem?.id === selectedId ? selectedItem : null) ??
+    (creatingName ? makeCreateItem(creatingName) : null);
 
   useEffect(() => {
     if (value) {
+      if (seedItem && seedItem.id === value) {
+        setSelectedItem((current) =>
+          current?.id === value ? current : seedItem,
+        );
+      }
       return;
     }
+
+    if (creatingName) {
+      setSelectedItem(makeCreateItem(creatingName));
+      if (!isFocusedRef.current) {
+        setInputValue(creatingName);
+      }
+      return;
+    }
+
     setSelectedItem(null);
     if (!isFocusedRef.current) {
       setInputValue('');
     }
-  }, [value]);
+  }, [creatingName, seedItem, value]);
 
   useEffect(() => {
     if (isFocusedRef.current) {
@@ -115,10 +196,6 @@ export function GameItemSearchSelectComponent({
     }
     setInputValue(selectedFromValue?.name ?? '');
   }, [selectedFromValue]);
-
-  const isSearchPending =
-    trimmedInput.length > 0 &&
-    (debouncedQuery !== trimmedInput || searchQuery.isFetching);
 
   let emptyMessage = '请输入物品名称';
   if (searchQuery.isError) {
@@ -133,6 +210,10 @@ export function GameItemSearchSelectComponent({
 
   const commitSelection = (next: GameItemSearchItem) => {
     setSelectedItem(next);
+    if (isCreateItem(next)) {
+      onCreateRequest?.(next.name);
+      return;
+    }
     onValueChange(next.id);
   };
 
@@ -220,7 +301,7 @@ export function GameItemSearchSelectComponent({
           <ComboboxList>
             {(item) => (
               <ComboboxItem key={item.id} value={item}>
-                {item.name}
+                {itemOptionLabel(item)}
               </ComboboxItem>
             )}
           </ComboboxList>

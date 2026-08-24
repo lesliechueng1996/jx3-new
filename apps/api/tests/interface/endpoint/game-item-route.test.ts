@@ -31,6 +31,7 @@ const listAdminGameItems = mock(async () => ({
 }));
 const searchGameItems = mock(async () => [itemPublic]);
 const createAdminGameItem = mock(async () => itemDetail);
+const quickCreateGameItem = mock(async () => itemPublic);
 const getAdminGameItem = mock(async () => itemDetail);
 const updateAdminGameItem = mock(async () => itemDetail);
 const deleteAdminGameItem = mock(async () => undefined);
@@ -40,6 +41,7 @@ mock.module('@api/application/service/game-item-service', () => ({
   listAdminGameItems,
   searchGameItems,
   createAdminGameItem,
+  quickCreateGameItem,
   getAdminGameItem,
   updateAdminGameItem,
   deleteAdminGameItem,
@@ -76,6 +78,7 @@ describe('gameItemRoute', () => {
     listAdminGameItems.mockReset();
     searchGameItems.mockReset();
     createAdminGameItem.mockReset();
+    quickCreateGameItem.mockReset();
     getAdminGameItem.mockReset();
     updateAdminGameItem.mockReset();
     deleteAdminGameItem.mockReset();
@@ -89,6 +92,7 @@ describe('gameItemRoute', () => {
     });
     searchGameItems.mockResolvedValue([itemPublic]);
     createAdminGameItem.mockResolvedValue(itemDetail);
+    quickCreateGameItem.mockResolvedValue(itemPublic);
     getAdminGameItem.mockResolvedValue(itemDetail);
     updateAdminGameItem.mockResolvedValue(itemDetail);
     deleteAdminGameItem.mockResolvedValue(undefined);
@@ -117,6 +121,39 @@ describe('gameItemRoute', () => {
 
     expect(response.status).toBe(422);
     expect(searchGameItems).not.toHaveBeenCalled();
+  });
+
+  it('quick-creates an item for users', async () => {
+    const response = await jsonRequest('/quick', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: '新掉落',
+        type: 'equipment',
+        quality: 'purple',
+      }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(quickCreateGameItem).toHaveBeenCalledWith({
+      name: '新掉落',
+      type: 'equipment',
+      quality: 'purple',
+    });
+    expect(body.data).toEqual(itemPublic);
+  });
+
+  it('rejects quick create without a name', async () => {
+    const response = await jsonRequest('/quick', {
+      method: 'POST',
+      body: JSON.stringify({
+        type: 'equipment',
+        quality: 'purple',
+      }),
+    });
+
+    expect(response.status).toBe(422);
+    expect(quickCreateGameItem).not.toHaveBeenCalled();
   });
 
   it('lists items', async () => {

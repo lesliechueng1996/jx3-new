@@ -3,6 +3,7 @@ import {
   deleteAdminGameItem,
   getAdminGameItem,
   listAdminGameItems,
+  quickCreateGameItem,
   replaceAdminGameItemLoot,
   searchGameItems,
   updateAdminGameItem,
@@ -18,8 +19,10 @@ import {
   createGameItemBodySchema,
   gameItemDetailSchema,
   gameItemIdParamsSchema,
+  gameItemPublicSchema,
   listGameItemsQuerySchema,
   listGameItemsResponseSchema,
+  quickCreateGameItemBodySchema,
   replaceGameItemBodySchema,
   replaceGameItemResponseSchema,
   searchGameItemsQuerySchema,
@@ -63,6 +66,30 @@ export const gameItemRoute = apiRoute.group('/game-item', (app) =>
           summary: 'Search game items by name',
           description:
             'Returns up to 15 items matching name or alias. Requires user role.',
+        },
+      },
+    )
+    .post(
+      '/quick',
+      async ({ body, status }) => {
+        const result = await quickCreateGameItem(body);
+        return status(201, AppResponse.success(result).toJson());
+      },
+      {
+        auth: roleUser,
+        body: quickCreateGameItemBodySchema,
+        response: {
+          201: createSuccessResponseSchema(gameItemPublicSchema),
+          400: errorResponseSchema,
+          403: errorResponseSchema,
+          409: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [gameItemTag.name],
+          summary: 'Quick-create a game item',
+          description:
+            'Creates an item from name, type, and quality. Requires user role.',
         },
       },
     )

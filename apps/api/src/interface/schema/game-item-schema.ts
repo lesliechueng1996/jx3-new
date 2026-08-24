@@ -135,6 +135,16 @@ export const createGameItemBodySchema = t.Object({
 
 export type CreateGameItemBody = Static<typeof createGameItemBodySchema>;
 
+export const quickCreateGameItemBodySchema = t.Object({
+  name: nameSchema,
+  type: itemTypeSchema,
+  quality: itemQualitySchema,
+});
+
+export type QuickCreateGameItemBody = Static<
+  typeof quickCreateGameItemBodySchema
+>;
+
 export const updateGameItemBodySchema = t.Object(
   {
     name: t.Optional(nameSchema),

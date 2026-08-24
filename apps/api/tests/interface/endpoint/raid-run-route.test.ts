@@ -83,6 +83,28 @@ const updateRaidRunWages = mock<
   }),
 );
 
+const lootItem = {
+  id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  raidRunId,
+  itemId: '11111111-1111-4111-8111-111111111111',
+  itemName: '上品玄晶',
+  itemIcon: '/icons/xuanjing.png',
+  itemType: 'special' as const,
+  itemQuality: 'orange' as const,
+  quantity: 1,
+  winnerSignupId: null,
+  winnerCharacterName: null,
+  winnerServerName: null,
+  price: null,
+  remark: null,
+  createdAt: '2026-08-24T07:00:00.000Z',
+};
+
+const listRaidLoots = mock(async () => [lootItem]);
+const createRaidLoot = mock(async () => lootItem);
+const updateRaidLoot = mock(async () => lootItem);
+const deleteRaidLoot = mock(async () => undefined);
+
 mock.module('@api/application/service/raid-run-service', () => ({
   createRaidRun,
   getRaidRun,
@@ -90,6 +112,13 @@ mock.module('@api/application/service/raid-run-service', () => ({
   updateRaidRunStatus,
   updateRaidRunGameRaidId,
   updateRaidRunWages,
+}));
+
+mock.module('@api/application/service/raid-loot-service', () => ({
+  listRaidLoots,
+  createRaidLoot,
+  updateRaidLoot,
+  deleteRaidLoot,
 }));
 
 mock.module('@api/shared/util/auth', () => ({
@@ -161,6 +190,14 @@ describe('raidRunRoute', () => {
       subsidyAmount: 2000,
       wagePerPerson: 1300,
     });
+    listRaidLoots.mockReset();
+    listRaidLoots.mockResolvedValue([lootItem]);
+    createRaidLoot.mockReset();
+    createRaidLoot.mockResolvedValue(lootItem);
+    updateRaidLoot.mockReset();
+    updateRaidLoot.mockResolvedValue(lootItem);
+    deleteRaidLoot.mockReset();
+    deleteRaidLoot.mockResolvedValue(undefined);
   });
 
   it('exports an OpenAPI tag', () => {
@@ -321,5 +358,79 @@ describe('raidRunRoute', () => {
 
     expect(response.status).toBe(422);
     expect(updateRaidRunWages).not.toHaveBeenCalled();
+  });
+
+  it('lists loot for a raid run', async () => {
+    const response = await jsonRequest(`/${raidRunId}/loot`);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(listRaidLoots).toHaveBeenCalledWith(raidRunId);
+    expect(body.data).toEqual([lootItem]);
+  });
+
+  it('creates loot for a raid run', async () => {
+    const response = await jsonRequest(`/${raidRunId}/loot`, {
+      method: 'POST',
+      body: JSON.stringify({
+        itemId: lootItem.itemId,
+        quantity: 1,
+      }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(createRaidLoot).toHaveBeenCalledWith(
+      raidRunId,
+      expect.objectContaining({ itemId: lootItem.itemId, quantity: 1 }),
+      'actor-1',
+    );
+    expect(body.data.id).toBe(lootItem.id);
+  });
+
+  it('rejects loot with a non-positive quantity', async () => {
+    const response = await jsonRequest(`/${raidRunId}/loot`, {
+      method: 'POST',
+      body: JSON.stringify({
+        itemId: lootItem.itemId,
+        quantity: 0,
+      }),
+    });
+
+    expect(response.status).toBe(422);
+    expect(createRaidLoot).not.toHaveBeenCalled();
+  });
+
+  it('updates loot for a raid run', async () => {
+    const response = await jsonRequest(`/${raidRunId}/loot/${lootItem.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        itemId: lootItem.itemId,
+        quantity: 2,
+        winnerSignupId: null,
+        price: 1000,
+        remark: '改',
+      }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(updateRaidLoot).toHaveBeenCalledWith(
+      raidRunId,
+      lootItem.id,
+      expect.objectContaining({ quantity: 2, price: 1000 }),
+    );
+    expect(body.data.id).toBe(lootItem.id);
+  });
+
+  it('deletes loot for a raid run', async () => {
+    const response = await jsonRequest(`/${raidRunId}/loot/${lootItem.id}`, {
+      method: 'DELETE',
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(deleteRaidLoot).toHaveBeenCalledWith(raidRunId, lootItem.id);
+    expect(body.data).toBeNull();
   });
 });

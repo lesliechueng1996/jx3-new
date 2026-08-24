@@ -208,7 +208,7 @@ const RaidRunPage = ({ raidRunId }: Props) => {
         <RaidRunInfo className="w-72 shrink-0" />
         <div className="flex min-w-0 flex-1 flex-col gap-4">
           <RaidTeamLayout />
-          <RaidLootPanel />
+          <RaidLootPanel raidRunId={raidRunId} />
         </div>
         <RaidMemberPanel className="w-72 shrink-0" />
       </div>

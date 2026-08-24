@@ -120,11 +120,19 @@ mock.module('@api/shared/util/date', () => ({
   formatDateTime,
 }));
 
+mock.module('@api/infrastructure/logger', () => ({
+  logger: {
+    info: mock((message: string) => message),
+    error: mock((message: string) => message),
+  },
+}));
+
 const {
   searchGameItems,
   listAdminGameItems,
   getAdminGameItem,
   createAdminGameItem,
+  quickCreateGameItem,
   updateAdminGameItem,
   deleteAdminGameItem,
   replaceAdminGameItemLoot,
@@ -342,6 +350,72 @@ describe('game-item-service', () => {
       code: ERROR_CODES.GAME_ITEM_NAME_ALREADY_EXISTS,
     });
     expect(create).not.toHaveBeenCalled();
+  });
+
+  it('quick-creates an item from name, type, and quality', async () => {
+    const created = itemRow({
+      name: '新掉落',
+      type: 'equipment',
+      quality: 'purple',
+      gameItemId: null,
+      description: null,
+      icon: null,
+      alias: [],
+    });
+    create.mockResolvedValue(created);
+
+    await expect(
+      quickCreateGameItem({
+        name: ' 新掉落 ',
+        type: 'equipment',
+        quality: 'purple',
+      }),
+    ).resolves.toEqual({
+      id: created.id,
+      name: '新掉落',
+      type: 'equipment',
+      quality: 'purple',
+      icon: null,
+      alias: [],
+    });
+    expect(findByName).toHaveBeenCalledWith('新掉落');
+    expect(create).toHaveBeenCalledWith({
+      name: '新掉落',
+      gameItemId: null,
+      type: 'equipment',
+      quality: 'purple',
+      description: null,
+      icon: null,
+      alias: [],
+    });
+  });
+
+  it('rejects a duplicate name on quick create', async () => {
+    findByName.mockResolvedValue(itemRow());
+
+    await expect(
+      quickCreateGameItem({
+        name: '上品玄晶',
+        type: 'equipment',
+        quality: 'purple',
+      }),
+    ).rejects.toMatchObject({
+      code: ERROR_CODES.GAME_ITEM_NAME_ALREADY_EXISTS,
+    });
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('logs and rethrows when quick create fails', async () => {
+    const failure = new Error('db down');
+    create.mockRejectedValue(failure);
+
+    await expect(
+      quickCreateGameItem({
+        name: '新品',
+        type: 'equipment',
+        quality: 'purple',
+      }),
+    ).rejects.toBe(failure);
   });
 
   it('rejects a duplicate game item id on create', async () => {

@@ -29,5 +29,6 @@ describe('ERROR_CODES', () => {
     expect(ERROR_CODES.RAID_RUN_SIGNUP_NOT_FOUND).toBe(
       'RAID_RUN_SIGNUP_NOT_FOUND',
     );
+    expect(ERROR_CODES.RAID_LOOT_NOT_FOUND).toBe('RAID_LOOT_NOT_FOUND');
   });
 });

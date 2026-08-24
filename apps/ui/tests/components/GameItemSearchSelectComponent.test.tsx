@@ -313,4 +313,55 @@ describe('GameItemSearchSelectComponent', () => {
     );
     expect(screen.getByLabelText('物品')).toBeInTheDocument();
   });
+
+  it('seeds the selected item name', () => {
+    renderWithQueryClient(
+      <GameItemSearchSelectComponent
+        label="物品名称"
+        value="item-1"
+        seedItem={items[0]}
+        onValueChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByLabelText('物品名称')).toHaveValue('上品玄晶');
+  });
+
+  it('shows the creating name when create is in progress', () => {
+    renderWithQueryClient(
+      <GameItemSearchSelectComponent
+        label="物品名称"
+        creatingName="新掉落"
+        allowCreate
+        onValueChange={vi.fn()}
+        onCreateRequest={vi.fn()}
+      />,
+    );
+    expect(screen.getByLabelText('物品名称')).toHaveValue('新掉落');
+  });
+
+  it('offers a create option when search is empty', async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    const onCreateRequest = vi.fn();
+    searchGameItems.mockResolvedValue([]);
+    renderWithQueryClient(
+      <GameItemSearchSelectComponent
+        label="物品名称"
+        debounceMs={0}
+        allowCreate
+        onValueChange={onValueChange}
+        onCreateRequest={onCreateRequest}
+      />,
+    );
+
+    const combobox = screen.getByLabelText('物品名称');
+    await user.click(combobox);
+    await user.type(combobox, '新掉落');
+    expect(
+      await screen.findByRole('option', { name: '创建【新掉落】' }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('option', { name: '创建【新掉落】' }));
+    expect(onCreateRequest).toHaveBeenCalledWith('新掉落');
+    expect(onValueChange).not.toHaveBeenCalled();
+  });
 });

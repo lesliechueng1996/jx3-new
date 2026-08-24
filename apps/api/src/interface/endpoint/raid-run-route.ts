@@ -1,4 +1,10 @@
 import {
+  createRaidLoot,
+  deleteRaidLoot,
+  listRaidLoots,
+  updateRaidLoot,
+} from '@api/application/service/raid-loot-service';
+import {
   createRaidRun,
   getRaidRun,
   saveRaidRun,
@@ -10,8 +16,15 @@ import { roleUser } from '@api/shared/util/auth';
 import {
   AppResponse,
   createSuccessResponseSchema,
+  emptySuccessResponseSchema,
   errorResponseSchema,
 } from '../schema/common';
+import {
+  listRaidLootResponseSchema,
+  raidLootIdParamsSchema,
+  raidLootItemSchema,
+  upsertRaidLootBodySchema,
+} from '../schema/raid-loot-schema';
 import {
   createRaidRunBodySchema,
   createRaidRunResponseSchema,
@@ -173,6 +186,96 @@ export const raidRunRoute = apiRoute.group('/raid-run', (app) =>
           summary: 'Update raid run wages',
           description:
             'Updates total income, subsidy, and wage per person. Requires user role.',
+        },
+      },
+    )
+    .get(
+      '/:id/loot',
+      async ({ params, status }) => {
+        const result = await listRaidLoots(params.id);
+        return status(200, AppResponse.success(result).toJson());
+      },
+      {
+        auth: roleUser,
+        params: raidRunIdParamsSchema,
+        response: {
+          200: createSuccessResponseSchema(listRaidLootResponseSchema),
+          400: errorResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [raidRunTag.name],
+          summary: 'List raid run loot',
+          description: 'Returns loot rows for a raid run. Requires user role.',
+        },
+      },
+    )
+    .post(
+      '/:id/loot',
+      async ({ body, params, status, user }) => {
+        const result = await createRaidLoot(params.id, body, user.id);
+        return status(201, AppResponse.success(result).toJson());
+      },
+      {
+        auth: roleUser,
+        params: raidRunIdParamsSchema,
+        body: upsertRaidLootBodySchema,
+        response: {
+          201: createSuccessResponseSchema(raidLootItemSchema),
+          400: errorResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [raidRunTag.name],
+          summary: 'Create raid run loot',
+          description: 'Creates a loot row for a raid run. Requires user role.',
+        },
+      },
+    )
+    .patch(
+      '/:id/loot/:lootId',
+      async ({ body, params, status }) => {
+        const result = await updateRaidLoot(params.id, params.lootId, body);
+        return status(200, AppResponse.success(result).toJson());
+      },
+      {
+        auth: roleUser,
+        params: raidLootIdParamsSchema,
+        body: upsertRaidLootBodySchema,
+        response: {
+          200: createSuccessResponseSchema(raidLootItemSchema),
+          400: errorResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [raidRunTag.name],
+          summary: 'Update raid run loot',
+          description: 'Updates a loot row for a raid run. Requires user role.',
+        },
+      },
+    )
+    .delete(
+      '/:id/loot/:lootId',
+      async ({ params, status }) => {
+        await deleteRaidLoot(params.id, params.lootId);
+        return status(200, AppResponse.success().toJson());
+      },
+      {
+        auth: roleUser,
+        params: raidLootIdParamsSchema,
+        response: {
+          200: emptySuccessResponseSchema,
+          400: errorResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [raidRunTag.name],
+          summary: 'Delete raid run loot',
+          description: 'Deletes a loot row for a raid run. Requires user role.',
         },
       },
     ),
