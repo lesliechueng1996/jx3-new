@@ -98,6 +98,31 @@ const replaceLootItemId = mock<
 const formatDateTime = mock<(date: Date) => string>(
   (date) => `fmt:${date.toISOString()}`,
 );
+const logger = {
+  info: mock((message: string) => message),
+  warn: mock((message: string) => message),
+  error: mock((message: string) => message),
+};
+const searchItem = mock<
+  (
+    keyword: string,
+    options?: unknown,
+  ) => Promise<{
+    id: string;
+    level: number;
+    iconId: number;
+    iconUrl: string;
+    description: string;
+  }>
+>(() =>
+  Promise.resolve({
+    id: '6_42729',
+    level: 35300,
+    iconId: 25571,
+    iconUrl: 'https://icon.jx3box.com/icon/25571.png',
+    description: '130级武器用破防无双\n武器伤害提高2737-4562',
+  }),
+);
 
 mock.module('@api/infrastructure/repository/game-item-repository', () => ({
   gameItemRepository: {
@@ -121,10 +146,11 @@ mock.module('@api/shared/util/date', () => ({
 }));
 
 mock.module('@api/infrastructure/logger', () => ({
-  logger: {
-    info: mock((message: string) => message),
-    error: mock((message: string) => message),
-  },
+  logger,
+}));
+
+mock.module('@jx3/jx3api', () => ({
+  searchItem,
 }));
 
 const {
@@ -161,6 +187,10 @@ describe('game-item-service', () => {
     isReferenced.mockReset();
     replaceLootItemId.mockReset();
     formatDateTime.mockClear();
+    logger.info.mockReset();
+    logger.warn.mockReset();
+    logger.error.mockReset();
+    searchItem.mockReset();
 
     buildWhereClause.mockReturnValue(undefined);
     searchByName.mockResolvedValue([]);
@@ -174,6 +204,13 @@ describe('game-item-service', () => {
     deleteById.mockResolvedValue(undefined);
     isReferenced.mockResolvedValue(false);
     replaceLootItemId.mockResolvedValue(0);
+    searchItem.mockResolvedValue({
+      id: '6_42729',
+      level: 35300,
+      iconId: 25571,
+      iconUrl: 'https://icon.jx3box.com/icon/25571.png',
+      description: '130级武器用破防无双\n武器伤害提高2737-4562',
+    });
   });
 
   it('searches items by trimmed name with a limit of 15', async () => {
@@ -352,14 +389,14 @@ describe('game-item-service', () => {
     expect(create).not.toHaveBeenCalled();
   });
 
-  it('quick-creates an item from name, type, and quality', async () => {
+  it('quick-creates an item and fills icon and description from jx3box', async () => {
     const created = itemRow({
       name: '新掉落',
       type: 'equipment',
       quality: 'purple',
       gameItemId: null,
-      description: null,
-      icon: null,
+      description: '130级武器用破防无双\n武器伤害提高2737-4562',
+      icon: 'https://icon.jx3box.com/icon/25571.png',
       alias: [],
     });
     create.mockResolvedValue(created);
@@ -375,12 +412,48 @@ describe('game-item-service', () => {
       name: '新掉落',
       type: 'equipment',
       quality: 'purple',
-      icon: null,
+      icon: 'https://icon.jx3box.com/icon/25571.png',
       alias: [],
     });
     expect(findByName).toHaveBeenCalledWith('新掉落');
+    expect(searchItem).toHaveBeenCalledWith('新掉落', { logger });
     expect(create).toHaveBeenCalledWith({
       name: '新掉落',
+      gameItemId: null,
+      type: 'equipment',
+      quality: 'purple',
+      description: '130级武器用破防无双\n武器伤害提高2737-4562',
+      icon: 'https://icon.jx3box.com/icon/25571.png',
+      alias: [],
+    });
+  });
+
+  it('quick-creates without icon and description when jx3box search fails', async () => {
+    searchItem.mockRejectedValue(new Error('not found'));
+    const created = itemRow({
+      name: '新品',
+      type: 'equipment',
+      quality: 'purple',
+      gameItemId: null,
+      description: null,
+      icon: null,
+      alias: [],
+    });
+    create.mockResolvedValue(created);
+
+    await expect(
+      quickCreateGameItem({
+        name: '新品',
+        type: 'equipment',
+        quality: 'purple',
+      }),
+    ).resolves.toMatchObject({
+      name: '新品',
+      icon: null,
+    });
+    expect(logger.warn).toHaveBeenCalled();
+    expect(create).toHaveBeenCalledWith({
+      name: '新品',
       gameItemId: null,
       type: 'equipment',
       quality: 'purple',
@@ -388,6 +461,35 @@ describe('game-item-service', () => {
       icon: null,
       alias: [],
     });
+  });
+
+  it('stores a null description when jx3box returns a blank one', async () => {
+    searchItem.mockResolvedValue({
+      id: '6_1',
+      level: 1,
+      iconId: 13,
+      iconUrl: 'https://icon.jx3box.com/icon/13.png',
+      description: '   ',
+    });
+    const created = itemRow({
+      name: '新品',
+      icon: 'https://icon.jx3box.com/icon/13.png',
+      description: null,
+    });
+    create.mockResolvedValue(created);
+
+    await quickCreateGameItem({
+      name: '新品',
+      type: 'equipment',
+      quality: 'purple',
+    });
+
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        description: null,
+        icon: 'https://icon.jx3box.com/icon/13.png',
+      }),
+    );
   });
 
   it('rejects a duplicate name on quick create', async () => {
@@ -402,6 +504,7 @@ describe('game-item-service', () => {
     ).rejects.toMatchObject({
       code: ERROR_CODES.GAME_ITEM_NAME_ALREADY_EXISTS,
     });
+    expect(searchItem).not.toHaveBeenCalled();
     expect(create).not.toHaveBeenCalled();
   });
 

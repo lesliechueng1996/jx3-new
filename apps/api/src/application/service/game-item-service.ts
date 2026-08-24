@@ -16,6 +16,7 @@ import {
   NotFoundException,
 } from '@api/shared/exception';
 import { formatDateTime } from '@api/shared/util/date';
+import { searchItem } from '@jx3/jx3api';
 
 type GameItemRow = NonNullable<
   Awaited<ReturnType<typeof gameItemRepository.findById>>
@@ -171,11 +172,35 @@ export const createAdminGameItem = async (
   return toGameItemDetail(created);
 };
 
+const lookupQuickCreateDetails = async (
+  name: string,
+): Promise<{ icon: string | null; description: string | null }> => {
+  try {
+    const item = await searchItem(name, { logger });
+    logger.info('Looked up jx3box item {name} with icon {iconUrl}', {
+      name,
+      iconUrl: item.iconUrl,
+    });
+    return {
+      icon: item.iconUrl,
+      description: normalizeNullableText(item.description),
+    };
+  } catch (error) {
+    logger.warn('Jx3box item search failed, {name}, {error}', {
+      name,
+      error,
+    });
+    return { icon: null, description: null };
+  }
+};
+
 export const quickCreateGameItem = async (
   body: QuickCreateGameItemBody,
 ): Promise<GameItemPublic> => {
   const name = body.name.trim();
   await assertNameAvailable(name);
+
+  const { icon, description } = await lookupQuickCreateDetails(name);
 
   try {
     const created = await gameItemRepository.create({
@@ -183,8 +208,8 @@ export const quickCreateGameItem = async (
       gameItemId: null,
       type: body.type,
       quality: body.quality,
-      description: null,
-      icon: null,
+      description,
+      icon,
       alias: [],
     });
     logger.info('Quick-created game item {itemId} named {name}', {

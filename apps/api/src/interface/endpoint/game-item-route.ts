@@ -89,7 +89,7 @@ export const gameItemRoute = apiRoute.group('/game-item', (app) =>
           tags: [gameItemTag.name],
           summary: 'Quick-create a game item',
           description:
-            'Creates an item from name, type, and quality. Requires user role.',
+            'Creates an item from name, type, and quality, filling icon and description from jx3box when found. Requires user role.',
         },
       },
     )
