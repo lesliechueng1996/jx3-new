@@ -82,8 +82,21 @@ const schoolRow = (overrides: Partial<SchoolRow> = {}): SchoolRow => ({
   ...overrides,
 });
 
+type KungfuPublicRow = {
+  id: string;
+  name: string;
+  schoolId: string;
+  schoolName: string;
+  kungfuType: 'defense' | 'heal' | 'attack';
+  icon: string | null;
+  alias: string[];
+};
+
 const buildWhereClause = mock<(query: ListKungfusQuery) => unknown>(
   () => undefined,
+);
+const listAll = mock<() => Promise<KungfuPublicRow[]>>(() =>
+  Promise.resolve([]),
 );
 const listPagination = mock<
   (where: unknown, limit: number, offset: number) => Promise<KungfuRow[]>
@@ -117,6 +130,7 @@ const formatDateTime = mock<(date: Date) => string>(
 mock.module('@api/infrastructure/repository/kungfu-repository', () => ({
   kungfuRepository: {
     buildWhereClause,
+    listAll,
     listPagination,
     count,
     findById,
@@ -140,6 +154,7 @@ mock.module('@api/shared/util/date', () => ({
 
 const {
   listAdminKungfus,
+  listAllKungfus,
   getAdminKungfu,
   createAdminKungfu,
   updateAdminKungfu,
@@ -166,6 +181,7 @@ const createBody = (
 describe('kungfu-service', () => {
   beforeEach(() => {
     buildWhereClause.mockReset();
+    listAll.mockReset();
     listPagination.mockReset();
     count.mockReset();
     findById.mockReset();
@@ -178,6 +194,7 @@ describe('kungfu-service', () => {
     formatDateTime.mockClear();
 
     buildWhereClause.mockReturnValue(undefined);
+    listAll.mockResolvedValue([]);
     listPagination.mockResolvedValue([]);
     count.mockResolvedValue([{ total: 0 }]);
     findById.mockResolvedValue(null);
@@ -187,6 +204,32 @@ describe('kungfu-service', () => {
     deleteById.mockResolvedValue(undefined);
     isReferenced.mockResolvedValue(false);
     findSchoolById.mockResolvedValue(schoolRow());
+  });
+
+  it('lists all kungfus without timestamps', async () => {
+    listAll.mockResolvedValue([
+      {
+        id: 'kungfu-1',
+        name: '紫霞功',
+        schoolId: 'school-1',
+        schoolName: '纯阳',
+        kungfuType: 'attack',
+        icon: '/icons/zixia.png',
+        alias: ['气纯'],
+      },
+    ]);
+
+    await expect(listAllKungfus()).resolves.toEqual([
+      {
+        id: 'kungfu-1',
+        name: '紫霞功',
+        schoolId: 'school-1',
+        schoolName: '纯阳',
+        kungfuType: 'attack',
+        icon: '/icons/zixia.png',
+        alias: ['气纯'],
+      },
+    ]);
   });
 
   it('lists kungfus and maps rows', async () => {

@@ -3,9 +3,10 @@ import {
   deleteAdminKungfu,
   getAdminKungfu,
   listAdminKungfus,
+  listAllKungfus,
   updateAdminKungfu,
 } from '@api/application/service/kungfu-service';
-import { roleAdmin } from '@api/shared/util/auth';
+import { roleAdmin, roleUser } from '@api/shared/util/auth';
 import {
   AppResponse,
   createSuccessResponseSchema,
@@ -16,6 +17,7 @@ import {
   createKungfuBodySchema,
   kungfuDetailSchema,
   kungfuIdParamsSchema,
+  listAllKungfusResponseSchema,
   listKungfusQuerySchema,
   listKungfusResponseSchema,
   updateKungfuBodySchema,
@@ -37,6 +39,27 @@ const kungfuDetailResponse = {
 
 export const kungfuRoute = apiRoute.group('/kungfu', (app) =>
   app
+    .get(
+      '/all',
+      async ({ status }) => {
+        const result = await listAllKungfus();
+        return status(200, AppResponse.success(result).toJson());
+      },
+      {
+        auth: roleUser,
+        response: {
+          200: createSuccessResponseSchema(listAllKungfusResponseSchema),
+          403: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [kungfuTag.name],
+          summary: 'List all kungfus',
+          description:
+            'Returns every kungfu id, name, school, type, icon, and alias. Requires user role.',
+        },
+      },
+    )
     .post(
       '',
       async ({ body, status }) => {

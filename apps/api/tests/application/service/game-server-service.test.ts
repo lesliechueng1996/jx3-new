@@ -104,6 +104,7 @@ mock.module('@jx3/jx3api', () => ({
 
 const {
   listAdminGameServers,
+  listAllGameServers,
   getAdminGameServer,
   createAdminGameServer,
   updateAdminGameServer,
@@ -156,6 +157,19 @@ describe('game-server-service', () => {
         },
       ],
     });
+  });
+
+  it('lists all game servers without timestamps', async () => {
+    listAll.mockResolvedValue([serverRow()]);
+
+    await expect(listAllGameServers()).resolves.toEqual([
+      {
+        id: 'server-1',
+        zone: '电信一区',
+        name: '梦江南',
+        alias: ['梦岛'],
+      },
+    ]);
   });
 
   it('gets a game server and throws when missing', async () => {

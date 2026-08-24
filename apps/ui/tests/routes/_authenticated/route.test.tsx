@@ -29,5 +29,6 @@ describe('authenticated layout', () => {
     await renderApp('/');
     expect(await screen.findByText('欢迎回来')).toBeInTheDocument();
     expect(screen.getByText('控制台')).toBeInTheDocument();
+    expect(document.title).toBe('概览 · 四堆专用');
   });
 });

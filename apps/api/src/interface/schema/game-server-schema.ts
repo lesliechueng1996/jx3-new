@@ -30,6 +30,17 @@ export const gameServerDetailSchema = t.Object({
 
 export type GameServerDetail = Static<typeof gameServerDetailSchema>;
 
+export const gameServerPublicSchema = t.Object({
+  id: t.String(),
+  zone: t.String(),
+  name: t.String(),
+  alias: t.Array(t.String()),
+});
+
+export type GameServerPublic = Static<typeof gameServerPublicSchema>;
+
+export const listAllGameServersResponseSchema = t.Array(gameServerPublicSchema);
+
 export const listGameServersResponseSchema = t.Object({
   items: t.Array(gameServerDetailSchema),
 });

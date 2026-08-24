@@ -114,9 +114,37 @@ const seasonRow = (overrides: Partial<GameSeasonRow> = {}): GameSeasonRow => ({
   ...overrides,
 });
 
+type GameDungeonPublicRow = {
+  id: string;
+  name: string;
+  expansionId: string;
+  expansionName: string;
+  seasonId: string;
+  seasonName: string;
+  playerLimit: number;
+  difficulty: GameDungeonRow['difficulty'];
+  levelRequirement: number;
+  bossCount: number;
+};
+
+const dungeonPublicRow = (
+  overrides: Partial<GameDungeonPublicRow> = {},
+): GameDungeonPublicRow => {
+  const {
+    resetWeekdays: _resetWeekdays,
+    createdAt: _createdAt,
+    updatedAt: _updatedAt,
+    ...row
+  } = dungeonRow();
+  return { ...row, ...overrides };
+};
+
 const buildWhereClause = mock<(query: ListGameDungeonsQuery) => unknown>(
   () => undefined,
 );
+const searchByName = mock<
+  (name: string, limit: number) => Promise<GameDungeonPublicRow[]>
+>(() => Promise.resolve([]));
 const listPagination = mock<
   (where: unknown, limit: number, offset: number) => Promise<GameDungeonRow[]>
 >(() => Promise.resolve([]));
@@ -157,6 +185,7 @@ const formatDateTime = mock<(date: Date) => string>(
 mock.module('@api/infrastructure/repository/game-dungeon-repository', () => ({
   gameDungeonRepository: {
     buildWhereClause,
+    searchByName,
     listPagination,
     count,
     findById,
@@ -185,6 +214,7 @@ mock.module('@api/shared/util/date', () => ({
 }));
 
 const {
+  searchGameDungeons,
   listAdminGameDungeons,
   getAdminGameDungeon,
   createAdminGameDungeon,
@@ -216,6 +246,7 @@ const createBody = (
 describe('game-dungeon-service', () => {
   beforeEach(() => {
     buildWhereClause.mockReset();
+    searchByName.mockReset();
     listPagination.mockReset();
     count.mockReset();
     findById.mockReset();
@@ -229,6 +260,7 @@ describe('game-dungeon-service', () => {
     formatDateTime.mockClear();
 
     buildWhereClause.mockReturnValue(undefined);
+    searchByName.mockResolvedValue([]);
     listPagination.mockResolvedValue([]);
     count.mockResolvedValue([{ total: 0 }]);
     findById.mockResolvedValue(null);
@@ -239,6 +271,19 @@ describe('game-dungeon-service', () => {
     isReferenced.mockResolvedValue(false);
     findExpansionById.mockResolvedValue(expansionRow());
     findSeasonById.mockResolvedValue(seasonRow());
+  });
+
+  it('searches dungeons by trimmed name with a limit of 10', async () => {
+    const row = dungeonPublicRow();
+    searchByName.mockResolvedValue([row]);
+
+    await expect(searchGameDungeons('  河阳  ')).resolves.toEqual([row]);
+    expect(searchByName).toHaveBeenCalledWith('河阳', 10);
+  });
+
+  it('returns an empty list when the search name is blank', async () => {
+    await expect(searchGameDungeons('   ')).resolves.toEqual([]);
+    expect(searchByName).not.toHaveBeenCalled();
   });
 
   it('lists dungeons and maps rows', async () => {

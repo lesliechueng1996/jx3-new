@@ -14,7 +14,7 @@ describe('admin layout', () => {
   it('allows admins through', async () => {
     await renderApp('/admin/idioms');
     expect(
-      await screen.findByRole('heading', { name: '成语管理' }),
+      await screen.findByRole('button', { name: '新增成语' }),
     ).toBeInTheDocument();
   });
 

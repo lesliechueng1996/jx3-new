@@ -82,6 +82,33 @@ export const gameDungeonDetailSchema = t.Object({
 
 export type GameDungeonDetail = Static<typeof gameDungeonDetailSchema>;
 
+export const gameDungeonPublicSchema = t.Object({
+  id: t.String(),
+  name: t.String(),
+  expansionId: t.String(),
+  expansionName: t.String(),
+  seasonId: t.String(),
+  seasonName: t.String(),
+  playerLimit: t.Integer(),
+  difficulty: dungeonDifficultySchema,
+  levelRequirement: t.Integer(),
+  bossCount: t.Integer(),
+});
+
+export type GameDungeonPublic = Static<typeof gameDungeonPublicSchema>;
+
+export const searchGameDungeonsQuerySchema = t.Object({
+  name: nameSchema,
+});
+
+export type SearchGameDungeonsQuery = Static<
+  typeof searchGameDungeonsQuerySchema
+>;
+
+export const searchGameDungeonsResponseSchema = t.Array(
+  gameDungeonPublicSchema,
+);
+
 export const listGameDungeonsQuerySchema = t.Composite([
   paginationQuerySchema,
   t.Object({

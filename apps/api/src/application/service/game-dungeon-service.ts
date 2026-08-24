@@ -5,6 +5,7 @@ import type {
   CreateGameDungeonBody,
   DungeonDifficulty,
   GameDungeonDetail,
+  GameDungeonPublic,
   ListGameDungeonsQuery,
   UpdateGameDungeonBody,
 } from '@api/interface/schema/game-dungeon-schema';
@@ -135,6 +136,19 @@ const assertUnique = async (
       ERROR_CODES.GAME_DUNGEON_ALREADY_EXISTS,
     );
   }
+};
+
+const GAME_DUNGEON_SEARCH_LIMIT = 10;
+
+export const searchGameDungeons = async (
+  name: string,
+): Promise<GameDungeonPublic[]> => {
+  const trimmed = name.trim();
+  if (trimmed.length === 0) {
+    return [];
+  }
+
+  return gameDungeonRepository.searchByName(trimmed, GAME_DUNGEON_SEARCH_LIMIT);
 };
 
 export const listAdminGameDungeons = async (

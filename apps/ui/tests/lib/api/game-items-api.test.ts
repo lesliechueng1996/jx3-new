@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { itemSearchGet } = vi.hoisted(() => ({
+const { itemSearchGet, itemQuickPost } = vi.hoisted(() => ({
   itemSearchGet: vi.fn(),
+  itemQuickPost: vi.fn(),
 }));
 
 vi.mock('@/lib/api-client', () => ({
@@ -12,6 +13,9 @@ vi.mock('@/lib/api-client', () => ({
           search: {
             get: itemSearchGet,
           },
+          quick: {
+            post: itemQuickPost,
+          },
         },
       },
     },
@@ -21,6 +25,7 @@ vi.mock('@/lib/api-client', () => ({
 describe('game-items-api', () => {
   beforeEach(() => {
     itemSearchGet.mockReset();
+    itemQuickPost.mockReset();
   });
 
   it('searches items and unwraps the envelope', async () => {
@@ -65,5 +70,60 @@ describe('game-items-api', () => {
     });
     const { searchGameItems } = await import('@/lib/api/game-items-api');
     await expect(searchGameItems('玄晶')).rejects.toThrow('搜索物品失败');
+  });
+
+  it('quick-creates an item and unwraps the envelope', async () => {
+    const payload = {
+      id: '2',
+      name: '新掉落',
+      type: 'equipment',
+      quality: 'purple',
+      icon: null,
+      alias: [],
+    };
+    itemQuickPost.mockResolvedValue({ data: { data: payload }, error: null });
+    const { createGameItemQuick } = await import('@/lib/api/game-items-api');
+    await expect(
+      createGameItemQuick({
+        name: '新掉落',
+        type: 'equipment',
+        quality: 'purple',
+      }),
+    ).resolves.toEqual(payload);
+    expect(itemQuickPost).toHaveBeenCalledWith({
+      name: '新掉落',
+      type: 'equipment',
+      quality: 'purple',
+    });
+  });
+
+  it('throws when quick create fails', async () => {
+    itemQuickPost.mockResolvedValue({
+      data: null,
+      error: { value: { message: '物品名称已存在' } },
+    });
+    const { createGameItemQuick } = await import('@/lib/api/game-items-api');
+    await expect(
+      createGameItemQuick({
+        name: '新掉落',
+        type: 'equipment',
+        quality: 'purple',
+      }),
+    ).rejects.toThrow('物品名称已存在');
+  });
+
+  it('uses a fallback message when quick create omits one', async () => {
+    itemQuickPost.mockResolvedValue({
+      data: null,
+      error: { value: {} },
+    });
+    const { createGameItemQuick } = await import('@/lib/api/game-items-api');
+    await expect(
+      createGameItemQuick({
+        name: '新掉落',
+        type: 'equipment',
+        quality: 'purple',
+      }),
+    ).rejects.toThrow('创建物品失败');
   });
 });

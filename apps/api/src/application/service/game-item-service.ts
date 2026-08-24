@@ -1,9 +1,11 @@
+import { logger } from '@api/infrastructure/logger';
 import { gameItemRepository } from '@api/infrastructure/repository/game-item-repository';
 import type {
   CreateGameItemBody,
   GameItemDetail,
   GameItemPublic,
   ListGameItemsQuery,
+  QuickCreateGameItemBody,
   ReplaceGameItemResponse,
   UpdateGameItemBody,
 } from '@api/interface/schema/game-item-schema';
@@ -14,6 +16,7 @@ import {
   NotFoundException,
 } from '@api/shared/exception';
 import { formatDateTime } from '@api/shared/util/date';
+import { searchItem } from '@jx3/jx3api';
 
 type GameItemRow = NonNullable<
   Awaited<ReturnType<typeof gameItemRepository.findById>>
@@ -47,6 +50,17 @@ const normalizeNullableText = (
   const trimmed = value.trim();
   return trimmed.length === 0 ? null : trimmed;
 };
+
+const toGameItemPublic = (
+  row: Pick<GameItemRow, 'id' | 'name' | 'type' | 'quality' | 'icon' | 'alias'>,
+): GameItemPublic => ({
+  id: row.id,
+  name: row.name,
+  type: row.type,
+  quality: row.quality,
+  icon: row.icon,
+  alias: row.alias,
+});
 
 const toGameItemDetail = (row: GameItemRow): GameItemDetail => ({
   id: row.id,
@@ -156,6 +170,60 @@ export const createAdminGameItem = async (
   });
 
   return toGameItemDetail(created);
+};
+
+const lookupQuickCreateDetails = async (
+  name: string,
+): Promise<{ icon: string | null; description: string | null }> => {
+  try {
+    const item = await searchItem(name, { logger });
+    logger.info('Looked up jx3box item {name} with icon {iconUrl}', {
+      name,
+      iconUrl: item.iconUrl,
+    });
+    return {
+      icon: item.iconUrl,
+      description: normalizeNullableText(item.description),
+    };
+  } catch (error) {
+    logger.warn('Jx3box item search failed, {name}, {error}', {
+      name,
+      error,
+    });
+    return { icon: null, description: null };
+  }
+};
+
+export const quickCreateGameItem = async (
+  body: QuickCreateGameItemBody,
+): Promise<GameItemPublic> => {
+  const name = body.name.trim();
+  await assertNameAvailable(name);
+
+  const { icon, description } = await lookupQuickCreateDetails(name);
+
+  try {
+    const created = await gameItemRepository.create({
+      name,
+      gameItemId: null,
+      type: body.type,
+      quality: body.quality,
+      description,
+      icon,
+      alias: [],
+    });
+    logger.info('Quick-created game item {itemId} named {name}', {
+      itemId: created.id,
+      name: created.name,
+    });
+    return toGameItemPublic(created);
+  } catch (error) {
+    logger.error('Quick create game item failed, {name}, {error}', {
+      name,
+      error,
+    });
+    throw error;
+  }
 };
 
 export const updateAdminGameItem = async (

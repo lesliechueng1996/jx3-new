@@ -3,6 +3,7 @@ import { schoolRepository } from '@api/infrastructure/repository/school-reposito
 import type {
   CreateKungfuBody,
   KungfuDetail,
+  KungfuPublic,
   ListKungfusQuery,
   UpdateKungfuBody,
 } from '@api/interface/schema/kungfu-schema';
@@ -49,6 +50,20 @@ const normalizeNullableText = (
   const trimmed = value.trim();
   return trimmed.length === 0 ? null : trimmed;
 };
+
+type KungfuPublicRow = Awaited<
+  ReturnType<typeof kungfuRepository.listAll>
+>[number];
+
+const toKungfuPublic = (row: KungfuPublicRow): KungfuPublic => ({
+  id: row.id,
+  name: row.name,
+  schoolId: row.schoolId,
+  schoolName: row.schoolName,
+  kungfuType: row.kungfuType,
+  icon: row.icon,
+  alias: row.alias,
+});
 
 const toKungfuDetail = (
   row:
@@ -99,6 +114,11 @@ const assertNameAvailable = async (name: string, excludeId?: string) => {
       ERROR_CODES.KUNGFU_NAME_ALREADY_EXISTS,
     );
   }
+};
+
+export const listAllKungfus = async (): Promise<KungfuPublic[]> => {
+  const rows = await kungfuRepository.listAll();
+  return rows.map(toKungfuPublic);
 };
 
 export const listAdminKungfus = async (

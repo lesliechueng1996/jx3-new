@@ -104,11 +104,6 @@ function GameServersComponent() {
 
   return (
     <section className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">区服管理</h1>
-        <p className="text-sm text-muted-foreground">维护游戏大区与服务器</p>
-      </div>
-
       <div className="flex justify-end gap-2">
         <Button
           type="button"

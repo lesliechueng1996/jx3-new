@@ -183,11 +183,6 @@ function GameExpansionsComponent() {
 
   return (
     <section className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">资料片管理</h1>
-        <p className="text-sm text-muted-foreground">维护游戏资料片及其赛季</p>
-      </div>
-
       <div className="flex justify-end gap-2">
         <Button type="button" onClick={() => setCreating(true)}>
           新增资料片

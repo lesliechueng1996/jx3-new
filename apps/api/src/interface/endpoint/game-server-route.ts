@@ -3,10 +3,11 @@ import {
   deleteAdminGameServer,
   getAdminGameServer,
   listAdminGameServers,
+  listAllGameServers,
   syncAdminGameServersFromJx3box,
   updateAdminGameServer,
 } from '@api/application/service/game-server-service';
-import { roleAdmin } from '@api/shared/util/auth';
+import { roleAdmin, roleUser } from '@api/shared/util/auth';
 import {
   AppResponse,
   createSuccessResponseSchema,
@@ -17,6 +18,7 @@ import {
   createGameServerBodySchema,
   gameServerDetailSchema,
   gameServerIdParamsSchema,
+  listAllGameServersResponseSchema,
   listGameServersResponseSchema,
   syncGameServersResponseSchema,
   updateGameServerBodySchema,
@@ -38,6 +40,27 @@ const gameServerDetailResponse = {
 
 export const gameServerRoute = apiRoute.group('/game-server', (app) =>
   app
+    .get(
+      '/all',
+      async ({ status }) => {
+        const result = await listAllGameServers();
+        return status(200, AppResponse.success(result).toJson());
+      },
+      {
+        auth: roleUser,
+        response: {
+          200: createSuccessResponseSchema(listAllGameServersResponseSchema),
+          403: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [gameServerTag.name],
+          summary: 'List all game servers',
+          description:
+            'Returns every game server id, zone, name, and alias. Requires user role.',
+        },
+      },
+    )
     .post(
       '/sync',
       async ({ status }) => {

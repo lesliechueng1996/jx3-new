@@ -322,13 +322,6 @@ function MinesweeperComponent() {
 
   return (
     <section className="flex flex-col gap-6 pb-48">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">扫雷辅助</h1>
-        <p className="text-sm text-muted-foreground">
-          对照游戏里的格子状态同步到棋盘，分析后把建议坐标粘贴回游戏。
-        </p>
-      </div>
-
       <MinesweeperSetupComponent
         mode={mode}
         rows={rowsInput}

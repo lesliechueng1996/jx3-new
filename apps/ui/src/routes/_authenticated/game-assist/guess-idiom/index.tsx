@@ -128,15 +128,6 @@ function GuessIdiomComponent() {
 
   return (
     <section className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">猜成语</h1>
-        <p className="text-sm text-muted-foreground">
-          录入每轮猜测并标注反馈：汉字（灰 → 橙 → 绿 → 灰），声母 / 韵母 / 声调
-          / 关联线（灰 → 橙 → 绿 →
-          灰）。灰表示答案中不存在该部分，橙表示存在于其他位置，绿表示当前位置正确；完成后点击「检索成语」。
-        </p>
-      </div>
-
       <SearchResultPanelComponent
         result={searchResult}
         searching={searchMutation.isPending}

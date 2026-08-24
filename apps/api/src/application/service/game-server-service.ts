@@ -6,6 +6,7 @@ import {
 import type {
   CreateGameServerBody,
   GameServerDetail,
+  GameServerPublic,
   ListGameServersResponse,
   SyncGameServersResponse,
   UpdateGameServerBody,
@@ -91,6 +92,16 @@ const assertZoneNameAvailable = async (
       ERROR_CODES.GAME_SERVER_ZONE_NAME_ALREADY_EXISTS,
     );
   }
+};
+
+export const listAllGameServers = async (): Promise<GameServerPublic[]> => {
+  const rows = await gameServerRepository.listAll();
+  return rows.map((row) => ({
+    id: row.id,
+    zone: row.zone,
+    name: row.name,
+    alias: row.alias,
+  }));
 };
 
 export const listAdminGameServers =

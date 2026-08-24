@@ -106,11 +106,6 @@ function KungfusComponent() {
 
   return (
     <section className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">心法管理</h1>
-        <p className="text-sm text-muted-foreground">维护游戏心法与阵眼信息</p>
-      </div>
-
       <KungfuFiltersComponent
         committedFilters={search}
         onSearch={setSearch}

@@ -132,11 +132,6 @@ function GameItemsComponent() {
 
   return (
     <section className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">物品管理</h1>
-        <p className="text-sm text-muted-foreground">维护游戏物品与别名</p>
-      </div>
-
       <GameItemFiltersComponent
         committedFilters={search}
         onSearch={setSearch}

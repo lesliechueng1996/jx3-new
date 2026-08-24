@@ -97,7 +97,7 @@ describe('guess-idiom route', () => {
     const user = userEvent.setup();
     await renderApp('/game-assist/guess-idiom');
     expect(
-      await screen.findByRole('heading', { name: '猜成语' }),
+      await screen.findByPlaceholderText('输入 4 个汉字'),
     ).toBeInTheDocument();
 
     await user.type(screen.getByPlaceholderText('输入 4 个汉字'), 'abc');
@@ -119,7 +119,7 @@ describe('guess-idiom route', () => {
     const user = userEvent.setup();
     adminCreateIdiom.mockResolvedValue({ id: 'n' });
     await renderApp('/game-assist/guess-idiom');
-    await screen.findByRole('heading', { name: '猜成语' });
+    await screen.findByPlaceholderText('输入 4 个汉字');
 
     await user.type(screen.getByPlaceholderText('输入 4 个汉字'), '一心一意');
     await user.click(screen.getByRole('button', { name: '提交猜测' }));
@@ -157,7 +157,7 @@ describe('guess-idiom route', () => {
     getPinyinByText.mockRejectedValue(new Error('解析失败了'));
 
     await renderApp('/game-assist/guess-idiom');
-    await screen.findByRole('heading', { name: '猜成语' });
+    await screen.findByPlaceholderText('输入 4 个汉字');
     expect(
       screen.queryByRole('button', { name: '添加成语到词库' }),
     ).not.toBeInTheDocument();
@@ -177,7 +177,7 @@ describe('guess-idiom route', () => {
     adminCreateIdiom.mockRejectedValue(new Error('加不进去'));
 
     await renderApp('/game-assist/guess-idiom');
-    await screen.findByRole('heading', { name: '猜成语' });
+    await screen.findByPlaceholderText('输入 4 个汉字');
 
     await user.type(screen.getByPlaceholderText('输入 4 个汉字'), '一心一意');
     await user.click(screen.getByRole('button', { name: '提交猜测' }));

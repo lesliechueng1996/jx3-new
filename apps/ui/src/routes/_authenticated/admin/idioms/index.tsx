@@ -128,13 +128,6 @@ function IdiomsComponent() {
 
   return (
     <section className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">成语管理</h1>
-        <p className="text-sm text-muted-foreground">
-          维护成语库及逐字读音信息
-        </p>
-      </div>
-
       <IdiomFiltersComponent
         committedFilters={search}
         onSearch={setSearch}

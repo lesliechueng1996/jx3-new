@@ -17,12 +17,26 @@ const dungeonDetail = {
   updatedAt: '2026-01-02 00:00:00',
 };
 
+const dungeonPublic = {
+  id: dungeonDetail.id,
+  name: dungeonDetail.name,
+  expansionId: dungeonDetail.expansionId,
+  expansionName: dungeonDetail.expansionName,
+  seasonId: dungeonDetail.seasonId,
+  seasonName: dungeonDetail.seasonName,
+  playerLimit: dungeonDetail.playerLimit,
+  difficulty: dungeonDetail.difficulty,
+  levelRequirement: dungeonDetail.levelRequirement,
+  bossCount: dungeonDetail.bossCount,
+};
+
 const listAdminGameDungeons = mock(async () => ({
   items: [dungeonDetail],
   total: 1,
   page: 1,
   pageSize: 20,
 }));
+const searchGameDungeons = mock(async () => [dungeonPublic]);
 const createAdminGameDungeon = mock(async () => dungeonDetail);
 const getAdminGameDungeon = mock(async () => dungeonDetail);
 const updateAdminGameDungeon = mock(async () => dungeonDetail);
@@ -30,6 +44,7 @@ const deleteAdminGameDungeon = mock(async () => undefined);
 
 mock.module('@api/application/service/game-dungeon-service', () => ({
   listAdminGameDungeons,
+  searchGameDungeons,
   createAdminGameDungeon,
   getAdminGameDungeon,
   updateAdminGameDungeon,
@@ -64,6 +79,7 @@ const jsonRequest = (path: string, init?: RequestInit) =>
 describe('gameDungeonRoute', () => {
   beforeEach(() => {
     listAdminGameDungeons.mockReset();
+    searchGameDungeons.mockReset();
     createAdminGameDungeon.mockReset();
     getAdminGameDungeon.mockReset();
     updateAdminGameDungeon.mockReset();
@@ -75,6 +91,7 @@ describe('gameDungeonRoute', () => {
       page: 1,
       pageSize: 20,
     });
+    searchGameDungeons.mockResolvedValue([dungeonPublic]);
     createAdminGameDungeon.mockResolvedValue(dungeonDetail);
     getAdminGameDungeon.mockResolvedValue(dungeonDetail);
     updateAdminGameDungeon.mockResolvedValue(dungeonDetail);
@@ -86,6 +103,23 @@ describe('gameDungeonRoute', () => {
       name: 'game-dungeon',
       description: 'Game dungeon API',
     });
+  });
+
+  it('searches dungeons by name for users', async () => {
+    const response = await jsonRequest('/search?name=河阳');
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(searchGameDungeons).toHaveBeenCalledWith('河阳');
+    expect(body.data).toEqual([dungeonPublic]);
+    expect(body.code).toBe('SUCCESS');
+  });
+
+  it('rejects search without a name', async () => {
+    const response = await jsonRequest('/search');
+
+    expect(response.status).toBe(422);
+    expect(searchGameDungeons).not.toHaveBeenCalled();
   });
 
   it('lists dungeons', async () => {

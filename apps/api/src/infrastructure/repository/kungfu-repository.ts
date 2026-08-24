@@ -8,6 +8,7 @@ import {
   gameKungfu,
   gameSchool,
   ilike,
+  inArray,
   raidSignup,
   type SQL,
 } from '@api/shared/util/db';
@@ -85,6 +86,22 @@ export class KungfuRepository {
     return and(...conditions);
   }
 
+  listAll() {
+    return db
+      .select({
+        id: gameKungfu.id,
+        name: gameKungfu.name,
+        schoolId: gameKungfu.schoolId,
+        schoolName: gameSchool.name,
+        kungfuType: gameKungfu.kungfuType,
+        icon: gameKungfu.icon,
+        alias: gameKungfu.alias,
+      })
+      .from(gameKungfu)
+      .innerJoin(gameSchool, eq(gameKungfu.schoolId, gameSchool.id))
+      .orderBy(gameKungfu.name);
+  }
+
   listPagination(where: SQL | undefined, limit: number, offset: number) {
     return db
       .select(kungfuSelect)
@@ -108,6 +125,20 @@ export class KungfuRepository {
       .where(eq(gameKungfu.id, id))
       .limit(1);
     return result[0] ?? null;
+  }
+
+  async findByIds(ids: string[]) {
+    if (ids.length === 0) {
+      return [];
+    }
+
+    return db
+      .select({
+        id: gameKungfu.id,
+        schoolId: gameKungfu.schoolId,
+      })
+      .from(gameKungfu)
+      .where(inArray(gameKungfu.id, ids));
   }
 
   async findByName(name: string) {
@@ -161,6 +192,14 @@ export class KungfuRepository {
       .limit(1);
 
     return Boolean(signup);
+  }
+
+  async countByIds(ids: string[]) {
+    const result = await db
+      .select({ total: count() })
+      .from(gameKungfu)
+      .where(inArray(gameKungfu.id, ids));
+    return result[0]?.total ?? 0;
   }
 }
 

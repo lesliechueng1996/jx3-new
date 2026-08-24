@@ -8,6 +8,7 @@ export {
   type GetItemIconByNameOptions,
   getItemIconByName,
 } from './icon-by-name';
+export { type SearchItemOptions, searchItem } from './item-search';
 export { type GetServerStatesOptions, getServerStates } from './server-state';
 export {
   type ItemIcon,
@@ -15,6 +16,14 @@ export {
   type Jx3boxIconItemRaw,
   mapItemIcon,
 } from './types/icon-by-name';
+export {
+  type ItemSearch,
+  type Jx3boxItemSearchAttributeRaw,
+  type Jx3boxItemSearchDataRaw,
+  type Jx3boxItemSearchItemRaw,
+  type Jx3boxItemSearchRaw,
+  mapItemSearch,
+} from './types/item-search';
 export {
   type GameServerState,
   type Jx3boxServerStateRaw,

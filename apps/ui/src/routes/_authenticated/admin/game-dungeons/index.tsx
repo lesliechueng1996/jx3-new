@@ -107,13 +107,6 @@ function GameDungeonsComponent() {
 
   return (
     <section className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">副本管理</h1>
-        <p className="text-sm text-muted-foreground">
-          维护游戏副本与每周刷新日
-        </p>
-      </div>
-
       <GameDungeonFiltersComponent
         committedFilters={search}
         onSearch={setSearch}
