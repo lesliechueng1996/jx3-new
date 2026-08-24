@@ -77,9 +77,16 @@ describe('RaidMemberPanel', () => {
     });
   });
 
-  it('renders nothing until a slot is selected', () => {
+  it('prompts to select a slot when none is selected', () => {
     renderWithQueryClient(<RaidMemberPanel />);
-    expect(screen.queryByText('团员属性')).not.toBeInTheDocument();
+    expect(screen.getByText('团员属性')).toBeInTheDocument();
+    expect(screen.getByText('尚未选择位置')).toBeInTheDocument();
+    expect(
+      screen.getByText('请在团队布局中点击一个位置，即可编辑该团员属性。'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: '清空' }),
+    ).not.toBeInTheDocument();
   });
 
   it('edits the selected signup fields', async () => {
@@ -248,11 +255,13 @@ describe('RaidMemberPanel', () => {
     expect(useRaidRun.getState().raidRun.reservedTank).toBe(0);
   });
 
-  it('renders nothing when the selected slot is missing', () => {
+  it('prompts to select a slot when the selected slot is missing', () => {
     useRaidRun.setState({
       selectedSlot: { groupNumber: 9, positionNumber: 1 },
     });
     renderWithQueryClient(<RaidMemberPanel />);
-    expect(screen.queryByText('团员属性')).not.toBeInTheDocument();
+    expect(screen.getByText('团员属性')).toBeInTheDocument();
+    expect(screen.getByText('尚未选择位置')).toBeInTheDocument();
+    expect(screen.queryByLabelText('职能')).not.toBeInTheDocument();
   });
 });

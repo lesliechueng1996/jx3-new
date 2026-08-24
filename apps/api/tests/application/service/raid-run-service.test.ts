@@ -680,14 +680,15 @@ describe('createRaidRun', () => {
     );
   });
 
-  it('rejects a group without a formation core', async () => {
-    await expectBadRequest(
+  it('accepts a group without a formation core', async () => {
+    await createRaidRun(
       validBody({
         signups: [signup({ isFormationCore: false })],
       }),
-      ERROR_CODES.RAID_RUN_FORMATION_CORE_INVALID,
-      '阵眼人数不匹配，每个小队应只有1个阵眼',
+      userId,
     );
+
+    expect(createWithSignups).toHaveBeenCalledTimes(1);
   });
 
   it('rejects a group with more than one formation core', async () => {
@@ -708,7 +709,7 @@ describe('createRaidRun', () => {
         ],
       }),
       ERROR_CODES.RAID_RUN_FORMATION_CORE_INVALID,
-      '阵眼人数不匹配，每个小队应只有1个阵眼',
+      '阵眼人数不匹配，每个小队最多1个阵眼',
     );
   });
 

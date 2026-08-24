@@ -1,4 +1,4 @@
-import { EraserIcon } from 'lucide-react';
+import { EraserIcon, MousePointerClickIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -8,6 +8,13 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import {
   Select,
@@ -64,7 +71,26 @@ const RaidMemberPanel = ({ className }: Props) => {
     : undefined;
 
   if (!selectedSlot || !signup) {
-    return null;
+    return (
+      <Card className={cn(className)}>
+        <CardHeader>
+          <CardTitle>团员属性</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <MousePointerClickIcon />
+              </EmptyMedia>
+              <EmptyTitle>尚未选择位置</EmptyTitle>
+              <EmptyDescription>
+                请在团队布局中点击一个位置，即可编辑该团员属性。
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        </CardContent>
+      </Card>
+    );
   }
 
   const updateSignup = (updater: Parameters<typeof updateRaidSignupAt>[3]) => {

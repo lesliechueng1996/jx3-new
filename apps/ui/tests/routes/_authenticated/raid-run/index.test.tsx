@@ -176,11 +176,12 @@ describe('raid-run route', () => {
       screen.getByRole('button', { name: '发布开团' }),
     ).toBeInTheDocument();
     expect(screen.getByText('待开始')).toBeInTheDocument();
-    expect(screen.queryByText('团员属性')).not.toBeInTheDocument();
+    expect(screen.getByText('团员属性')).toBeInTheDocument();
+    expect(screen.getByText('尚未选择位置')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: '第1队第1位' }));
-    expect(await screen.findByText('团员属性')).toBeInTheDocument();
-    expect(screen.getByText('第1队第1位')).toBeInTheDocument();
+    expect(await screen.findByText('第1队第1位')).toBeInTheDocument();
+    expect(screen.queryByText('尚未选择位置')).not.toBeInTheDocument();
   });
 
   it('blocks stash when the roster is incomplete', async () => {

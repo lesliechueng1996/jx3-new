@@ -221,21 +221,12 @@ const validateCreateRaidRunBody = async (data: CreateRaidRunBody) => {
 
   const groupNumbers = [...new Set(data.signups.map((s) => s.groupNumber))];
   for (const groupNumber of groupNumbers) {
-    const groupSignups = data.signups.filter(
-      (signup) => signup.groupNumber === groupNumber,
-    );
-    const occupiedCount = groupSignups.filter((signup) =>
-      Boolean(signupCharacterName(signup.characterName)),
+    const coreCount = data.signups.filter(
+      (signup) => signup.groupNumber === groupNumber && signup.isFormationCore,
     ).length;
-    const coreCount = groupSignups.filter(
-      (signup) => signup.isFormationCore,
-    ).length;
-    if (occupiedCount === 0) {
-      continue;
-    }
-    if (coreCount !== 1) {
+    if (coreCount > 1) {
       throw new BadRequestException(
-        '阵眼人数不匹配，每个小队应只有1个阵眼',
+        '阵眼人数不匹配，每个小队最多1个阵眼',
         ERROR_CODES.RAID_RUN_FORMATION_CORE_INVALID,
       );
     }

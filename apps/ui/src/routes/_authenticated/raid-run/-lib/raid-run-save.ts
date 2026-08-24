@@ -167,20 +167,11 @@ export const validateRaidRunForSave = (
     ...new Set(signups.map((signup) => signup.groupNumber)),
   ];
   for (const groupNumber of groupNumbers) {
-    const groupSignups = signups.filter(
-      (signup) => signup.groupNumber === groupNumber,
-    );
-    const occupiedCount = groupSignups.filter((signup) =>
-      Boolean(signup.characterName?.trim()),
+    const coreCount = signups.filter(
+      (signup) => signup.groupNumber === groupNumber && signup.isFormationCore,
     ).length;
-    const coreCount = groupSignups.filter(
-      (signup) => signup.isFormationCore,
-    ).length;
-    if (occupiedCount === 0) {
-      continue;
-    }
-    if (coreCount !== 1) {
-      return '阵眼人数不匹配，每个小队应只有1个阵眼';
+    if (coreCount > 1) {
+      return '阵眼人数不匹配，每个小队最多1个阵眼';
     }
   }
 

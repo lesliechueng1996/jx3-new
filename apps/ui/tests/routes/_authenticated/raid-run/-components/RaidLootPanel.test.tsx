@@ -225,7 +225,7 @@ describe('RaidLootPanel', () => {
     expect(screen.getByText('1砖')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: '添加掉落' }));
-    const itemInput = screen.getByLabelText('物品名称');
+    const itemInput = screen.getByLabelText('物品');
     await user.click(itemInput);
     await user.type(itemInput, '玄晶');
     await user.click(await screen.findByRole('option', { name: '上品玄晶' }));
@@ -258,7 +258,7 @@ describe('RaidLootPanel', () => {
     renderWithQueryClient(<RaidLootPanel raidRunId="run-1" />);
 
     await user.click(await screen.findByRole('button', { name: '添加掉落' }));
-    const itemInput = screen.getByLabelText('物品名称');
+    const itemInput = screen.getByLabelText('物品');
     await user.click(itemInput);
     await user.type(itemInput, '新掉落');
     await user.click(
@@ -321,7 +321,7 @@ describe('RaidLootPanel', () => {
     createRaidRunLoot.mockRejectedValue(new Error('添加失败'));
     renderWithQueryClient(<RaidLootPanel raidRunId="run-1" />);
     await user.click(await screen.findByRole('button', { name: '添加掉落' }));
-    const itemInput = screen.getByLabelText('物品名称');
+    const itemInput = screen.getByLabelText('物品');
     await user.click(itemInput);
     await user.type(itemInput, '玄晶');
     await user.click(await screen.findByRole('option', { name: '上品玄晶' }));

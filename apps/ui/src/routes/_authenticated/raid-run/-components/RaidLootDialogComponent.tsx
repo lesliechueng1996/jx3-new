@@ -14,11 +14,20 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
+  FieldLegend,
+  FieldSet,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import type { GameItemSearchItem } from '@/lib/api/game-items-api';
 import {
   ITEM_QUALITY_OPTIONS,
@@ -74,10 +83,12 @@ type Props = {
   onSubmit: (values: RaidLootDialogValues) => void;
 };
 
-const isItemType = (value: string): value is ItemType =>
+const isItemType = (value: unknown): value is ItemType =>
+  typeof value === 'string' &&
   ITEM_TYPE_OPTIONS.some((item) => item.value === value);
 
-const isItemQuality = (value: string): value is ItemQuality =>
+const isItemQuality = (value: unknown): value is ItemQuality =>
+  typeof value === 'string' &&
   ITEM_QUALITY_OPTIONS.some((item) => item.value === value);
 
 const seedFromInitial = (
@@ -121,6 +132,7 @@ export const RaidLootDialogComponent = ({
   );
   const [remark, setRemark] = useState('');
   const [error, setError] = useState<string>();
+  const [createPanelOpen, setCreatePanelOpen] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -129,6 +141,7 @@ export const RaidLootDialogComponent = ({
 
     setItemId(initial?.itemId);
     setCreatingName(undefined);
+    setCreatePanelOpen(false);
     setCreateType(DEFAULT_QUICK_CREATE_ITEM_TYPE);
     setCreateQuality(DEFAULT_QUICK_CREATE_ITEM_QUALITY);
     setQuantity(String(initial?.quantity ?? 1));
@@ -176,13 +189,13 @@ export const RaidLootDialogComponent = ({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            选择已有物品，或在搜不到时创建物品后记录掉落。
+            记录副本中的重要掉落，获得者和成交价可稍后再填。
           </DialogDescription>
         </DialogHeader>
         <FieldGroup>
           <GameItemSearchSelectComponent
             id="raid-loot-item"
-            label="物品名称"
+            label="物品"
             value={itemId}
             seedItem={seedItem}
             creatingName={creatingName}
@@ -191,69 +204,143 @@ export const RaidLootDialogComponent = ({
             onValueChange={(next) => {
               setItemId(next);
               setCreatingName(undefined);
+              setCreatePanelOpen(false);
               setError(undefined);
             }}
             onCreateRequest={(name) => {
               setItemId(undefined);
               setCreatingName(name);
+              setCreatePanelOpen(true);
               setCreateType(DEFAULT_QUICK_CREATE_ITEM_TYPE);
               setCreateQuality(DEFAULT_QUICK_CREATE_ITEM_QUALITY);
               setError(undefined);
             }}
           />
-          {creatingName ? (
-            <>
-              <Field data-disabled={pending || undefined}>
-                <FieldLabel>类型</FieldLabel>
-                <ToggleGroup
-                  variant="outline"
-                  spacing={0}
-                  value={[createType]}
-                  disabled={pending}
-                  onValueChange={(value) => {
-                    const next = value[0];
-                    if (next && isItemType(next)) {
-                      setCreateType(next);
-                    }
-                  }}
-                >
-                  {ITEM_TYPE_OPTIONS.map((item) => (
-                    <ToggleGroupItem
-                      key={item.value}
-                      value={item.value}
+          {createPanelOpen ? (
+            <div className="rounded-lg border border-dashed bg-muted/40 p-4">
+              <FieldSet>
+                <FieldLegend>创建新物品</FieldLegend>
+                <FieldGroup>
+                  <Field
+                    data-invalid={error === '请填写物品名称' || undefined}
+                    data-disabled={pending || undefined}
+                  >
+                    <FieldLabel htmlFor="raid-loot-create-name">
+                      物品名称
+                    </FieldLabel>
+                    <Input
+                      id="raid-loot-create-name"
+                      autoComplete="off"
+                      value={creatingName ?? ''}
                       disabled={pending}
-                    >
-                      {item.label}
-                    </ToggleGroupItem>
-                  ))}
-                </ToggleGroup>
-              </Field>
-              <Field data-disabled={pending || undefined}>
-                <FieldLabel>品质</FieldLabel>
-                <ToggleGroup
-                  variant="outline"
-                  spacing={0}
-                  value={[createQuality]}
-                  disabled={pending}
-                  onValueChange={(value) => {
-                    const next = value[0];
-                    if (next && isItemQuality(next)) {
-                      setCreateQuality(next);
-                    }
-                  }}
-                >
-                  {ITEM_QUALITY_OPTIONS.map((item) => (
-                    <ToggleGroupItem
-                      key={item.value}
-                      value={item.value}
+                      aria-invalid={error === '请填写物品名称' || undefined}
+                      onChange={(event) => {
+                        setCreatingName(event.target.value);
+                        setError(undefined);
+                      }}
+                    />
+                  </Field>
+                  <FieldGroup className="grid grid-cols-2 gap-4">
+                    <Field data-disabled={pending || undefined}>
+                      <FieldLabel htmlFor="raid-loot-create-type">
+                        类型
+                      </FieldLabel>
+                      <Select
+                        items={[...ITEM_TYPE_OPTIONS]}
+                        value={createType}
+                        disabled={pending}
+                        onValueChange={(next) => {
+                          if (!isItemType(next)) {
+                            return;
+                          }
+                          setCreateType(next);
+                        }}
+                      >
+                        <SelectTrigger
+                          id="raid-loot-create-type"
+                          className="w-full"
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent alignItemWithTrigger={false}>
+                          <SelectGroup>
+                            {ITEM_TYPE_OPTIONS.map((item) => (
+                              <SelectItem key={item.value} value={item.value}>
+                                {item.label}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                    <Field data-disabled={pending || undefined}>
+                      <FieldLabel htmlFor="raid-loot-create-quality">
+                        品质
+                      </FieldLabel>
+                      <Select
+                        items={[...ITEM_QUALITY_OPTIONS]}
+                        value={createQuality}
+                        disabled={pending}
+                        onValueChange={(next) => {
+                          if (!isItemQuality(next)) {
+                            return;
+                          }
+                          setCreateQuality(next);
+                        }}
+                      >
+                        <SelectTrigger
+                          id="raid-loot-create-quality"
+                          className="w-full"
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent alignItemWithTrigger={false}>
+                          <SelectGroup>
+                            {ITEM_QUALITY_OPTIONS.map((item) => (
+                              <SelectItem key={item.value} value={item.value}>
+                                {item.label}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                  </FieldGroup>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
                       disabled={pending}
+                      onClick={() => {
+                        setCreatingName(undefined);
+                        setCreatePanelOpen(false);
+                        setCreateType(DEFAULT_QUICK_CREATE_ITEM_TYPE);
+                        setCreateQuality(DEFAULT_QUICK_CREATE_ITEM_QUALITY);
+                        setError(undefined);
+                      }}
                     >
-                      {item.label}
-                    </ToggleGroupItem>
-                  ))}
-                </ToggleGroup>
-              </Field>
-            </>
+                      取消
+                    </Button>
+                    <Button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => {
+                        const name = creatingName?.trim();
+                        if (!name) {
+                          setError('请填写物品名称');
+                          return;
+                        }
+                        setCreatingName(name);
+                        setCreatePanelOpen(false);
+                        setError(undefined);
+                      }}
+                    >
+                      创建并选择
+                    </Button>
+                  </div>
+                </FieldGroup>
+              </FieldSet>
+            </div>
           ) : null}
           <Field data-invalid={error === '数量须为大于0的整数' || undefined}>
             <FieldLabel htmlFor="raid-loot-quantity">数量</FieldLabel>

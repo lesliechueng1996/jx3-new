@@ -244,12 +244,23 @@ describe('validateRaidRunForSave', () => {
     ).toBe('黑本人数不匹配，应为1人');
   });
 
-  it('rejects a missing formation core', () => {
+  it('accepts a missing formation core', () => {
     expect(
       validateRaidRunForSave(
         setRaidSignupFormationCoreExclusive(validRun(), 1, 1, false),
       ),
-    ).toBe('阵眼人数不匹配，每个小队应只有1个阵眼');
+    ).toBeUndefined();
+  });
+
+  it('rejects a group with more than one formation core', () => {
+    const run = updateRaidSignupAt(validRun(), 1, 2, (signup) => ({
+      ...signup,
+      isFormationCore: true,
+    }));
+
+    expect(validateRaidRunForSave(run)).toBe(
+      '阵眼人数不匹配，每个小队最多1个阵眼',
+    );
   });
 
   it('rejects a kungfu and school mismatch when kungfus are provided', () => {
