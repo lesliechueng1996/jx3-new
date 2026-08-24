@@ -116,3 +116,48 @@ export type CreateRaidRunBody = Static<typeof createRaidRunBodySchema>;
 export const createRaidRunResponseSchema = t.Object({
   id: t.String(),
 });
+
+export const raidRunIdParamsSchema = t.Object({
+  id: t.String({
+    format: 'uuid',
+    error: () => '开团记录ID格式不正确',
+  }),
+});
+
+export const updateRaidRunGameRaidIdBodySchema = t.Object({
+  gameRaidId: t.String({
+    minLength: 1,
+    maxLength: 64,
+    error: () => '游戏副本ID不能为空,且不能超过64个字符',
+  }),
+});
+
+export type UpdateRaidRunGameRaidIdBody = Static<
+  typeof updateRaidRunGameRaidIdBodySchema
+>;
+
+export const updateRaidRunGameRaidIdResponseSchema = t.Object({
+  gameRaidId: t.String(),
+});
+
+const goldAmountSchema = (message: string) =>
+  t.Integer({
+    minimum: 0,
+    error: () => message,
+  });
+
+export const updateRaidRunWagesBodySchema = t.Object({
+  totalIncome: goldAmountSchema('金团工资不能为负数'),
+  subsidyAmount: goldAmountSchema('团队补贴不能为负数'),
+  wagePerPerson: goldAmountSchema('个人工资不能为负数'),
+});
+
+export type UpdateRaidRunWagesBody = Static<
+  typeof updateRaidRunWagesBodySchema
+>;
+
+export const updateRaidRunWagesResponseSchema = t.Object({
+  totalIncome: t.Integer(),
+  subsidyAmount: t.Integer(),
+  wagePerPerson: t.Integer(),
+});

@@ -4,9 +4,34 @@ import { Elysia } from 'elysia';
 const createRaidRun = mock<
   (body: unknown, userId: string) => Promise<{ id: string }>
 >(() => Promise.resolve({ id: 'raid-run-1' }));
+const updateRaidRunGameRaidId = mock<
+  (id: string, gameRaidId: string) => Promise<{ gameRaidId: string }>
+>(() => Promise.resolve({ gameRaidId: 'game-1' }));
+const updateRaidRunWages = mock<
+  (
+    id: string,
+    body: {
+      totalIncome: number;
+      subsidyAmount: number;
+      wagePerPerson: number;
+    },
+  ) => Promise<{
+    totalIncome: number;
+    subsidyAmount: number;
+    wagePerPerson: number;
+  }>
+>(() =>
+  Promise.resolve({
+    totalIncome: 15000,
+    subsidyAmount: 2000,
+    wagePerPerson: 1300,
+  }),
+);
 
 mock.module('@api/application/service/raid-run-service', () => ({
   createRaidRun,
+  updateRaidRunGameRaidId,
+  updateRaidRunWages,
 }));
 
 mock.module('@api/shared/util/auth', () => ({
@@ -63,9 +88,19 @@ const jsonRequest = (path: string, init?: RequestInit) =>
   );
 
 describe('raidRunRoute', () => {
+  const raidRunId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+
   beforeEach(() => {
     createRaidRun.mockReset();
     createRaidRun.mockResolvedValue({ id: 'raid-run-1' });
+    updateRaidRunGameRaidId.mockReset();
+    updateRaidRunGameRaidId.mockResolvedValue({ gameRaidId: 'game-1' });
+    updateRaidRunWages.mockReset();
+    updateRaidRunWages.mockResolvedValue({
+      totalIncome: 15000,
+      subsidyAmount: 2000,
+      wagePerPerson: 1300,
+    });
   });
 
   it('exports an OpenAPI tag', () => {
@@ -118,5 +153,61 @@ describe('raidRunRoute', () => {
 
     expect(response.status).toBe(422);
     expect(createRaidRun).not.toHaveBeenCalled();
+  });
+
+  it('updates the game raid id', async () => {
+    const response = await jsonRequest(`/${raidRunId}/game-raid-id`, {
+      method: 'PATCH',
+      body: JSON.stringify({ gameRaidId: 'game-1' }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(updateRaidRunGameRaidId).toHaveBeenCalledWith(raidRunId, 'game-1');
+    expect(body.data.gameRaidId).toBe('game-1');
+  });
+
+  it('rejects an empty game raid id', async () => {
+    const response = await jsonRequest(`/${raidRunId}/game-raid-id`, {
+      method: 'PATCH',
+      body: JSON.stringify({ gameRaidId: '' }),
+    });
+
+    expect(response.status).toBe(422);
+    expect(updateRaidRunGameRaidId).not.toHaveBeenCalled();
+  });
+
+  it('updates wages', async () => {
+    const response = await jsonRequest(`/${raidRunId}/wages`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        totalIncome: 15000,
+        subsidyAmount: 2000,
+        wagePerPerson: 1300,
+      }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(updateRaidRunWages).toHaveBeenCalledWith(raidRunId, {
+      totalIncome: 15000,
+      subsidyAmount: 2000,
+      wagePerPerson: 1300,
+    });
+    expect(body.data.wagePerPerson).toBe(1300);
+  });
+
+  it('rejects negative wages', async () => {
+    const response = await jsonRequest(`/${raidRunId}/wages`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        totalIncome: -1,
+        subsidyAmount: 0,
+        wagePerPerson: 0,
+      }),
+    });
+
+    expect(response.status).toBe(422);
+    expect(updateRaidRunWages).not.toHaveBeenCalled();
   });
 });

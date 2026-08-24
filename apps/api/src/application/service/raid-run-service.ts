@@ -4,7 +4,10 @@ import { gameServerRepository } from '@api/infrastructure/repository/game-server
 import { kungfuRepository } from '@api/infrastructure/repository/kungfu-repository';
 import { raidRunRepository } from '@api/infrastructure/repository/raid-run-repository';
 import { schoolRepository } from '@api/infrastructure/repository/school-repository';
-import type { CreateRaidRunBody } from '@api/interface/schema/raid-run-schema';
+import type {
+  CreateRaidRunBody,
+  UpdateRaidRunWagesBody,
+} from '@api/interface/schema/raid-run-schema';
 import {
   BadRequestException,
   ERROR_CODES,
@@ -231,6 +234,124 @@ export const createRaidRun = async (
   } catch (error) {
     logger.error('Create raid run failed, {userId}, {error}', {
       userId,
+      error,
+    });
+    throw error;
+  }
+};
+
+const numericToGoldInteger = (value: string | null): number => {
+  if (value === null || value.length === 0) {
+    return 0;
+  }
+
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return 0;
+  }
+
+  return Math.trunc(parsed);
+};
+
+const findRaidRunOrThrow = async (id: string) => {
+  const existing = await raidRunRepository.findById(id);
+  if (!existing) {
+    throw new NotFoundException(
+      '开团记录不存在',
+      ERROR_CODES.RAID_RUN_NOT_FOUND,
+    );
+  }
+
+  return existing;
+};
+
+export const updateRaidRunGameRaidId = async (
+  id: string,
+  gameRaidId: string,
+) => {
+  const trimmed = gameRaidId.trim();
+  if (trimmed.length === 0) {
+    throw new BadRequestException(
+      '游戏副本ID不能为空',
+      ERROR_CODES.BAD_REQUEST,
+    );
+  }
+
+  await findRaidRunOrThrow(id);
+
+  try {
+    const updated = await raidRunRepository.updateById(id, {
+      gameRaidId: trimmed,
+    });
+    if (!updated) {
+      throw new NotFoundException(
+        '开团记录不存在',
+        ERROR_CODES.RAID_RUN_NOT_FOUND,
+      );
+    }
+
+    logger.info('Updated raid run {raidRunId} game raid id', {
+      raidRunId: id,
+    });
+
+    return {
+      gameRaidId: updated.gameRaidId ?? trimmed,
+    };
+  } catch (error) {
+    if (error instanceof NotFoundException) {
+      throw error;
+    }
+
+    logger.error('Update raid run game raid id failed, {raidRunId}, {error}', {
+      raidRunId: id,
+      error,
+    });
+    throw error;
+  }
+};
+
+export const updateRaidRunWages = async (
+  id: string,
+  data: UpdateRaidRunWagesBody,
+) => {
+  if (data.subsidyAmount > data.totalIncome) {
+    throw new BadRequestException(
+      '团队补贴不能大于金团工资',
+      ERROR_CODES.RAID_RUN_WAGE_INVALID,
+    );
+  }
+
+  await findRaidRunOrThrow(id);
+
+  try {
+    const updated = await raidRunRepository.updateById(id, {
+      totalIncome: String(data.totalIncome),
+      subsidyAmount: String(data.subsidyAmount),
+      wagePerPerson: String(data.wagePerPerson),
+    });
+    if (!updated) {
+      throw new NotFoundException(
+        '开团记录不存在',
+        ERROR_CODES.RAID_RUN_NOT_FOUND,
+      );
+    }
+
+    logger.info('Updated raid run {raidRunId} wages', {
+      raidRunId: id,
+    });
+
+    return {
+      totalIncome: numericToGoldInteger(updated.totalIncome),
+      subsidyAmount: numericToGoldInteger(updated.subsidyAmount),
+      wagePerPerson: numericToGoldInteger(updated.wagePerPerson),
+    };
+  } catch (error) {
+    if (error instanceof NotFoundException) {
+      throw error;
+    }
+
+    logger.error('Update raid run wages failed, {raidRunId}, {error}', {
+      raidRunId: id,
       error,
     });
     throw error;

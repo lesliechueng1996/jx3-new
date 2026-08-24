@@ -24,6 +24,11 @@ const createWithSignups = mock<
     signups: Array<{ isReserved: boolean }>;
   }) => Promise<{ id: string }>
 >(() => Promise.resolve({ id: 'raid-run-1' }));
+const findById = mock(async (_id: string) => null as { id: string } | null);
+const updateById = mock(
+  async (_id: string, _values: Record<string, string>) =>
+    null as Record<string, string | null> | null,
+);
 
 type DungeonRow = {
   id: string;
@@ -108,12 +113,13 @@ mock.module('@api/infrastructure/repository/kungfu-repository', () => ({
 mock.module('@api/infrastructure/repository/raid-run-repository', () => ({
   raidRunRepository: {
     createWithSignups,
+    findById,
+    updateById,
   },
 }));
 
-const { createRaidRun } = await import(
-  '@api/application/service/raid-run-service'
-);
+const { createRaidRun, updateRaidRunGameRaidId, updateRaidRunWages } =
+  await import('@api/application/service/raid-run-service');
 
 const expectBadRequest = async (
   body: CreateRaidRunBody,
@@ -138,6 +144,8 @@ describe('createRaidRun', () => {
     countKungfusByIds.mockReset();
     findKungfusByIds.mockReset();
     createWithSignups.mockReset();
+    findById.mockReset();
+    updateById.mockReset();
     logger.info.mockReset();
     logger.error.mockReset();
 
@@ -507,6 +515,212 @@ describe('createRaidRun', () => {
 
     try {
       await createRaidRun(validBody(), userId);
+      throw new Error('expected repository error');
+    } catch (error) {
+      expect(error).toBe(failure);
+      expect(logger.error).toHaveBeenCalled();
+    }
+  });
+});
+
+const raidRunId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+
+describe('updateRaidRunGameRaidId', () => {
+  beforeEach(() => {
+    findById.mockReset();
+    updateById.mockReset();
+    logger.info.mockReset();
+    logger.error.mockReset();
+    findById.mockResolvedValue({ id: raidRunId });
+    updateById.mockResolvedValue({ gameRaidId: 'game-123' });
+  });
+
+  it('updates the game raid id', async () => {
+    const result = await updateRaidRunGameRaidId(raidRunId, '  game-123  ');
+
+    expect(result).toEqual({ gameRaidId: 'game-123' });
+    expect(updateById).toHaveBeenCalledWith(raidRunId, {
+      gameRaidId: 'game-123',
+    });
+    expect(logger.info).toHaveBeenCalled();
+  });
+
+  it('rejects a blank game raid id', async () => {
+    try {
+      await updateRaidRunGameRaidId(raidRunId, '   ');
+      throw new Error('expected BadRequestException');
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect((error as BadRequestException).code).toBe(ERROR_CODES.BAD_REQUEST);
+      expect(findById).not.toHaveBeenCalled();
+    }
+  });
+
+  it('throws when the raid run is missing', async () => {
+    findById.mockResolvedValue(null);
+
+    try {
+      await updateRaidRunGameRaidId(raidRunId, 'game-123');
+      throw new Error('expected NotFoundException');
+    } catch (error) {
+      expect(error).toBeInstanceOf(NotFoundException);
+      expect((error as NotFoundException).code).toBe(
+        ERROR_CODES.RAID_RUN_NOT_FOUND,
+      );
+      expect(updateById).not.toHaveBeenCalled();
+    }
+  });
+
+  it('throws when the update returns no row', async () => {
+    updateById.mockResolvedValue(null);
+
+    try {
+      await updateRaidRunGameRaidId(raidRunId, 'game-123');
+      throw new Error('expected NotFoundException');
+    } catch (error) {
+      expect(error).toBeInstanceOf(NotFoundException);
+      expect((error as NotFoundException).code).toBe(
+        ERROR_CODES.RAID_RUN_NOT_FOUND,
+      );
+    }
+  });
+
+  it('falls back to the trimmed id when the stored value is null', async () => {
+    updateById.mockResolvedValue({ gameRaidId: null });
+
+    const result = await updateRaidRunGameRaidId(raidRunId, 'game-123');
+
+    expect(result).toEqual({ gameRaidId: 'game-123' });
+  });
+
+  it('logs and rethrows repository failures', async () => {
+    const failure = new Error('db down');
+    updateById.mockRejectedValue(failure);
+
+    try {
+      await updateRaidRunGameRaidId(raidRunId, 'game-123');
+      throw new Error('expected repository error');
+    } catch (error) {
+      expect(error).toBe(failure);
+      expect(logger.error).toHaveBeenCalled();
+    }
+  });
+});
+
+describe('updateRaidRunWages', () => {
+  beforeEach(() => {
+    findById.mockReset();
+    updateById.mockReset();
+    logger.info.mockReset();
+    logger.error.mockReset();
+    findById.mockResolvedValue({ id: raidRunId });
+    updateById.mockResolvedValue({
+      totalIncome: '15000',
+      subsidyAmount: '2000',
+      wagePerPerson: '1300',
+    });
+  });
+
+  it('updates wage fields as integer gold', async () => {
+    const result = await updateRaidRunWages(raidRunId, {
+      totalIncome: 15000,
+      subsidyAmount: 2000,
+      wagePerPerson: 1300,
+    });
+
+    expect(result).toEqual({
+      totalIncome: 15000,
+      subsidyAmount: 2000,
+      wagePerPerson: 1300,
+    });
+    expect(updateById).toHaveBeenCalledWith(raidRunId, {
+      totalIncome: '15000',
+      subsidyAmount: '2000',
+      wagePerPerson: '1300',
+    });
+    expect(logger.info).toHaveBeenCalled();
+  });
+
+  it('rejects a subsidy greater than total income', async () => {
+    try {
+      await updateRaidRunWages(raidRunId, {
+        totalIncome: 1000,
+        subsidyAmount: 1001,
+        wagePerPerson: 0,
+      });
+      throw new Error('expected BadRequestException');
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect((error as BadRequestException).code).toBe(
+        ERROR_CODES.RAID_RUN_WAGE_INVALID,
+      );
+      expect(findById).not.toHaveBeenCalled();
+    }
+  });
+
+  it('throws when the raid run is missing', async () => {
+    findById.mockResolvedValue(null);
+
+    try {
+      await updateRaidRunWages(raidRunId, {
+        totalIncome: 1000,
+        subsidyAmount: 0,
+        wagePerPerson: 0,
+      });
+      throw new Error('expected NotFoundException');
+    } catch (error) {
+      expect(error).toBeInstanceOf(NotFoundException);
+      expect((error as NotFoundException).code).toBe(
+        ERROR_CODES.RAID_RUN_NOT_FOUND,
+      );
+    }
+  });
+
+  it('throws when the update returns no row', async () => {
+    updateById.mockResolvedValue(null);
+
+    try {
+      await updateRaidRunWages(raidRunId, {
+        totalIncome: 1000,
+        subsidyAmount: 0,
+        wagePerPerson: 0,
+      });
+      throw new Error('expected NotFoundException');
+    } catch (error) {
+      expect(error).toBeInstanceOf(NotFoundException);
+    }
+  });
+
+  it('coerces blank and invalid numeric columns to zero', async () => {
+    updateById.mockResolvedValue({
+      totalIncome: null,
+      subsidyAmount: '',
+      wagePerPerson: 'not-a-number',
+    });
+
+    const result = await updateRaidRunWages(raidRunId, {
+      totalIncome: 0,
+      subsidyAmount: 0,
+      wagePerPerson: 0,
+    });
+
+    expect(result).toEqual({
+      totalIncome: 0,
+      subsidyAmount: 0,
+      wagePerPerson: 0,
+    });
+  });
+
+  it('logs and rethrows repository failures', async () => {
+    const failure = new Error('db down');
+    updateById.mockRejectedValue(failure);
+
+    try {
+      await updateRaidRunWages(raidRunId, {
+        totalIncome: 1000,
+        subsidyAmount: 0,
+        wagePerPerson: 0,
+      });
       throw new Error('expected repository error');
     } catch (error) {
       expect(error).toBe(failure);

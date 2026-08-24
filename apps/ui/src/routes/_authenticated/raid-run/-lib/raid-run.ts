@@ -418,6 +418,59 @@ export const setRaidRunSubsidyAmount = (
   subsidyAmount,
 });
 
+export const setRaidRunWages = (
+  run: RaidRun,
+  wages: {
+    totalIncome: number;
+    subsidyAmount: number;
+    wagePerPerson: number;
+  },
+): RaidRun => ({
+  ...run,
+  totalIncome: wages.totalIncome,
+  subsidyAmount: wages.subsidyAmount,
+  wagePerPerson: wages.wagePerPerson,
+});
+
+export const countRaidRunWageShareSignups = (
+  run: Pick<RaidRun, 'signups'>,
+): number => {
+  let count = 0;
+
+  for (const group of run.signups) {
+    for (const signup of group) {
+      if (signup.role === 'boss') {
+        continue;
+      }
+
+      if (!signup.characterName?.trim()) {
+        continue;
+      }
+
+      count += 1;
+    }
+  }
+
+  return count;
+};
+
+export const calculateRaidRunWagePerPerson = (
+  totalIncome: number,
+  subsidyAmount: number,
+  wageShareCount: number,
+): number => {
+  if (wageShareCount <= 0) {
+    return 0;
+  }
+
+  const remaining = totalIncome - subsidyAmount;
+  if (remaining <= 0) {
+    return 0;
+  }
+
+  return Math.floor(remaining / wageShareCount);
+};
+
 export const setRaidRunGameRaidId = (
   run: RaidRun,
   gameRaidId: string,

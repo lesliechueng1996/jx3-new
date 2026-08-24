@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyRaidRunReservedToSignups,
+  calculateRaidRunWagePerPerson,
   clampRaidRunReservedToLimit,
+  countRaidRunWageShareSignups,
   createRaidRun,
   formatRaidDungeonLabel,
   getRaidSignupAt,
@@ -29,6 +31,7 @@ import {
   setRaidRunSubsidyAmount,
   setRaidRunTotalIncome,
   setRaidRunWagePerPerson,
+  setRaidRunWages,
   setRaidSignupDarkRunExclusive,
   setRaidSignupFormationCoreExclusive,
   setRaidSignupLeaderExclusive,
@@ -221,6 +224,17 @@ describe('raid-run', () => {
     expect(setRaidRunTotalIncome(run, 50).totalIncome).toBe(50);
     expect(setRaidRunWagePerPerson(run, 2).wagePerPerson).toBe(2);
     expect(setRaidRunSubsidyAmount(run, 8).subsidyAmount).toBe(8);
+    expect(
+      setRaidRunWages(run, {
+        totalIncome: 15000,
+        subsidyAmount: 2000,
+        wagePerPerson: 1300,
+      }),
+    ).toMatchObject({
+      totalIncome: 15000,
+      subsidyAmount: 2000,
+      wagePerPerson: 1300,
+    });
     expect(setRaidRunGameRaidId(run, 'game-2').gameRaidId).toBe('game-2');
     expect(setRaidRunGatherTime(run, gatherTime).gatherTime).toBe(gatherTime);
     expect(setRaidRunStartTime(run, startTime).startTime).toBe(startTime);
@@ -684,5 +698,51 @@ describe('raid-run', () => {
     expect(expanded.totalGroupCount).toBe(5);
     expect(expanded.signups).toHaveLength(5);
     expect(expanded.signups[4][0].groupNumber).toBe(5);
+  });
+
+  it('counts occupied non-boss signups for wage shares', () => {
+    const run = updateRaidSignupAt(
+      updateRaidSignupAt(
+        updateRaidSignupAt(
+          setRaidRunReservedBoss(createRaidRun({ id: 'run-1' }), 1),
+          1,
+          1,
+          (signup) =>
+            setRaidSignupCharacterName(
+              setRaidSignupRole(signup, 'dps'),
+              '输出',
+            ),
+        ),
+        1,
+        2,
+        (signup) =>
+          setRaidSignupCharacterName(
+            setRaidSignupRole(signup, 'healer'),
+            ' 治疗 ',
+          ),
+      ),
+      1,
+      3,
+      (signup) =>
+        setRaidSignupCharacterName(setRaidSignupRole(signup, 'boss'), '老板'),
+    );
+
+    expect(countRaidRunWageShareSignups(run)).toBe(2);
+    expect(run.signups[0][0].role).toBe('dps');
+  });
+
+  it('does not count reserved empty slots as wage shares', () => {
+    const run = setRaidRunReservedDps(createRaidRun({ id: 'run-1' }), 3);
+
+    expect(run.signups[0][0].role).toBe('dps');
+    expect(countRaidRunWageShareSignups(run)).toBe(0);
+  });
+
+  it('floors personal wage and returns zero without a share count', () => {
+    expect(calculateRaidRunWagePerPerson(15000, 2000, 10)).toBe(1300);
+    expect(calculateRaidRunWagePerPerson(1000, 0, 3)).toBe(333);
+    expect(calculateRaidRunWagePerPerson(1000, 1000, 5)).toBe(0);
+    expect(calculateRaidRunWagePerPerson(1000, 2000, 5)).toBe(0);
+    expect(calculateRaidRunWagePerPerson(1000, 0, 0)).toBe(0);
   });
 });
