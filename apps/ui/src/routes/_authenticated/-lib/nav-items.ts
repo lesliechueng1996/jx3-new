@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   BookOpenTextIcon,
+  CalendarClockIcon,
   CastleIcon,
   FlameIcon,
   Gamepad2Icon,
@@ -55,6 +56,11 @@ export const navItems: NavItem[] = [
     title: '副本管理',
     icon: CastleIcon,
     to: '/admin/game-dungeons',
+  },
+  {
+    title: '开团管理',
+    icon: CalendarClockIcon,
+    to: '/admin/raid-runs',
   },
   {
     title: '物品管理',

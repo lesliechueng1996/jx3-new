@@ -1,12 +1,19 @@
+import type { ListRaidRunsQuery } from '@api/interface/schema/raid-run-schema';
 import {
   and,
   asc,
+  count,
   db,
+  desc,
   eq,
   gameDungeon,
+  ilike,
   inArray,
+  raidLoot,
   raidRun,
   raidSignup,
+  type SQL,
+  sql,
 } from '@api/shared/util/db';
 
 export type RaidRunInsert = typeof raidRun.$inferInsert;
@@ -65,6 +72,60 @@ const dungeonSelect = {
 };
 
 export class RaidRunRepository {
+  buildWhereClause(query: ListRaidRunsQuery): SQL | undefined {
+    const conditions: SQL[] = [];
+
+    if (query.name) {
+      conditions.push(ilike(raidRun.name, `%${query.name}%`));
+    }
+
+    if (query.status) {
+      conditions.push(eq(raidRun.status, query.status));
+    }
+
+    if (conditions.length === 0) {
+      return undefined;
+    }
+
+    return and(...conditions);
+  }
+
+  listPagination(where: SQL | undefined, limit: number, offset: number) {
+    return db
+      .select({
+        id: raidRun.id,
+        name: raidRun.name,
+        status: raidRun.status,
+        gameRaidId: raidRun.gameRaidId,
+        dungeonId: raidRun.dungeonId,
+        dungeonName: gameDungeon.name,
+        startTime: raidRun.startTime,
+        endTime: raidRun.endTime,
+        reservedTank: raidRun.reservedTank,
+        reservedHealer: raidRun.reservedHealer,
+        reservedDps: raidRun.reservedDps,
+        reservedBoss: raidRun.reservedBoss,
+        totalIncome: raidRun.totalIncome,
+        wagePerPerson: raidRun.wagePerPerson,
+        subsidyAmount: raidRun.subsidyAmount,
+        signupCount: sql<number>`(
+          select count(*)::int
+          from ${raidSignup}
+          where ${raidSignup.raidRunId} = ${raidRun.id}
+        )`.mapWith(Number),
+      })
+      .from(raidRun)
+      .leftJoin(gameDungeon, eq(raidRun.dungeonId, gameDungeon.id))
+      .where(where)
+      .orderBy(desc(raidRun.startTime))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  count(where: SQL | undefined) {
+    return db.select({ total: count() }).from(raidRun).where(where);
+  }
+
   async findById(id: string) {
     const result = await db
       .select()
@@ -106,6 +167,33 @@ export class RaidRunRepository {
       .where(eq(raidRun.id, id))
       .returning();
     return updated ?? null;
+  }
+
+  async updateStatus(
+    id: string,
+    status: RaidRunInsert['status'],
+    signupStatus?: RaidSignupInsert['status'],
+  ) {
+    return await db.transaction(async (tx) => {
+      const [updated] = await tx
+        .update(raidRun)
+        .set({ status })
+        .where(eq(raidRun.id, id))
+        .returning();
+
+      if (!updated) {
+        return null;
+      }
+
+      if (signupStatus) {
+        await tx
+          .update(raidSignup)
+          .set({ status: signupStatus })
+          .where(eq(raidSignup.raidRunId, id));
+      }
+
+      return updated;
+    });
   }
 
   async updateWithSignups(
@@ -175,12 +263,19 @@ export class RaidRunRepository {
           signups.map((signup) => ({
             ...signup,
             raidRunId: raidRunRecord.id,
-            isReserved: false,
           })),
         );
       }
 
       return raidRunRecord;
+    });
+  }
+
+  async deleteWithChildren(id: string): Promise<void> {
+    await db.transaction(async (tx) => {
+      await tx.delete(raidLoot).where(eq(raidLoot.raidRunId, id));
+      await tx.delete(raidSignup).where(eq(raidSignup.raidRunId, id));
+      await tx.delete(raidRun).where(eq(raidRun.id, id));
     });
   }
 }

@@ -7,7 +7,9 @@ import { raidSignupRepository } from '@api/infrastructure/repository/raid-signup
 import { schoolRepository } from '@api/infrastructure/repository/school-repository';
 import type {
   CreateRaidRunBody,
+  ListRaidRunsQuery,
   RaidRunDetail,
+  RaidRunListItem,
   RaidRunStatus,
   SaveRaidRunBody,
   UpdateRaidRunStatusBody,
@@ -18,6 +20,10 @@ import {
   ERROR_CODES,
   NotFoundException,
 } from '@api/shared/exception';
+import {
+  formatDateTimeToMinute,
+  shiftToTodayKeepingTime,
+} from '@api/shared/util/date';
 
 const uniqueIds = (ids: Array<string | undefined>): string[] => [
   ...new Set(ids.filter((id): id is string => id !== undefined)),
@@ -395,6 +401,147 @@ const toIsoString = (value: Date | null): string | null => {
   return value.toISOString();
 };
 
+const formatOptionalDateTime = (value: Date | null): string | null => {
+  if (!value) {
+    return null;
+  }
+
+  return formatDateTimeToMinute(value);
+};
+
+type RaidRunListRow = Awaited<
+  ReturnType<typeof raidRunRepository.listPagination>
+>[number];
+
+const toRaidRunListItem = (row: RaidRunListRow): RaidRunListItem => ({
+  id: row.id,
+  name: row.name,
+  status: row.status,
+  gameRaidId: row.gameRaidId,
+  dungeonId: row.dungeonId,
+  dungeonName: row.dungeonName,
+  startTime: formatDateTimeToMinute(row.startTime),
+  endTime: formatOptionalDateTime(row.endTime),
+  reservedTank: row.reservedTank,
+  reservedHealer: row.reservedHealer,
+  reservedDps: row.reservedDps,
+  reservedBoss: row.reservedBoss,
+  totalIncome: numericToGoldInteger(row.totalIncome),
+  wagePerPerson: numericToGoldInteger(row.wagePerPerson),
+  subsidyAmount: numericToGoldInteger(row.subsidyAmount),
+  signupCount: row.signupCount,
+});
+
+export const listAdminRaidRuns = async (
+  query: ListRaidRunsQuery,
+): Promise<{
+  items: RaidRunListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}> => {
+  const where = raidRunRepository.buildWhereClause(query);
+  const offset = (query.page - 1) * query.pageSize;
+
+  const [rows, totalRows] = await Promise.all([
+    raidRunRepository.listPagination(where, query.pageSize, offset),
+    raidRunRepository.count(where),
+  ]);
+
+  return {
+    items: rows.map(toRaidRunListItem),
+    total: totalRows[0]?.total ?? 0,
+    page: query.page,
+    pageSize: query.pageSize,
+  };
+};
+
+export const deleteAdminRaidRun = async (id: string): Promise<void> => {
+  await findRaidRunOrThrow(id);
+
+  try {
+    await raidRunRepository.deleteWithChildren(id);
+    logger.info('Deleted raid run {raidRunId} with related loot and signups', {
+      raidRunId: id,
+    });
+  } catch (error) {
+    logger.error('Delete raid run failed, {raidRunId}, {error}', {
+      raidRunId: id,
+      error,
+    });
+    throw error;
+  }
+};
+
+export const copyRaidRun = async (
+  id: string,
+  userId: string,
+): Promise<{ id: string }> => {
+  const detail = await raidRunRepository.findDetailById(id);
+  if (!detail) {
+    throw new NotFoundException(
+      '开团记录不存在',
+      ERROR_CODES.RAID_RUN_NOT_FOUND,
+    );
+  }
+
+  const { run, signups } = detail;
+
+  try {
+    const copied = await raidRunRepository.createWithSignups({
+      name: run.name,
+      description: run.description,
+      dungeonId: run.dungeonId,
+      gameRaidId: null,
+      createdBy: userId,
+      status: 'pending',
+      gatherTime: shiftToTodayKeepingTime(run.gatherTime),
+      startTime: shiftToTodayKeepingTime(run.startTime),
+      endTime: shiftToTodayKeepingTime(run.endTime),
+      reservedTank: run.reservedTank,
+      reservedHealer: run.reservedHealer,
+      reservedDps: run.reservedDps,
+      reservedBoss: run.reservedBoss,
+      remark: null,
+      signups: signups.map((signup) => ({
+        groupNumber: signup.groupNumber,
+        positionNumber: signup.positionNumber,
+        role: signup.role,
+        status: 'pending',
+        isReserved: signup.isReserved,
+        isLeader: signup.isLeader,
+        isDarkRun: signup.isDarkRun,
+        isFormationCore: signup.isFormationCore,
+        serverId: signup.serverId,
+        characterName: signup.characterName,
+        schoolId: signup.schoolId,
+        kungfuId: signup.kungfuId,
+        userId: signup.userId,
+        createdBy: userId,
+        remark: null,
+      })),
+    });
+
+    logger.info(
+      'Copied raid run {sourceRaidRunId} to {raidRunId} for user {userId} with {signupCount} signups',
+      {
+        sourceRaidRunId: id,
+        raidRunId: copied.id,
+        userId,
+        signupCount: signups.length,
+      },
+    );
+
+    return { id: copied.id };
+  } catch (error) {
+    logger.error('Copy raid run failed, {raidRunId}, {error}', {
+      raidRunId: id,
+      error,
+    });
+    throw error;
+  }
+};
+
 const mapRaidRunDetail = (
   detail: NonNullable<
     Awaited<ReturnType<typeof raidRunRepository.findDetailById>>
@@ -598,9 +745,11 @@ export const updateRaidRunStatus = async (
   }
 
   try {
-    const updated = await raidRunRepository.updateById(id, {
-      status: data.status,
-    });
+    const updated = await raidRunRepository.updateStatus(
+      id,
+      data.status,
+      data.status === 'ongoing' ? 'confirmed' : undefined,
+    );
     if (!updated) {
       throw new NotFoundException(
         '开团记录不存在',

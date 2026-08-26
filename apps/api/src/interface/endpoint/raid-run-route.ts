@@ -5,14 +5,17 @@ import {
   updateRaidLoot,
 } from '@api/application/service/raid-loot-service';
 import {
+  copyRaidRun,
   createRaidRun,
+  deleteAdminRaidRun,
   getRaidRun,
+  listAdminRaidRuns,
   saveRaidRun,
   updateRaidRunGameRaidId,
   updateRaidRunStatus,
   updateRaidRunWages,
 } from '@api/application/service/raid-run-service';
-import { roleUser } from '@api/shared/util/auth';
+import { roleAdmin, roleUser } from '@api/shared/util/auth';
 import {
   AppResponse,
   createSuccessResponseSchema,
@@ -26,8 +29,11 @@ import {
   upsertRaidLootBodySchema,
 } from '../schema/raid-loot-schema';
 import {
+  copyRaidRunResponseSchema,
   createRaidRunBodySchema,
   createRaidRunResponseSchema,
+  listRaidRunsQuerySchema,
+  listRaidRunsResponseSchema,
   raidRunDetailSchema,
   raidRunIdParamsSchema,
   updateRaidRunGameRaidIdBodySchema,
@@ -90,6 +96,30 @@ export const raidRunRoute = apiRoute.group('/raid-run', (app) =>
           tags: [raidRunTag.name],
           summary: 'Get a raid run',
           description: 'Returns a raid run with signups. Requires user role.',
+        },
+      },
+    )
+    .post(
+      '/:id/copy',
+      async ({ params, status, user }) => {
+        const result = await copyRaidRun(params.id, user.id);
+        return status(201, AppResponse.success(result).toJson());
+      },
+      {
+        auth: roleAdmin,
+        params: raidRunIdParamsSchema,
+        response: {
+          201: createSuccessResponseSchema(copyRaidRunResponseSchema),
+          400: errorResponseSchema,
+          403: errorResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [raidRunTag.name],
+          summary: 'Copy a raid run',
+          description:
+            'Copies a raid run and its signups without loot. Requires admin role.',
         },
       },
     )
@@ -276,6 +306,53 @@ export const raidRunRoute = apiRoute.group('/raid-run', (app) =>
           tags: [raidRunTag.name],
           summary: 'Delete raid run loot',
           description: 'Deletes a loot row for a raid run. Requires user role.',
+        },
+      },
+    )
+    .delete(
+      '/:id',
+      async ({ params, status }) => {
+        await deleteAdminRaidRun(params.id);
+        return status(200, AppResponse.success().toJson());
+      },
+      {
+        auth: roleAdmin,
+        params: raidRunIdParamsSchema,
+        response: {
+          200: emptySuccessResponseSchema,
+          400: errorResponseSchema,
+          403: errorResponseSchema,
+          404: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [raidRunTag.name],
+          summary: 'Delete a raid run',
+          description:
+            'Deletes a raid run and related loot and signups. Requires admin role.',
+        },
+      },
+    )
+    .get(
+      '',
+      async ({ query, status }) => {
+        const result = await listAdminRaidRuns(query);
+        return status(200, AppResponse.success(result).toJson());
+      },
+      {
+        auth: roleAdmin,
+        query: listRaidRunsQuerySchema,
+        response: {
+          200: createSuccessResponseSchema(listRaidRunsResponseSchema),
+          400: errorResponseSchema,
+          403: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [raidRunTag.name],
+          summary: 'List raid runs with pagination and filters',
+          description:
+            'Returns a paginated list of raid runs. Requires admin role.',
         },
       },
     ),
