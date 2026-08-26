@@ -1,8 +1,9 @@
-import type { ItemQuality, ItemType } from '@/lib/game-item-labels';
 import type { RaidSignup } from './raid-signup';
 
-export const DEFAULT_QUICK_CREATE_ITEM_TYPE: ItemType = 'equipment';
-export const DEFAULT_QUICK_CREATE_ITEM_QUALITY: ItemQuality = 'purple';
+export {
+  DEFAULT_QUICK_CREATE_ITEM_QUALITY,
+  DEFAULT_QUICK_CREATE_ITEM_TYPE,
+} from '@/lib/game-item-labels';
 
 export const parseLootQuantity = (value: string): number | undefined => {
   if (value.length === 0) {

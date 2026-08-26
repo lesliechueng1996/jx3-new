@@ -35,6 +35,8 @@ function RaidRunsComponent() {
   const search = Route.useSearch();
   const [deletingRaidRun, setDeletingRaidRun] =
     useState<AdminRaidRunListItem | null>(null);
+  const [copyingRaidRun, setCopyingRaidRun] =
+    useState<AdminRaidRunListItem | null>(null);
   const [pendingRaidRunId, setPendingRaidRunId] = useState<string | null>(null);
 
   const {
@@ -74,6 +76,7 @@ function RaidRunsComponent() {
         type: 'success',
         title: '开团已复制',
       });
+      void invalidate();
       navigate({
         to: '/raid-run/$id',
         params: { id: result.id },
@@ -111,14 +114,31 @@ function RaidRunsComponent() {
             params: { id: raidRun.id },
           })
         }
-        onCopy={(raidRun) => {
-          setPendingRaidRunId(raidRun.id);
-          copyMutation.mutate(raidRun.id);
-        }}
+        onCopy={setCopyingRaidRun}
         onDelete={setDeletingRaidRun}
       />
 
       <Pagination {...paginationProps} />
+
+      <ConfirmDialog
+        open={copyingRaidRun !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCopyingRaidRun(null);
+          }
+        }}
+        title="复制开团"
+        description="确定复制这个开团吗？"
+        confirmLabel="复制"
+        pending={copyMutation.isPending}
+        onConfirm={() => {
+          if (!copyingRaidRun) {
+            return;
+          }
+          setPendingRaidRunId(copyingRaidRun.id);
+          copyMutation.mutate(copyingRaidRun.id);
+        }}
+      />
 
       <ConfirmDialog
         open={deletingRaidRun !== null}

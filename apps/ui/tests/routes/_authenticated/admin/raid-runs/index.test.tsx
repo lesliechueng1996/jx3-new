@@ -158,7 +158,7 @@ describe('admin raid-runs route', () => {
     });
   });
 
-  it('copies a raid run and navigates to the new page', async () => {
+  it('copies a raid run after confirmation and navigates to the new page', async () => {
     const user = userEvent.setup();
     const copiedId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
     adminCopyRaidRun.mockResolvedValue({ id: copiedId });
@@ -166,6 +166,12 @@ describe('admin raid-runs route', () => {
     await screen.findByText('周六团');
 
     await user.click(screen.getByRole('button', { name: '复制' }));
+    expect(adminCopyRaidRun).not.toHaveBeenCalled();
+    const confirm = await screen.findByRole('alertdialog');
+    expect(
+      within(confirm).getByText('确定复制这个开团吗？'),
+    ).toBeInTheDocument();
+    await user.click(within(confirm).getByRole('button', { name: '复制' }));
     await waitFor(() => {
       expect(adminCopyRaidRun).toHaveBeenCalledWith(raidRunItem.id);
       expect(toast.add).toHaveBeenCalledWith(
@@ -175,6 +181,17 @@ describe('admin raid-runs route', () => {
     });
   });
 
+  it('does not copy when confirmation is cancelled', async () => {
+    const user = userEvent.setup();
+    await renderApp('/admin/raid-runs');
+    await screen.findByText('周六团');
+
+    await user.click(screen.getByRole('button', { name: '复制' }));
+    const confirm = await screen.findByRole('alertdialog');
+    await user.click(within(confirm).getByRole('button', { name: '取消' }));
+    expect(adminCopyRaidRun).not.toHaveBeenCalled();
+  });
+
   it('toasts copy failures', async () => {
     const user = userEvent.setup();
     adminCopyRaidRun.mockRejectedValue(new Error('复制失败'));
@@ -182,6 +199,8 @@ describe('admin raid-runs route', () => {
     await screen.findByText('周六团');
 
     await user.click(screen.getByRole('button', { name: '复制' }));
+    const confirm = await screen.findByRole('alertdialog');
+    await user.click(within(confirm).getByRole('button', { name: '复制' }));
     await waitFor(() => {
       expect(toast.add).toHaveBeenCalledWith(
         expect.objectContaining({ description: '复制失败' }),

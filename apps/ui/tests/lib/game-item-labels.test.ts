@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { ItemQuality, ItemType } from '@/lib/game-item-labels';
 import {
+  DEFAULT_QUICK_CREATE_ITEM_QUALITY,
+  DEFAULT_QUICK_CREATE_ITEM_TYPE,
+  isItemQuality,
+  isItemType,
   itemQualityBadgeClassName,
   itemQualityLabel,
   itemTypeBadgeClassName,
@@ -15,6 +19,20 @@ describe('game-item-labels', () => {
     expect(itemTypeBadgeClassName('special')).toContain('bg-amber-500');
     expect(itemTypeBadgeClassName('small_iron')).toContain('bg-cyan-500');
     expect(itemTypeBadgeClassName('enchantment')).toContain('bg-violet-500');
+  });
+
+  it('uses equipment and purple as quick-create defaults', () => {
+    expect(DEFAULT_QUICK_CREATE_ITEM_TYPE).toBe('equipment');
+    expect(DEFAULT_QUICK_CREATE_ITEM_QUALITY).toBe('purple');
+  });
+
+  it('narrows type and quality values', () => {
+    expect(isItemType('equipment')).toBe(true);
+    expect(isItemType('unknown')).toBe(false);
+    expect(isItemType(1)).toBe(false);
+    expect(isItemQuality('purple')).toBe(true);
+    expect(isItemQuality('unknown')).toBe(false);
+    expect(isItemQuality(1)).toBe(false);
   });
 
   it('maps qualities and falls back', () => {

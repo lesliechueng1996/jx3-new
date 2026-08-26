@@ -16,10 +16,12 @@ import {
   adminReplaceGameItemLoot,
   adminUpdateGameItem,
 } from '@/lib/api/admin/admin-game-items-api';
+import { createGameItemQuick } from '@/lib/api/game-items-api';
 import { handleApiError } from '@/lib/api-client';
 import { GameItemCreateDialogComponent } from './-components/GameItemCreateDialogComponent';
 import { GameItemEditDialogComponent } from './-components/GameItemEditDialogComponent';
 import { GameItemFiltersComponent } from './-components/GameItemFiltersComponent';
+import { GameItemQuickCreateDialogComponent } from './-components/GameItemQuickCreateDialogComponent';
 import { GameItemReplaceDialogComponent } from './-components/GameItemReplaceDialogComponent';
 import { GameItemTableComponent } from './-components/GameItemTableComponent';
 import {
@@ -39,6 +41,7 @@ function GameItemsComponent() {
   const navigate = Route.useNavigate();
   const search = Route.useSearch();
   const [creating, setCreating] = useState(false);
+  const [quickCreating, setQuickCreating] = useState(false);
   const [editingItem, setEditingItem] = useState<AdminGameItemListItem | null>(
     null,
   );
@@ -73,6 +76,19 @@ function GameItemsComponent() {
         title: '物品已创建',
       });
       setCreating(false);
+      await invalidate();
+    },
+    onError: (error) => handleApiError(error, '创建物品失败'),
+  });
+
+  const quickCreateMutation = useMutation({
+    mutationFn: createGameItemQuick,
+    onSuccess: async () => {
+      toast.add({
+        type: 'success',
+        title: '物品已创建',
+      });
+      setQuickCreating(false);
       await invalidate();
     },
     onError: (error) => handleApiError(error, '创建物品失败'),
@@ -138,7 +154,14 @@ function GameItemsComponent() {
         onReset={resetSearch}
       />
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setQuickCreating(true)}
+        >
+          快速添加
+        </Button>
         <Button type="button" onClick={() => setCreating(true)}>
           新增物品
         </Button>
@@ -203,6 +226,13 @@ function GameItemsComponent() {
             targetItemId,
           });
         }}
+      />
+
+      <GameItemQuickCreateDialogComponent
+        open={quickCreating}
+        pending={quickCreateMutation.isPending}
+        onOpenChange={setQuickCreating}
+        onSubmit={(values) => quickCreateMutation.mutate(values)}
       />
 
       <GameItemCreateDialogComponent

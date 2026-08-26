@@ -16,6 +16,17 @@ export const ITEM_QUALITY_OPTIONS = [
 export type ItemType = (typeof ITEM_TYPE_OPTIONS)[number]['value'];
 export type ItemQuality = (typeof ITEM_QUALITY_OPTIONS)[number]['value'];
 
+export const DEFAULT_QUICK_CREATE_ITEM_TYPE: ItemType = 'equipment';
+export const DEFAULT_QUICK_CREATE_ITEM_QUALITY: ItemQuality = 'purple';
+
+export const isItemType = (value: unknown): value is ItemType =>
+  typeof value === 'string' &&
+  ITEM_TYPE_OPTIONS.some((item) => item.value === value);
+
+export const isItemQuality = (value: unknown): value is ItemQuality =>
+  typeof value === 'string' &&
+  ITEM_QUALITY_OPTIONS.some((item) => item.value === value);
+
 export const itemTypeLabel = (type: ItemType): string => {
   const option = ITEM_TYPE_OPTIONS.find((item) => item.value === type);
   return option?.label ?? type;

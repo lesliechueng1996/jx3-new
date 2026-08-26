@@ -12,12 +12,14 @@ const {
   adminUpdateGameItem,
   adminDeleteGameItem,
   adminReplaceGameItemLoot,
+  createGameItemQuick,
 } = vi.hoisted(() => ({
   adminListGameItems: vi.fn(),
   adminCreateGameItem: vi.fn(),
   adminUpdateGameItem: vi.fn(),
   adminDeleteGameItem: vi.fn(),
   adminReplaceGameItemLoot: vi.fn(),
+  createGameItemQuick: vi.fn(),
 }));
 
 vi.mock('@/lib/api/admin/admin-game-items-api', () => ({
@@ -26,6 +28,10 @@ vi.mock('@/lib/api/admin/admin-game-items-api', () => ({
   adminUpdateGameItem,
   adminDeleteGameItem,
   adminReplaceGameItemLoot,
+}));
+
+vi.mock('@/lib/api/game-items-api', () => ({
+  createGameItemQuick,
 }));
 
 vi.mock('@/components/GameItemSearchSelectComponent', () => ({
@@ -78,6 +84,7 @@ describe('admin game items route', () => {
     adminUpdateGameItem.mockReset();
     adminDeleteGameItem.mockReset();
     adminReplaceGameItemLoot.mockReset();
+    createGameItemQuick.mockReset();
     adminListGameItems.mockResolvedValue({ items: [item], total: 1 });
   });
 
@@ -139,6 +146,31 @@ describe('admin game items route', () => {
     });
   });
 
+  it('quick-creates an item', async () => {
+    const user = userEvent.setup();
+    createGameItemQuick.mockResolvedValue({ id: 'q' });
+    await renderApp('/admin/game-items');
+    await screen.findByText('上品玄晶');
+
+    await user.click(screen.getByRole('button', { name: '快速添加' }));
+    const dialog = await screen.findByRole('dialog');
+    await user.type(within(dialog).getByLabelText('物品名称'), '小铁');
+    await user.click(within(dialog).getByRole('button', { name: '保存' }));
+    await waitFor(() => {
+      expect(createGameItemQuick).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: '小铁',
+          type: 'equipment',
+          quality: 'purple',
+        }),
+        expect.anything(),
+      );
+      expect(toast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ title: '物品已创建' }),
+      );
+    });
+  });
+
   it('edits, replaces, and deletes items', async () => {
     const user = userEvent.setup();
     adminUpdateGameItem.mockResolvedValue({ id: 'item-1' });
@@ -179,6 +211,7 @@ describe('admin game items route', () => {
   it('toasts mutation failures', async () => {
     const user = userEvent.setup();
     adminCreateGameItem.mockRejectedValue(new Error('创建失败'));
+    createGameItemQuick.mockRejectedValue(new Error('快速创建失败'));
     adminUpdateGameItem.mockRejectedValue(new Error('更新失败'));
     adminDeleteGameItem.mockRejectedValue(new Error('删除失败'));
     adminReplaceGameItemLoot.mockRejectedValue(new Error('替换失败'));
@@ -200,6 +233,17 @@ describe('admin game items route', () => {
     await user.click(
       within(createDialog).getByRole('button', { name: '取消' }),
     );
+
+    await user.click(screen.getByRole('button', { name: '快速添加' }));
+    const quickDialog = await screen.findByRole('dialog');
+    await user.type(within(quickDialog).getByLabelText('物品名称'), '小铁');
+    await user.click(within(quickDialog).getByRole('button', { name: '保存' }));
+    await waitFor(() => {
+      expect(toast.add).toHaveBeenCalledWith(
+        expect.objectContaining({ description: '快速创建失败' }),
+      );
+    });
+    await user.click(within(quickDialog).getByRole('button', { name: '取消' }));
 
     await user.click(screen.getByRole('button', { name: '编辑' }));
     const editDialog = await screen.findByRole('dialog');
