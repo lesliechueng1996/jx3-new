@@ -24,6 +24,7 @@ import {
   isItemQuality,
   isItemType,
 } from '@/lib/game-item-labels';
+import { CopyMiddleDotHintComponent } from './CopyMiddleDotHintComponent';
 
 export type GameItemQuickCreateValues = {
   name: string;
@@ -162,6 +163,7 @@ export function GameItemQuickCreateFormComponent({
           </Field>
         </FieldGroup>
       </FieldGroup>
+      <CopyMiddleDotHintComponent />
     </form>
   );
 }

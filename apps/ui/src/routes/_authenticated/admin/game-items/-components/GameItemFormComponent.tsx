@@ -12,6 +12,7 @@ import type {
   ItemQuality,
   ItemType,
 } from '@/lib/api/admin/admin-game-items-api';
+import { CopyMiddleDotHintComponent } from '@/routes/_authenticated/-components/CopyMiddleDotHintComponent';
 import {
   type GameItemFormValues,
   gameItemFormSchema,
@@ -265,6 +266,7 @@ export function GameItemFormComponent({
           ) : null}
         </Field>
       </FieldGroup>
+      <CopyMiddleDotHintComponent />
     </form>
   );
 }

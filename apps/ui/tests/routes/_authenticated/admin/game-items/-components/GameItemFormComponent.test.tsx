@@ -136,4 +136,18 @@ describe('GameItemFormComponent', () => {
     expect(screen.getByText('图标地址最多 512 个字符')).toBeInTheDocument();
     expect(screen.getByText('别名最多 200 个字符')).toBeInTheDocument();
   });
+
+  it('shows a hint to copy the middle-dot character', () => {
+    render(
+      <GameItemFormComponent
+        formId="game-item-form"
+        initialValues={emptyValues}
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: '点击 · 即可复制到剪切板' }),
+    ).toBeInTheDocument();
+  });
 });

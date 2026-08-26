@@ -26,6 +26,10 @@ describe('GameItemQuickCreateDialogComponent', () => {
       quality: 'purple',
     });
 
+    expect(
+      screen.getByRole('button', { name: '点击 · 即可复制到剪切板' }),
+    ).toBeInTheDocument();
+
     await user.click(screen.getByRole('button', { name: '取消' }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });

@@ -214,6 +214,9 @@ describe('RaidLootDialogComponent', () => {
     );
 
     const panel = await openCreatePanel(user);
+    expect(
+      within(panel).getByRole('button', { name: '点击 · 即可复制到剪切板' }),
+    ).toBeInTheDocument();
     await user.click(within(panel).getByRole('button', { name: '取消' }));
     expect(
       screen.queryByRole('group', { name: '创建新物品' }),

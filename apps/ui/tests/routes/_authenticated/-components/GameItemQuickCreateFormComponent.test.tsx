@@ -181,4 +181,17 @@ describe('GameItemQuickCreateFormComponent', () => {
     expect(screen.getByRole('combobox', { name: '类型' })).toBeDisabled();
     expect(screen.getByRole('combobox', { name: '品质' })).toBeDisabled();
   });
+
+  it('shows a hint to copy the middle-dot character', () => {
+    render(
+      <GameItemQuickCreateFormComponent
+        formId="quick-create-form"
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: '点击 · 即可复制到剪切板' }),
+    ).toBeInTheDocument();
+  });
 });
