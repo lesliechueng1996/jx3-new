@@ -174,14 +174,23 @@ export const createAdminGameItem = async (
 
 const lookupQuickCreateDetails = async (
   name: string,
-): Promise<{ icon: string | null; description: string | null }> => {
+): Promise<{
+  gameItemId: string | null;
+  icon: string | null;
+  description: string | null;
+}> => {
   try {
     const item = await searchItem(name, { logger });
-    logger.info('Looked up jx3box item {name} with icon {iconUrl}', {
-      name,
-      iconUrl: item.iconUrl,
-    });
+    logger.info(
+      'Looked up jx3box item {name} with id {gameItemId} and icon {iconUrl}',
+      {
+        name,
+        gameItemId: item.id,
+        iconUrl: item.iconUrl,
+      },
+    );
     return {
+      gameItemId: item.id,
       icon: item.iconUrl,
       description: normalizeNullableText(item.description),
     };
@@ -190,7 +199,7 @@ const lookupQuickCreateDetails = async (
       name,
       error,
     });
-    return { icon: null, description: null };
+    return { gameItemId: null, icon: null, description: null };
   }
 };
 
@@ -200,12 +209,16 @@ export const quickCreateGameItem = async (
   const name = body.name.trim();
   await assertNameAvailable(name);
 
-  const { icon, description } = await lookupQuickCreateDetails(name);
+  const { gameItemId, icon, description } =
+    await lookupQuickCreateDetails(name);
+  if (gameItemId) {
+    await assertGameItemIdAvailable(gameItemId);
+  }
 
   try {
     const created = await gameItemRepository.create({
       name,
-      gameItemId: null,
+      gameItemId,
       type: body.type,
       quality: body.quality,
       description,

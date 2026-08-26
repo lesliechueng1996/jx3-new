@@ -389,12 +389,12 @@ describe('game-item-service', () => {
     expect(create).not.toHaveBeenCalled();
   });
 
-  it('quick-creates an item and fills icon and description from jx3box', async () => {
+  it('quick-creates an item and fills game item id, icon and description from jx3box', async () => {
     const created = itemRow({
       name: '新掉落',
       type: 'equipment',
       quality: 'purple',
-      gameItemId: null,
+      gameItemId: '6_42729',
       description: '130级武器用破防无双\n武器伤害提高2737-4562',
       icon: 'https://icon.jx3box.com/icon/25571.png',
       alias: [],
@@ -417,9 +417,10 @@ describe('game-item-service', () => {
     });
     expect(findByName).toHaveBeenCalledWith('新掉落');
     expect(searchItem).toHaveBeenCalledWith('新掉落', { logger });
+    expect(findByGameItemId).toHaveBeenCalledWith('6_42729');
     expect(create).toHaveBeenCalledWith({
       name: '新掉落',
-      gameItemId: null,
+      gameItemId: '6_42729',
       type: 'equipment',
       quality: 'purple',
       description: '130级武器用破防无双\n武器伤害提高2737-4562',
@@ -486,10 +487,26 @@ describe('game-item-service', () => {
 
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({
+        gameItemId: '6_1',
         description: null,
         icon: 'https://icon.jx3box.com/icon/13.png',
       }),
     );
+  });
+
+  it('rejects a duplicate game item id on quick create', async () => {
+    findByGameItemId.mockResolvedValue(itemRow());
+
+    await expect(
+      quickCreateGameItem({
+        name: '新品',
+        type: 'equipment',
+        quality: 'purple',
+      }),
+    ).rejects.toMatchObject({
+      code: ERROR_CODES.GAME_ITEM_GAME_ID_ALREADY_EXISTS,
+    });
+    expect(create).not.toHaveBeenCalled();
   });
 
   it('rejects a duplicate name on quick create', async () => {
