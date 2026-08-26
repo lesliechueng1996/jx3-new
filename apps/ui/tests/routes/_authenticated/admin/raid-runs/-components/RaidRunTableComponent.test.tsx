@@ -10,7 +10,7 @@ const raidRun: AdminRaidRunListItem = {
   status: 'pending',
   gameRaidId: 'game-1',
   dungeonId: 'dungeon-1',
-  dungeonName: '25人英雄',
+  dungeonName: '25人英雄河阳之战',
   startTime: '2026-08-22 21:00',
   endTime: '2026-08-23 00:00',
   reservedTank: 1,
@@ -71,7 +71,7 @@ describe('RaidRunTableComponent', () => {
     expect(screen.getByText('待开始')).toBeInTheDocument();
     expect(screen.getByText('招募中')).toBeInTheDocument();
     expect(screen.getByText('T1 / H2 / D20 / B2')).toBeInTheDocument();
-    expect(screen.getByText('25人英雄')).toBeInTheDocument();
+    expect(screen.getByText('25人英雄河阳之战')).toBeInTheDocument();
     expect(screen.getAllByText('2026-08-22 21:00').length).toBeGreaterThan(0);
     expect(screen.getAllByText('-').length).toBeGreaterThan(0);
 

@@ -20,6 +20,14 @@ export const raidRunsSearchSchema = paginationSearchQuerySchema.extend({
     .optional()
     .transform((val) => val?.trim() ?? undefined),
   status: z.enum(raidRunStatusValues).optional(),
+  dungeonId: z
+    .string()
+    .optional()
+    .transform((val) => val?.trim() || undefined),
+  startDate: z
+    .string()
+    .optional()
+    .transform((val) => val?.trim() || undefined),
 });
 
 export type RaidRunsSearch = z.infer<typeof raidRunsSearchSchema>;
@@ -29,6 +37,8 @@ export const defaultRaidRunsSearch: RaidRunsSearch = {
   pageSize: DEFAULT_PAGE_SIZE,
   name: undefined,
   status: undefined,
+  dungeonId: undefined,
+  startDate: undefined,
 };
 
 export const toListRaidRunsFilters = (
@@ -38,4 +48,6 @@ export const toListRaidRunsFilters = (
   pageSize: search.pageSize,
   name: search.name,
   status: search.status,
+  dungeonId: search.dungeonId,
+  startDate: search.startDate,
 });

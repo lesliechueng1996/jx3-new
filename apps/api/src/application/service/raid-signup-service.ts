@@ -1,5 +1,4 @@
 import { raidSignupRepository } from '@api/infrastructure/repository/raid-signup-repository';
-import type { DungeonDifficulty } from '@api/interface/schema/game-dungeon-schema';
 import type {
   ListRaidSignupsQuery,
   RaidSignupFlag,
@@ -7,24 +6,7 @@ import type {
   RaidSignupSearchItem,
 } from '@api/interface/schema/raid-signup-schema';
 import { formatDateTimeToMinute } from '@api/shared/util/date';
-
-const DUNGEON_DIFFICULTY_LABEL: Record<DungeonDifficulty, string> = {
-  normal: '普通',
-  heroic: '英雄',
-  challenge: '挑战',
-};
-
-const formatDungeonDisplayName = (
-  name: string | null,
-  playerLimit: number | null,
-  difficulty: DungeonDifficulty | null,
-): string | null => {
-  if (!name || playerLimit === null || !difficulty) {
-    return null;
-  }
-
-  return `${playerLimit}人${DUNGEON_DIFFICULTY_LABEL[difficulty]}${name}`;
-};
+import { formatDungeonDisplayName } from '@api/shared/util/dungeon';
 
 const RAID_SIGNUP_SEARCH_LIMIT = 10;
 

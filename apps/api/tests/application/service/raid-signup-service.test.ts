@@ -247,24 +247,4 @@ describe('listAdminRaidSignups', () => {
       kungfuName: null,
     });
   });
-
-  it('formats dungeon names for each difficulty', async () => {
-    listPagination.mockResolvedValue([
-      listRow({ dungeonDifficulty: 'normal' }),
-      listRow({
-        id: 'signup-2',
-        dungeonName: '一之窟',
-        dungeonPlayerLimit: 10,
-        dungeonDifficulty: 'challenge',
-      }),
-    ]);
-    count.mockResolvedValue([{ total: 2 }]);
-
-    const result = await listAdminRaidSignups({ page: 1, pageSize: 20 });
-
-    expect(result.items.map((item) => item.dungeonName)).toEqual([
-      '25人普通河阳之战',
-      '10人挑战一之窟',
-    ]);
-  });
 });

@@ -547,18 +547,32 @@ describe('raidRunRoute', () => {
 
   it('lists raid runs', async () => {
     const response = await jsonRequest(
-      '?page=1&pageSize=20&name=周六&status=pending',
+      `?page=1&pageSize=20&name=周六&status=pending&dungeonId=${dungeonId}&startDate=2026-08-22`,
     );
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(listAdminRaidRuns).toHaveBeenCalled();
+    expect(listAdminRaidRuns).toHaveBeenCalledWith({
+      page: 1,
+      pageSize: 20,
+      name: '周六',
+      status: 'pending',
+      dungeonId,
+      startDate: '2026-08-22',
+    });
     expect(body.data.total).toBe(1);
     expect(body.data.items[0].id).toBe(raidRunId);
   });
 
   it('rejects an invalid list status', async () => {
     const response = await jsonRequest('?page=1&pageSize=20&status=unknown');
+
+    expect(response.status).toBe(422);
+    expect(listAdminRaidRuns).not.toHaveBeenCalled();
+  });
+
+  it('rejects an invalid list start date', async () => {
+    const response = await jsonRequest('?page=1&pageSize=20&startDate=08-22');
 
     expect(response.status).toBe(422);
     expect(listAdminRaidRuns).not.toHaveBeenCalled();

@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { dungeonGet, dungeonPost, dungeonPatch, dungeonDelete } = vi.hoisted(
-  () => ({
+const { dungeonGet, dungeonGetById, dungeonPost, dungeonPatch, dungeonDelete } =
+  vi.hoisted(() => ({
     dungeonGet: vi.fn(),
+    dungeonGetById: vi.fn(),
     dungeonPost: vi.fn(),
     dungeonPatch: vi.fn(),
     dungeonDelete: vi.fn(),
-  }),
-);
+  }));
 
 vi.mock('@/lib/api-client', () => ({
   apiClient: {
@@ -15,6 +15,7 @@ vi.mock('@/lib/api-client', () => ({
       v1: {
         'game-dungeon': Object.assign(
           (params: { id: string }) => ({
+            get: () => dungeonGetById(params),
             patch: (body: unknown) => dungeonPatch(params, body),
             delete: () => dungeonDelete(params),
           }),
@@ -42,6 +43,7 @@ const formValues = {
 describe('admin-game-dungeons-api', () => {
   beforeEach(() => {
     dungeonGet.mockReset();
+    dungeonGetById.mockReset();
     dungeonPost.mockReset();
     dungeonPatch.mockReset();
     dungeonDelete.mockReset();
@@ -91,6 +93,7 @@ describe('admin-game-dungeons-api', () => {
 
   it('uses fallback messages when the API omits one', async () => {
     dungeonGet.mockResolvedValue({ data: null, error: { value: {} } });
+    dungeonGetById.mockResolvedValue({ data: null, error: { value: {} } });
     dungeonPost.mockResolvedValue({ error: { value: {} } });
     dungeonPatch.mockResolvedValue({ error: { value: {} } });
     dungeonDelete.mockResolvedValue({ error: { value: {} } });
@@ -100,6 +103,7 @@ describe('admin-game-dungeons-api', () => {
     await expect(
       api.adminListGameDungeons({ page: 1, pageSize: 20 }),
     ).rejects.toThrow('获取副本列表失败');
+    await expect(api.adminGetGameDungeon('1')).rejects.toThrow('获取副本失败');
     await expect(api.adminCreateGameDungeon(formValues)).rejects.toThrow(
       '创建副本失败',
     );
@@ -135,5 +139,18 @@ describe('admin-game-dungeons-api', () => {
       }),
     ).resolves.toEqual({ id: '1' });
     await api.adminDeleteGameDungeon('1');
+  });
+
+  it('gets a dungeon by id and unwraps the envelope', async () => {
+    const payload = { id: '1', name: '河阳之战' };
+    dungeonGetById.mockResolvedValue({ data: { data: payload }, error: null });
+
+    const api = await import('@/lib/api/admin/admin-game-dungeons-api');
+    await expect(api.adminGetGameDungeon('1')).resolves.toEqual(payload);
+    expect(dungeonGetById).toHaveBeenCalledWith({ id: '1' });
+    expect(api.adminGameDungeonQueryKey('1')).toEqual([
+      'admin-game-dungeon',
+      '1',
+    ]);
   });
 });

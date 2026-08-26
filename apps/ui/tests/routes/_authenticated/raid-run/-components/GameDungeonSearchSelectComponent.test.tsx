@@ -40,6 +40,18 @@ const dungeons = [
     levelRequirement: 120,
     bossCount: 3,
   },
+  {
+    id: 'dungeon-3',
+    name: '25人挑战',
+    expansionId: 'exp-1',
+    expansionName: '资料片',
+    seasonId: 'season-1',
+    seasonName: '赛季',
+    playerLimit: 25,
+    difficulty: 'challenge' as const,
+    levelRequirement: 120,
+    bossCount: 6,
+  },
 ];
 
 describe('GameDungeonSearchSelectComponent', () => {
@@ -90,6 +102,56 @@ describe('GameDungeonSearchSelectComponent', () => {
         difficulty: 'heroic',
       }),
     );
+  });
+
+  it('keeps a later selection after the search results expand', async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+
+    function Harness() {
+      const [value, setValue] = useState<RaidDungeon | undefined>();
+      return (
+        <GameDungeonSearchSelectComponent
+          debounceMs={0}
+          value={value}
+          onValueChange={(next) => {
+            onValueChange(next);
+            setValue(next);
+          }}
+        />
+      );
+    }
+
+    renderWithQueryClient(<Harness />);
+    const combobox = screen.getByLabelText('副本');
+    await user.type(combobox, '25人英雄');
+    await user.click(
+      await screen.findByRole('option', {
+        name: '25人英雄（英雄 · 25人）',
+      }),
+    );
+    await waitFor(() => {
+      expect(combobox).toHaveValue('25人英雄（英雄 · 25人）');
+    });
+
+    await user.clear(combobox);
+    await user.type(combobox, '25人');
+    await user.click(
+      await screen.findByRole('option', {
+        name: '25人挑战（挑战 · 25人）',
+      }),
+    );
+
+    await waitFor(() => {
+      expect(onValueChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          id: 'dungeon-3',
+          name: '25人挑战',
+          difficulty: 'challenge',
+        }),
+      );
+      expect(combobox).toHaveValue('25人挑战（挑战 · 25人）');
+    });
   });
 
   it('shows pending, empty, and error states', async () => {
@@ -149,6 +211,50 @@ describe('GameDungeonSearchSelectComponent', () => {
     await waitFor(() => {
       expect(combobox).toHaveValue('10人普通（普通 · 10人）');
     });
+  });
+
+  it('clears the selection when empty is allowed', async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    const onClear = vi.fn();
+
+    function Harness() {
+      const [value, setValue] = useState<RaidDungeon | undefined>({
+        id: 'dungeon-1',
+        name: '25人英雄',
+        playerLimit: 25,
+        bossCount: 6,
+        difficulty: 'heroic',
+      });
+      return (
+        <GameDungeonSearchSelectComponent
+          debounceMs={0}
+          allowEmpty
+          value={value}
+          onValueChange={(next) => {
+            onValueChange(next);
+            setValue(next);
+          }}
+          onClear={() => {
+            onClear();
+            setValue(undefined);
+          }}
+        />
+      );
+    }
+
+    renderWithQueryClient(<Harness />);
+    const combobox = screen.getByLabelText('副本');
+    await waitFor(() => {
+      expect(combobox).toHaveValue('25人英雄（英雄 · 25人）');
+    });
+    await user.clear(combobox);
+    combobox.blur();
+    await waitFor(() => {
+      expect(onClear).toHaveBeenCalled();
+      expect(combobox).toHaveValue('');
+    });
+    expect(onValueChange).not.toHaveBeenCalled();
   });
 
   it('reverts the input when dismissed with escape', async () => {
