@@ -28,6 +28,10 @@ vi.mock('@/lib/api/admin/admin-idioms-api', () => ({
   adminCreateIdiom,
 }));
 
+vi.mock('@/lib/copy-text', () => ({
+  copyText: vi.fn(async () => true),
+}));
+
 describe('guess-idiom route', () => {
   beforeEach(() => {
     vi.mocked(authClient.getSession).mockResolvedValue({
@@ -132,7 +136,7 @@ describe('guess-idiom route', () => {
     });
 
     await user.click(
-      screen.getByRole('button', { name: '将 一心一意 填入输入框' }),
+      screen.getByRole('button', { name: '复制 一心一意 并填入输入框' }),
     );
     expect(screen.getByPlaceholderText('输入 4 个汉字')).toHaveValue(
       '一心一意',

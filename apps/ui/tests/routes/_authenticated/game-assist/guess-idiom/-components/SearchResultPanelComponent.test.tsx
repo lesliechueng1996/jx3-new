@@ -1,8 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { toast } from '@/components/ui/toast';
+import { copyText } from '@/lib/copy-text';
 import SearchResultPanelComponent from '@/routes/_authenticated/game-assist/guess-idiom/-components/SearchResultPanelComponent';
 import type { IdiomGuessResult } from '@/routes/_authenticated/game-assist/guess-idiom/-lib/idiom-guess-schema';
+
+vi.mock('@/lib/copy-text', () => ({
+  copyText: vi.fn(),
+}));
 
 const result: IdiomGuessResult = {
   items: [
@@ -39,6 +45,12 @@ const result: IdiomGuessResult = {
 };
 
 describe('SearchResultPanelComponent', () => {
+  beforeEach(() => {
+    vi.mocked(copyText).mockReset();
+    vi.mocked(toast.add).mockClear();
+    vi.mocked(copyText).mockResolvedValue(true);
+  });
+
   it('shows searching and empty states', () => {
     const onSelectIdiom = vi.fn();
     const { rerender } = render(
@@ -75,14 +87,16 @@ describe('SearchResultPanelComponent', () => {
     expect(screen.getByText('一心一意')).toBeInTheDocument();
     expect(screen.getByText('还有多个候选')).toBeInTheDocument();
     expect(screen.getByText('真心实意')).toBeInTheDocument();
-    expect(screen.getByText('点击候选即可填入下方输入框')).toBeInTheDocument();
+    expect(
+      screen.getAllByText('点击即可复制并填入下方输入框').length,
+    ).toBeGreaterThan(0);
 
     await user.click(screen.getByText('查看位置分析'));
     expect(screen.getByText('第 1 字')).toBeInTheDocument();
     expect(screen.getByText('第 10 字')).toBeInTheDocument();
   });
 
-  it('fills the input when a candidate or probe is clicked', async () => {
+  it('copies and fills the input when a candidate or probe is clicked', async () => {
     const user = userEvent.setup();
     const onSelectIdiom = vi.fn();
     render(
@@ -94,14 +108,40 @@ describe('SearchResultPanelComponent', () => {
     );
 
     await user.click(
-      screen.getByRole('button', { name: '将 一心一意 填入输入框' }),
+      screen.getByRole('button', { name: '复制 一心一意 并填入输入框' }),
     );
     expect(onSelectIdiom).toHaveBeenCalledWith('一心一意');
+    expect(copyText).toHaveBeenCalledWith('一心一意');
+    expect(toast.add).toHaveBeenCalledWith({
+      type: 'success',
+      description: '已复制到剪切板',
+    });
 
     await user.click(
-      screen.getByRole('button', { name: '将试探词 真心实意 填入输入框' }),
+      screen.getByRole('button', { name: '复制试探词 真心实意 并填入输入框' }),
     );
     expect(onSelectIdiom).toHaveBeenCalledWith('真心实意');
+    expect(copyText).toHaveBeenCalledWith('真心实意');
+  });
+
+  it('toasts an error when copying a candidate fails', async () => {
+    const user = userEvent.setup();
+    vi.mocked(copyText).mockResolvedValue(false);
+    render(
+      <SearchResultPanelComponent
+        result={result}
+        searching={false}
+        onSelectIdiom={vi.fn()}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole('button', { name: '复制 一心一意 并填入输入框' }),
+    );
+    expect(toast.add).toHaveBeenCalledWith({
+      type: 'error',
+      description: '复制失败，请手动复制',
+    });
   });
 
   it('marks a unique match', () => {

@@ -1,4 +1,6 @@
 import { Badge } from '#/components/ui/badge';
+import { toast } from '@/components/ui/toast';
+import { copyText } from '@/lib/copy-text';
 import type { IdiomGuessResult } from '../-lib/idiom-guess-schema';
 
 type SearchResultPanelComponentProps = {
@@ -7,13 +9,29 @@ type SearchResultPanelComponentProps = {
   onSelectIdiom: (text: string) => void;
 };
 
+const copyIdiom = async (text: string) => {
+  const copied = await copyText(text);
+  toast.add({
+    type: copied ? 'success' : 'error',
+    description: copied ? '已复制到剪切板' : '复制失败，请手动复制',
+  });
+};
+
 const POSITION_LABELS = ['第 1 字', '第 2 字', '第 3 字', '第 4 字'];
 
 type SelectableIdiomRowProps = {
   title: string;
   subtitle: string;
   selectLabel: string;
-  onSelect: () => void;
+  onSelect: () => void | Promise<void>;
+};
+
+const selectIdiom = async (
+  text: string,
+  onSelectIdiom: (text: string) => void,
+) => {
+  onSelectIdiom(text);
+  await copyIdiom(text);
 };
 
 const SelectableIdiomRow = ({
@@ -77,7 +95,7 @@ const SearchResultPanelComponent = ({
       {result.items.length > 0 ? (
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground">
-            点击候选即可填入下方输入框
+            点击即可复制并填入下方输入框
           </p>
           <ul className="space-y-2">
             {result.items.map((item) => (
@@ -85,8 +103,8 @@ const SearchResultPanelComponent = ({
                 key={item.id}
                 title={item.text}
                 subtitle={item.pinyin}
-                selectLabel={`将 ${item.text} 填入输入框`}
-                onSelect={() => onSelectIdiom(item.text)}
+                selectLabel={`复制 ${item.text} 并填入输入框`}
+                onSelect={() => selectIdiom(item.text, onSelectIdiom)}
               />
             ))}
           </ul>
@@ -129,14 +147,17 @@ const SearchResultPanelComponent = ({
       {result.analysis.suggestedProbes.length > 0 ? (
         <div className="space-y-2">
           <h3 className="text-sm font-medium">建议试探词</h3>
+          <p className="text-xs text-muted-foreground">
+            点击即可复制并填入下方输入框
+          </p>
           <ul className="space-y-2">
             {result.analysis.suggestedProbes.map((probe) => (
               <SelectableIdiomRow
                 key={probe.text}
                 title={probe.text}
                 subtitle={probe.reason}
-                selectLabel={`将试探词 ${probe.text} 填入输入框`}
-                onSelect={() => onSelectIdiom(probe.text)}
+                selectLabel={`复制试探词 ${probe.text} 并填入输入框`}
+                onSelect={() => selectIdiom(probe.text, onSelectIdiom)}
               />
             ))}
           </ul>
