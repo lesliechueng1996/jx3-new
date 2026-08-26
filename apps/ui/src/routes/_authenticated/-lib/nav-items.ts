@@ -3,6 +3,7 @@ import {
   BookOpenTextIcon,
   CalendarClockIcon,
   CastleIcon,
+  ClipboardListIcon,
   FlameIcon,
   Gamepad2Icon,
   LayersIcon,
@@ -61,6 +62,11 @@ export const navItems: NavItem[] = [
     title: '开团管理',
     icon: CalendarClockIcon,
     to: '/admin/raid-runs',
+  },
+  {
+    title: '报名管理',
+    icon: ClipboardListIcon,
+    to: '/admin/raid-signups',
   },
   {
     title: '物品管理',

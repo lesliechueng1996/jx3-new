@@ -83,6 +83,16 @@ export class RaidRunRepository {
       conditions.push(eq(raidRun.status, query.status));
     }
 
+    if (query.dungeonId) {
+      conditions.push(eq(raidRun.dungeonId, query.dungeonId));
+    }
+
+    if (query.startDate) {
+      conditions.push(
+        sql`(${raidRun.startTime} AT TIME ZONE 'Asia/Shanghai')::date = ${query.startDate}::date`,
+      );
+    }
+
     if (conditions.length === 0) {
       return undefined;
     }
@@ -99,6 +109,8 @@ export class RaidRunRepository {
         gameRaidId: raidRun.gameRaidId,
         dungeonId: raidRun.dungeonId,
         dungeonName: gameDungeon.name,
+        dungeonPlayerLimit: gameDungeon.playerLimit,
+        dungeonDifficulty: gameDungeon.difficulty,
         startTime: raidRun.startTime,
         endTime: raidRun.endTime,
         reservedTank: raidRun.reservedTank,

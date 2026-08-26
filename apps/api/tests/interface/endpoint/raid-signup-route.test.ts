@@ -12,10 +12,37 @@ const searchItem = {
   kungfuType: 'attack' as const,
 };
 
+const listResult = {
+  items: [
+    {
+      id: '11111111-1111-4111-8111-111111111111',
+      raidRunId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      raidRunName: '周六团',
+      startTime: '2026-08-22 21:00',
+      dungeonName: '25人英雄河阳之战',
+      role: 'dps' as const,
+      status: 'confirmed' as const,
+      isReserved: false,
+      isLeader: true,
+      isDarkRun: false,
+      isFormationCore: false,
+      characterName: '少侠甲',
+      serverName: '梦江南',
+      kungfuName: '紫霞功',
+      createdAt: '2026-08-22 21:00',
+    },
+  ],
+  total: 1,
+  page: 1,
+  pageSize: 20,
+};
+
 const searchRaidSignups = mock(async () => [searchItem]);
+const listAdminRaidSignups = mock(async () => listResult);
 
 mock.module('@api/application/service/raid-signup-service', () => ({
   searchRaidSignups,
+  listAdminRaidSignups,
 }));
 
 mock.module('@api/shared/util/auth', () => ({
@@ -44,7 +71,9 @@ const jsonRequest = (path: string, init?: RequestInit) =>
 describe('raidSignupRoute', () => {
   beforeEach(() => {
     searchRaidSignups.mockReset();
+    listAdminRaidSignups.mockReset();
     searchRaidSignups.mockResolvedValue([searchItem]);
+    listAdminRaidSignups.mockResolvedValue(listResult);
   });
 
   it('exports an OpenAPI tag', () => {
@@ -69,5 +98,33 @@ describe('raidSignupRoute', () => {
 
     expect(response.status).toBe(422);
     expect(searchRaidSignups).not.toHaveBeenCalled();
+  });
+
+  it('lists signups for admins', async () => {
+    const response = await jsonRequest(
+      '/?page=1&pageSize=20&characterName=少侠&raidRunName=周六&role=dps&flags=leader&flags=darkRun',
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(listAdminRaidSignups).toHaveBeenCalledWith({
+      page: 1,
+      pageSize: 20,
+      characterName: '少侠',
+      raidRunName: '周六',
+      role: 'dps',
+      flags: ['leader', 'darkRun'],
+    });
+    expect(body.data).toEqual(listResult);
+    expect(body.code).toBe('SUCCESS');
+  });
+
+  it('accepts a single flag query value', async () => {
+    const response = await jsonRequest('/?page=1&pageSize=20&flags=reserved');
+
+    expect(response.status).toBe(200);
+    expect(listAdminRaidSignups).toHaveBeenCalledWith(
+      expect.objectContaining({ flags: 'reserved' }),
+    );
   });
 });

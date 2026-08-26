@@ -25,8 +25,10 @@ type GameDungeonSearchSelectComponentProps = {
   disabled?: boolean;
   placeholder?: string;
   debounceMs?: number;
-  onInputValueChange: (value: string) => void;
+  allowEmpty?: boolean;
+  onInputValueChange?: (value: string) => void;
   onValueChange: (dungeon: RaidDungeon) => void;
+  onClear?: () => void;
 };
 
 const isTypingReason = (reason: string) =>
@@ -38,7 +40,10 @@ const matchesDungeonQuery = (item: GameDungeonSearchItem, query: string) => {
     return true;
   }
 
-  return item.name.toLowerCase().includes(normalized);
+  return (
+    item.name.toLowerCase().includes(normalized) ||
+    formatRaidDungeonLabel(item).toLowerCase().includes(normalized)
+  );
 };
 
 const toRaidDungeon = (item: GameDungeonSearchItem): RaidDungeon => ({
@@ -68,14 +73,17 @@ export function GameDungeonSearchSelectComponent({
   disabled = false,
   placeholder = '输入副本名称搜索',
   debounceMs = 300,
+  allowEmpty = false,
   onInputValueChange,
   onValueChange,
+  onClear,
 }: GameDungeonSearchSelectComponentProps) {
   const [inputValue, setInputValue] = useState(
     value ? formatRaidDungeonLabel(value) : '',
   );
   const [selectedItem, setSelectedItem] =
     useState<GameDungeonSearchItem | null>(value ? toSearchItem(value) : null);
+  const [isFocused, setIsFocused] = useState(false);
   const inputValueRef = useRef(inputValue);
   const isFocusedRef = useRef(false);
   const skipBlurCommitRef = useRef(false);
@@ -97,17 +105,30 @@ export function GameDungeonSearchSelectComponent({
     return searchQuery.data ?? EMPTY_ITEMS;
   }, [debouncedQuery, searchQuery.data]);
 
+  const committedLabel = selectedItem
+    ? formatRaidDungeonLabel(selectedItem)
+    : value
+      ? formatRaidDungeonLabel(value)
+      : '';
+  const isSearching = isFocused && trimmedInput !== committedLabel;
+  const isSearchingRef = useRef(isSearching);
+  isSearchingRef.current = isSearching;
+
   const items = useMemo(() => {
-    if (selectedItem && !results.some((item) => item.id === selectedItem.id)) {
+    if (
+      !isSearching &&
+      selectedItem &&
+      !results.some((item) => item.id === selectedItem.id)
+    ) {
       return [selectedItem, ...results];
     }
     return results;
-  }, [results, selectedItem]);
+  }, [isSearching, results, selectedItem]);
 
-  const selectedId = value?.id ?? selectedItem?.id;
-  const selectedFromValue =
-    items.find((item) => item.id === selectedId) ??
-    (selectedItem?.id === selectedId ? selectedItem : null);
+  const selectedFromItems =
+    selectedItem == null
+      ? null
+      : (items.find((item) => item.id === selectedItem.id) ?? selectedItem);
 
   useEffect(() => {
     if (value) {
@@ -126,10 +147,8 @@ export function GameDungeonSearchSelectComponent({
     if (isFocusedRef.current) {
       return;
     }
-    setInputValue(
-      selectedFromValue ? formatRaidDungeonLabel(selectedFromValue) : '',
-    );
-  }, [selectedFromValue]);
+    setInputValue(committedLabel);
+  }, [committedLabel]);
 
   const isSearchPending =
     trimmedInput.length > 0 &&
@@ -144,22 +163,33 @@ export function GameDungeonSearchSelectComponent({
     emptyMessage = '未找到副本';
   }
 
-  const selectedLabel = () =>
-    selectedFromValue ? formatRaidDungeonLabel(selectedFromValue) : '';
+  const selectedLabel = () => committedLabel;
 
   const updateInput = (next: string) => {
     setInputValue(next);
-    onInputValueChange(next);
+    onInputValueChange?.(next);
   };
 
   const commitSelection = (next: GameDungeonSearchItem) => {
+    const label = formatRaidDungeonLabel(next);
     setSelectedItem(next);
+    updateInput(label);
     onValueChange(toRaidDungeon(next));
+  };
+
+  const clearSelection = () => {
+    setSelectedItem(null);
+    onClear?.();
+    updateInput('');
   };
 
   const commitInput = () => {
     const trimmed = inputValueRef.current.trim();
     if (trimmed.length === 0) {
+      if (allowEmpty) {
+        clearSelection();
+        return;
+      }
       updateInput(selectedLabel());
       return;
     }
@@ -172,7 +202,6 @@ export function GameDungeonSearchSelectComponent({
     );
     if (exact) {
       commitSelection(exact);
-      updateInput(formatRaidDungeonLabel(exact));
       return;
     }
 
@@ -184,7 +213,7 @@ export function GameDungeonSearchSelectComponent({
       <FieldLabel htmlFor={id}>副本</FieldLabel>
       <Combobox
         items={items}
-        value={selectedFromValue}
+        value={isSearching ? null : selectedFromItems}
         inputValue={inputValue}
         disabled={disabled}
         itemToStringLabel={formatRaidDungeonLabel}
@@ -202,6 +231,9 @@ export function GameDungeonSearchSelectComponent({
           }
           skipBlurCommitRef.current = true;
           if (!next) {
+            if (allowEmpty && !isSearchingRef.current) {
+              clearSelection();
+            }
             return;
           }
           commitSelection(next);
@@ -223,12 +255,15 @@ export function GameDungeonSearchSelectComponent({
           className="w-full"
           placeholder={placeholder}
           disabled={disabled}
+          showClear={allowEmpty && Boolean(selectedFromItems) && !isSearching}
           aria-label="副本"
           onFocus={() => {
             isFocusedRef.current = true;
+            setIsFocused(true);
           }}
           onBlur={() => {
             isFocusedRef.current = false;
+            setIsFocused(false);
             window.setTimeout(() => {
               if (skipBlurCommitRef.current) {
                 skipBlurCommitRef.current = false;

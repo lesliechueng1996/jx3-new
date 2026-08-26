@@ -24,6 +24,7 @@ import {
   formatDateTimeToMinute,
   shiftToTodayKeepingTime,
 } from '@api/shared/util/date';
+import { formatDungeonDisplayName } from '@api/shared/util/dungeon';
 
 const uniqueIds = (ids: Array<string | undefined>): string[] => [
   ...new Set(ids.filter((id): id is string => id !== undefined)),
@@ -419,7 +420,11 @@ const toRaidRunListItem = (row: RaidRunListRow): RaidRunListItem => ({
   status: row.status,
   gameRaidId: row.gameRaidId,
   dungeonId: row.dungeonId,
-  dungeonName: row.dungeonName,
+  dungeonName: formatDungeonDisplayName(
+    row.dungeonName,
+    row.dungeonPlayerLimit,
+    row.dungeonDifficulty,
+  ),
   startTime: formatDateTimeToMinute(row.startTime),
   endTime: formatOptionalDateTime(row.endTime),
   reservedTank: row.reservedTank,

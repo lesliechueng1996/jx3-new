@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { type KeyboardEvent, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -10,6 +11,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  adminGameDungeonQueryKey,
+  adminGetGameDungeon,
+} from '@/lib/api/admin/admin-game-dungeons-api';
+import { GameDungeonSearchSelectComponent } from '@/routes/_authenticated/raid-run/-components/GameDungeonSearchSelectComponent';
+import type { RaidDungeon } from '@/routes/_authenticated/raid-run/-lib/raid-run';
 import type { RaidRunsSearch } from '../-lib/raid-runs-schema';
 
 type RaidRunFiltersComponentProps = {
@@ -29,16 +36,52 @@ const STATUS_FILTER_ITEMS = [
 
 const statusFilterValue = (status: RaidRunsSearch['status']) => status ?? 'all';
 
+const toRaidDungeon = (dungeon: {
+  id: string;
+  name: string;
+  playerLimit: number;
+  bossCount: number;
+  difficulty: RaidDungeon['difficulty'];
+}): RaidDungeon => ({
+  id: dungeon.id,
+  name: dungeon.name,
+  playerLimit: dungeon.playerLimit,
+  bossCount: dungeon.bossCount,
+  difficulty: dungeon.difficulty,
+});
+
 export function RaidRunFiltersComponent({
   committedFilters,
   onSearch,
   onReset,
 }: RaidRunFiltersComponentProps) {
   const [draft, setDraft] = useState<RaidRunsSearch>(committedFilters);
+  const [selectedDungeon, setSelectedDungeon] = useState<
+    RaidDungeon | undefined
+  >();
 
   useEffect(() => {
     setDraft(committedFilters);
+    if (!committedFilters.dungeonId) {
+      setSelectedDungeon(undefined);
+    }
   }, [committedFilters]);
+
+  const dungeonQuery = useQuery({
+    queryKey: adminGameDungeonQueryKey(committedFilters.dungeonId ?? ''),
+    queryFn: () => adminGetGameDungeon(committedFilters.dungeonId as string),
+    enabled:
+      Boolean(committedFilters.dungeonId) &&
+      selectedDungeon?.id !== committedFilters.dungeonId,
+  });
+
+  useEffect(() => {
+    const data = dungeonQuery.data;
+    if (!data || data.id !== committedFilters.dungeonId) {
+      return;
+    }
+    setSelectedDungeon(toRaidDungeon(data));
+  }, [committedFilters.dungeonId, dungeonQuery.data]);
 
   const handleSearch = () => {
     onSearch({ ...draft, page: 1 });
@@ -67,6 +110,40 @@ export function RaidRunFiltersComponent({
               }))
             }
             onKeyDown={handleKeyDown}
+          />
+        </Field>
+        <GameDungeonSearchSelectComponent
+          id="filter-raid-run-dungeon"
+          value={selectedDungeon}
+          allowEmpty
+          placeholder="搜索副本"
+          onValueChange={(dungeon) => {
+            setSelectedDungeon(dungeon);
+            setDraft((current) => ({
+              ...current,
+              dungeonId: dungeon.id,
+            }));
+          }}
+          onClear={() => {
+            setSelectedDungeon(undefined);
+            setDraft((current) => ({
+              ...current,
+              dungeonId: undefined,
+            }));
+          }}
+        />
+        <Field>
+          <FieldLabel htmlFor="filter-raid-run-start-date">开团日期</FieldLabel>
+          <Input
+            id="filter-raid-run-start-date"
+            type="date"
+            value={draft.startDate ?? ''}
+            onChange={(event) =>
+              setDraft((current) => ({
+                ...current,
+                startDate: event.target.value || undefined,
+              }))
+            }
           />
         </Field>
         <Field>

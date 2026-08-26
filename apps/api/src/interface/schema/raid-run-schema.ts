@@ -283,6 +283,18 @@ export const listRaidRunsQuerySchema = t.Composite([
   t.Object({
     name: t.Optional(t.String()),
     status: t.Optional(raidRunStatusSchema),
+    dungeonId: t.Optional(
+      t.String({
+        format: 'uuid',
+        error: () => '副本ID格式不正确',
+      }),
+    ),
+    startDate: t.Optional(
+      t.String({
+        pattern: '^\\d{4}-\\d{2}-\\d{2}$',
+        error: () => '日期格式须为 YYYY-MM-DD',
+      }),
+    ),
   }),
 ]);
 

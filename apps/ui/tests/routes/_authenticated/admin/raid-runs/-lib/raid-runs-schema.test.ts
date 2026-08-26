@@ -13,12 +13,16 @@ describe('raidRunsSearchSchema', () => {
         pageSize: '10',
         name: '  周六团  ',
         status: 'pending',
+        dungeonId: `  ${'11111111-1111-4111-8111-111111111111'}  `,
+        startDate: '  2026-08-22  ',
       }),
     ).toEqual({
       page: 2,
       pageSize: 10,
       name: '周六团',
       status: 'pending',
+      dungeonId: '11111111-1111-4111-8111-111111111111',
+      startDate: '2026-08-22',
     });
   });
 
@@ -35,6 +39,8 @@ describe('raidRunsSearchSchema', () => {
       pageSize: 20,
       name: undefined,
       status: undefined,
+      dungeonId: undefined,
+      startDate: undefined,
     });
   });
 });
@@ -46,12 +52,16 @@ describe('toListRaidRunsFilters', () => {
         ...defaultRaidRunsSearch,
         name: '周六',
         status: 'recruiting',
+        dungeonId: '11111111-1111-4111-8111-111111111111',
+        startDate: '2026-08-22',
       }),
     ).toEqual({
       page: 1,
       pageSize: 20,
       name: '周六',
       status: 'recruiting',
+      dungeonId: '11111111-1111-4111-8111-111111111111',
+      startDate: '2026-08-22',
     });
   });
 });

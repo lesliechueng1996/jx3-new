@@ -46,6 +46,8 @@ describe('admin-raid-runs-api', () => {
         pageSize: 20,
         name: '周六',
         status: 'pending',
+        dungeonId: '11111111-1111-4111-8111-111111111111',
+        startDate: '2026-08-22',
       }),
     ).resolves.toEqual(payload);
     expect(raidRunGet).toHaveBeenCalledWith({
@@ -54,6 +56,8 @@ describe('admin-raid-runs-api', () => {
         pageSize: 20,
         name: '周六',
         status: 'pending',
+        dungeonId: '11111111-1111-4111-8111-111111111111',
+        startDate: '2026-08-22',
       },
     });
   });

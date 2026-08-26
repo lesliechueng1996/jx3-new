@@ -26,6 +26,16 @@ vi.mock('@/lib/api/admin/admin-raid-runs-api', () => ({
   adminDeleteRaidRun,
 }));
 
+vi.mock('@/lib/api/game-dungeons-api', () => ({
+  gameDungeonsSearchQueryKey: (name: string) => ['game-dungeons-search', name],
+  searchGameDungeons: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock('@/lib/api/admin/admin-game-dungeons-api', () => ({
+  adminGameDungeonQueryKey: (id: string) => ['admin-game-dungeon', id],
+  adminGetGameDungeon: vi.fn(),
+}));
+
 vi.mock('@/lib/api/kungfus-api', () => ({
   kungfusAllQueryKey: ['kungfus-all'],
   listAllKungfus,
@@ -55,7 +65,7 @@ const raidRunItem = {
   status: 'pending' as const,
   gameRaidId: 'game-1',
   dungeonId: '11111111-1111-4111-8111-111111111111',
-  dungeonName: '25人英雄',
+  dungeonName: '25人英雄河阳之战',
   startTime: '2026-08-22 21:00',
   endTime: '2026-08-23 00:00',
   reservedTank: 1,
@@ -108,6 +118,8 @@ describe('admin raid-runs route', () => {
         expect.objectContaining({
           name: undefined,
           status: undefined,
+          dungeonId: undefined,
+          startDate: undefined,
           page: 1,
         }),
       );

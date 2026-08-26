@@ -12,6 +12,8 @@ export type ListRaidRunsFilters = {
   pageSize: number;
   name?: string;
   status?: RaidRunStatus;
+  dungeonId?: string;
+  startDate?: string;
 };
 
 export const adminListRaidRuns = async (filters: ListRaidRunsFilters) => {
@@ -21,6 +23,8 @@ export const adminListRaidRuns = async (filters: ListRaidRunsFilters) => {
       pageSize: filters.pageSize,
       name: filters.name,
       status: filters.status,
+      dungeonId: filters.dungeonId,
+      startDate: filters.startDate,
     },
   });
 

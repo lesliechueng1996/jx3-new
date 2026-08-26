@@ -123,6 +123,8 @@ type RaidRunListRow = {
   gameRaidId: string | null;
   dungeonId: string;
   dungeonName: string | null;
+  dungeonPlayerLimit: number | null;
+  dungeonDifficulty: 'normal' | 'heroic' | 'challenge' | null;
   startTime: Date;
   endTime: Date | null;
   reservedTank: number;
@@ -1449,7 +1451,9 @@ const listRow = (overrides: Partial<RaidRunListRow> = {}): RaidRunListRow => ({
   status: 'pending',
   gameRaidId: 'game-1',
   dungeonId,
-  dungeonName: '25人英雄',
+  dungeonName: '河阳之战',
+  dungeonPlayerLimit: 25,
+  dungeonDifficulty: 'heroic',
   startTime,
   endTime,
   reservedTank: 1,
@@ -1483,6 +1487,17 @@ describe('listAdminRaidRuns', () => {
       pageSize: 10,
       name: '周六',
       status: 'pending',
+      dungeonId,
+      startDate: '2026-08-22',
+    });
+
+    expect(buildWhereClause).toHaveBeenCalledWith({
+      page: 2,
+      pageSize: 10,
+      name: '周六',
+      status: 'pending',
+      dungeonId,
+      startDate: '2026-08-22',
     });
 
     expect(listPagination).toHaveBeenCalledWith(undefined, 10, 10);
@@ -1494,7 +1509,7 @@ describe('listAdminRaidRuns', () => {
           status: 'pending',
           gameRaidId: 'game-1',
           dungeonId,
-          dungeonName: '25人英雄',
+          dungeonName: '25人英雄河阳之战',
           startTime: 'min:2026-08-22T13:00:00.000Z',
           endTime: 'min:2026-08-22T16:00:00.000Z',
           reservedTank: 1,
@@ -1518,6 +1533,8 @@ describe('listAdminRaidRuns', () => {
       listRow({
         gameRaidId: null,
         dungeonName: null,
+        dungeonPlayerLimit: null,
+        dungeonDifficulty: null,
         endTime: null,
         totalIncome: null,
         wagePerPerson: '',

@@ -36,6 +36,21 @@ export type AdminGameDungeonListItem = Awaited<
   ReturnType<typeof adminListGameDungeons>
 >['items'][number];
 
+export const adminGameDungeonQueryKey = (id: string) =>
+  ['admin-game-dungeon', id] as const;
+
+export const adminGetGameDungeon = async (dungeonId: string) => {
+  const { data, error } = await apiClient.api.v1['game-dungeon']({
+    id: dungeonId,
+  }).get();
+
+  if (error) {
+    throw new Error(error.value.message ?? '获取副本失败');
+  }
+
+  return data.data;
+};
+
 export type AdminGameDungeonFormValues = {
   name: string;
   expansionId: string;
