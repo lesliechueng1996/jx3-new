@@ -106,6 +106,106 @@ describe('IdiomGameRound', () => {
     expect(round.explainFeedbackRejection(answer)).toBe('char');
   });
 
+  it('accepts a black glyph already consumed by a green of the same glyph', () => {
+    const candidate = {
+      chars: [
+        makeChar(0, { char: '不', initial: 'b', final: 'u', tone: 4 }),
+        makeChar(1, { char: '堪', initial: 'k', final: 'an', tone: 1 }),
+        makeChar(2, { char: '设', initial: 'sh', final: 'e', tone: 4 }),
+        makeChar(3, { char: '想', initial: 'x', final: 'iang', tone: 3 }),
+      ],
+    } as Idiom;
+
+    const round = makeRound(
+      [
+        makeCell(0, {
+          char: '不',
+          charColor: GREEN,
+          initial: 'b',
+          final: 'u',
+          tone: 4,
+        }),
+        makeCell(1, {
+          char: '声',
+          initial: 'sh',
+          initialColor: ORANGE,
+          final: 'eng',
+          tone: 1,
+          toneColor: GREEN,
+        }),
+        makeCell(2, {
+          char: '不',
+          initial: 'b',
+          final: 'u',
+          tone: 4,
+          toneColor: GREEN,
+        }),
+        makeCell(3, {
+          char: '响',
+          initial: 'x',
+          initialColor: GREEN,
+          final: 'iang',
+          finalColor: GREEN,
+          tone: 3,
+          toneColor: GREEN,
+          syllableLink: GREEN,
+        }),
+      ],
+      '不声不响',
+    );
+
+    expect(round.explainFeedbackRejection(candidate)).toBeNull();
+  });
+
+  it('rejects a black glyph when a leftover copy remains after a green', () => {
+    const candidate = {
+      chars: [
+        makeChar(0, { char: '不', initial: 'b', final: 'u', tone: 4 }),
+        makeChar(1, { char: '声', initial: 'sh', final: 'eng', tone: 1 }),
+        makeChar(2, { char: '不', initial: 'b', final: 'u', tone: 4 }),
+        makeChar(3, { char: '响', initial: 'x', final: 'iang', tone: 3 }),
+      ],
+    } as Idiom;
+
+    const round = makeRound(
+      [
+        makeCell(0, {
+          char: '不',
+          charColor: GREEN,
+          initial: 'b',
+          final: 'u',
+          tone: 4,
+        }),
+        makeCell(1, {
+          char: '声',
+          charColor: GREEN,
+          initial: 'sh',
+          final: 'eng',
+          tone: 1,
+        }),
+        makeCell(2, {
+          char: '不',
+          initial: 'b',
+          initialColor: GREEN,
+          final: 'u',
+          finalColor: GREEN,
+          tone: 4,
+          toneColor: GREEN,
+        }),
+        makeCell(3, {
+          char: '响',
+          charColor: GREEN,
+          initial: 'x',
+          final: 'iang',
+          tone: 3,
+        }),
+      ],
+      '不声不响',
+    );
+
+    expect(round.explainFeedbackRejection(candidate)).toBe('char');
+  });
+
   it('rejects a black glyph that still appears in the answer', () => {
     const round = makeRound([
       makeCell(0, {

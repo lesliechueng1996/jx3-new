@@ -211,48 +211,15 @@ export class IdiomGameRound {
   }
 
   #validateCharMultiset(chars: IdiomChar[]) {
-    for (const cell of this.cells) {
-      if (cell.charColor === IdiomGameCellColor.BLACK) {
-        if (chars.some((char) => char.char === cell.char)) {
-          return false;
-        }
-      }
-    }
-
-    for (const cell of this.cells) {
-      if (cell.charColor === IdiomGameCellColor.GREEN) {
-        const answer = chars[cell.position];
-        if (answer.char !== cell.char) {
-          return false;
-        }
-      }
-    }
-
-    const remaining = this.#buildRemainingCounts(chars, (char) => char.char);
-    for (const cell of this.cells) {
-      if (cell.charColor === IdiomGameCellColor.GREEN) {
-        if (!this.#takeRemaining(remaining, cell.char)) {
-          return false;
-        }
-      }
-    }
-
-    for (const cell of this.cells) {
-      if (cell.charColor !== IdiomGameCellColor.ORANGE) {
-        continue;
-      }
-
-      const answer = chars[cell.position];
-      if (answer.char === cell.char) {
-        return false;
-      }
-
-      if (!this.#takeRemaining(remaining, cell.char)) {
-        return false;
-      }
-    }
-
-    return true;
+    // Same Wordle accounting as phonetics: black means no extras after
+    // greens/oranges, not "this glyph is absent from the whole answer".
+    return this.#validatePartMultiset(
+      chars,
+      this.cells,
+      (cell) => cell.charColor,
+      (cell) => cell.char,
+      (char) => char.char,
+    );
   }
 
   #buildRemainingCounts(
