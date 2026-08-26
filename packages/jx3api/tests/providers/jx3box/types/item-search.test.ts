@@ -6,6 +6,7 @@ describe('mapItemSearch', () => {
     expect(
       mapItemSearch({
         id: '6_42729',
+        Name: '睡起推篷',
         Level: 35300,
         IconID: 25571,
         MagicType: '130级武器用破防无双',
@@ -24,6 +25,7 @@ describe('mapItemSearch', () => {
     expect(
       mapItemSearch({
         id: '6_1',
+        Name: '五行石',
         Level: 1,
         IconID: 13,
         MagicType: null,

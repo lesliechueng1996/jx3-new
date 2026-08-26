@@ -8,6 +8,7 @@ export interface Jx3boxItemSearchAttributeRaw {
 /** Raw item entry from jx3box `item/search`. */
 export interface Jx3boxItemSearchItemRaw {
   id: string;
+  Name: string;
   Level: number;
   IconID: number;
   MagicType: string | null;
