@@ -50,6 +50,9 @@ const raidRunDetail = {
 const createRaidRun = mock<
   (body: unknown, userId: string) => Promise<{ id: string }>
 >(() => Promise.resolve({ id: raidRunId }));
+const copyRaidRun = mock<
+  (id: string, userId: string) => Promise<{ id: string }>
+>(() => Promise.resolve({ id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd' }));
 const getRaidRun = mock<(id: string) => Promise<typeof raidRunDetail>>(() =>
   Promise.resolve(raidRunDetail),
 );
@@ -105,9 +108,39 @@ const createRaidLoot = mock(async () => lootItem);
 const updateRaidLoot = mock(async () => lootItem);
 const deleteRaidLoot = mock(async () => undefined);
 
+const listAdminRaidRuns = mock(async () => ({
+  items: [
+    {
+      id: raidRunId,
+      name: '周六团',
+      status: 'pending' as const,
+      gameRaidId: 'game-1',
+      dungeonId,
+      dungeonName: '25人英雄',
+      startTime: '2026-08-22 21:00',
+      endTime: '2026-08-23 00:00',
+      reservedTank: 1,
+      reservedHealer: 0,
+      reservedDps: 0,
+      reservedBoss: 0,
+      totalIncome: 0,
+      wagePerPerson: 0,
+      subsidyAmount: 0,
+      signupCount: 25,
+    },
+  ],
+  total: 1,
+  page: 1,
+  pageSize: 20,
+}));
+const deleteAdminRaidRun = mock(async () => undefined);
+
 mock.module('@api/application/service/raid-run-service', () => ({
+  copyRaidRun,
   createRaidRun,
+  deleteAdminRaidRun,
   getRaidRun,
+  listAdminRaidRuns,
   saveRaidRun,
   updateRaidRunStatus,
   updateRaidRunGameRaidId,
@@ -176,6 +209,10 @@ describe('raidRunRoute', () => {
   beforeEach(() => {
     createRaidRun.mockReset();
     createRaidRun.mockResolvedValue({ id: raidRunId });
+    copyRaidRun.mockReset();
+    copyRaidRun.mockResolvedValue({
+      id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+    });
     getRaidRun.mockReset();
     getRaidRun.mockResolvedValue(raidRunDetail);
     saveRaidRun.mockReset();
@@ -198,6 +235,34 @@ describe('raidRunRoute', () => {
     updateRaidLoot.mockResolvedValue(lootItem);
     deleteRaidLoot.mockReset();
     deleteRaidLoot.mockResolvedValue(undefined);
+    listAdminRaidRuns.mockReset();
+    listAdminRaidRuns.mockResolvedValue({
+      items: [
+        {
+          id: raidRunId,
+          name: '周六团',
+          status: 'pending' as const,
+          gameRaidId: 'game-1',
+          dungeonId,
+          dungeonName: '25人英雄',
+          startTime: '2026-08-22 21:00',
+          endTime: '2026-08-23 00:00',
+          reservedTank: 1,
+          reservedHealer: 0,
+          reservedDps: 0,
+          reservedBoss: 0,
+          totalIncome: 0,
+          wagePerPerson: 0,
+          subsidyAmount: 0,
+          signupCount: 25,
+        },
+      ],
+      total: 1,
+      page: 1,
+      pageSize: 20,
+    });
+    deleteAdminRaidRun.mockReset();
+    deleteAdminRaidRun.mockResolvedValue(undefined);
   });
 
   it('exports an OpenAPI tag', () => {
@@ -296,6 +361,18 @@ describe('raidRunRoute', () => {
     expect(getRaidRun).toHaveBeenCalledWith(raidRunId);
     expect(body.data.id).toBe(raidRunId);
     expect(body.data.dungeon.name).toBe('25人英雄');
+  });
+
+  it('copies a raid run', async () => {
+    const copiedId = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+    const response = await jsonRequest(`/${raidRunId}/copy`, {
+      method: 'POST',
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(copyRaidRun).toHaveBeenCalledWith(raidRunId, 'actor-1');
+    expect(body.data.id).toBe(copiedId);
   });
 
   it('saves a raid run', async () => {
@@ -465,6 +542,34 @@ describe('raidRunRoute', () => {
 
     expect(response.status).toBe(200);
     expect(deleteRaidLoot).toHaveBeenCalledWith(raidRunId, lootItem.id);
+    expect(body.data).toBeNull();
+  });
+
+  it('lists raid runs', async () => {
+    const response = await jsonRequest(
+      '?page=1&pageSize=20&name=周六&status=pending',
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(listAdminRaidRuns).toHaveBeenCalled();
+    expect(body.data.total).toBe(1);
+    expect(body.data.items[0].id).toBe(raidRunId);
+  });
+
+  it('rejects an invalid list status', async () => {
+    const response = await jsonRequest('?page=1&pageSize=20&status=unknown');
+
+    expect(response.status).toBe(422);
+    expect(listAdminRaidRuns).not.toHaveBeenCalled();
+  });
+
+  it('deletes a raid run', async () => {
+    const response = await jsonRequest(`/${raidRunId}`, { method: 'DELETE' });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(deleteAdminRaidRun).toHaveBeenCalledWith(raidRunId);
     expect(body.data).toBeNull();
   });
 });

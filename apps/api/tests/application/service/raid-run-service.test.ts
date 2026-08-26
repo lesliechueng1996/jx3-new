@@ -30,6 +30,10 @@ const updateById = mock(
   async (_id: string, _values: Record<string, string>) =>
     null as Record<string, string | null> | null,
 );
+const updateStatus = mock(
+  async (_id: string, _status: string, _signupStatus?: string) =>
+    null as Record<string, string | null> | null,
+);
 const updateWithSignups = mock(
   async (
     _id: string,
@@ -39,6 +43,22 @@ const updateWithSignups = mock(
 );
 const findSignupsByRaidRunId = mock(async (_id: string) => [] as SignupRow[]);
 const findSignupsByIds = mock(async (_ids: string[]) => [] as SignupRow[]);
+const buildWhereClause = mock((_query: unknown) => undefined as unknown);
+const listPagination = mock(
+  async (_where: unknown, _limit: number, _offset: number) =>
+    [] as RaidRunListRow[],
+);
+const count = mock(
+  async (_where: unknown) =>
+    [{ total: 0 }] as Array<{
+      total: number;
+    }>,
+);
+const deleteWithChildren = mock(async (_id: string) => undefined);
+const formatDateTimeToMinute = mock(
+  (date: Date) => `min:${date.toISOString()}`,
+);
+const shiftToTodayKeepingTime = mock((value: Date | null) => value);
 
 type RaidRunRow = {
   id: string;
@@ -82,6 +102,8 @@ type DetailRow = {
     groupNumber: number | null;
     positionNumber: number | null;
     role: 'pending' | 'tank' | 'healer' | 'dps' | 'boss';
+    status: 'pending' | 'confirmed' | 'waitlist' | 'rejected';
+    isReserved: boolean;
     isLeader: boolean;
     isDarkRun: boolean;
     isFormationCore: boolean;
@@ -89,8 +111,28 @@ type DetailRow = {
     characterName: string | null;
     schoolId: string | null;
     kungfuId: string | null;
+    userId: string | null;
     remark: string | null;
   }>;
+};
+
+type RaidRunListRow = {
+  id: string;
+  name: string;
+  status: 'pending' | 'recruiting' | 'ongoing' | 'completed' | 'cancelled';
+  gameRaidId: string | null;
+  dungeonId: string;
+  dungeonName: string | null;
+  startTime: Date;
+  endTime: Date | null;
+  reservedTank: number;
+  reservedHealer: number;
+  reservedDps: number;
+  reservedBoss: number;
+  totalIncome: string | null;
+  wagePerPerson: string | null;
+  subsidyAmount: string | null;
+  signupCount: number;
 };
 
 type DungeonRow = {
@@ -222,8 +264,18 @@ mock.module('@api/infrastructure/repository/raid-run-repository', () => ({
     findById,
     findDetailById,
     updateById,
+    updateStatus,
     updateWithSignups,
+    buildWhereClause,
+    listPagination,
+    count,
+    deleteWithChildren,
   },
+}));
+
+mock.module('@api/shared/util/date', () => ({
+  formatDateTimeToMinute,
+  shiftToTodayKeepingTime,
 }));
 
 mock.module('@api/infrastructure/repository/raid-signup-repository', () => ({
@@ -234,8 +286,11 @@ mock.module('@api/infrastructure/repository/raid-signup-repository', () => ({
 }));
 
 const {
+  copyRaidRun,
   createRaidRun,
+  deleteAdminRaidRun,
   getRaidRun,
+  listAdminRaidRuns,
   saveRaidRun,
   updateRaidRunGameRaidId,
   updateRaidRunStatus,
@@ -969,6 +1024,8 @@ const defaultDetailSignup = {
   groupNumber: 1 as number | null,
   positionNumber: 1 as number | null,
   role: 'tank' as const,
+  status: 'confirmed' as const,
+  isReserved: true,
   isLeader: true,
   isDarkRun: true,
   isFormationCore: true,
@@ -976,7 +1033,8 @@ const defaultDetailSignup = {
   characterName: '团长' as string | null,
   schoolId: null as string | null,
   kungfuId: null as string | null,
-  remark: null as string | null,
+  userId: 'signup-user-1' as string | null,
+  remark: '原备注' as string | null,
 };
 
 const detailRow = (overrides: Partial<DetailRow> = {}): DetailRow => ({
@@ -1257,11 +1315,11 @@ describe('saveRaidRun', () => {
 describe('updateRaidRunStatus', () => {
   beforeEach(() => {
     findById.mockReset();
-    updateById.mockReset();
+    updateStatus.mockReset();
     logger.info.mockReset();
     logger.error.mockReset();
     findById.mockResolvedValue({ id: raidRunId, status: 'pending' });
-    updateById.mockResolvedValue({ status: 'recruiting' });
+    updateStatus.mockResolvedValue({ status: 'recruiting' });
   });
 
   it('allows pending to recruiting', async () => {
@@ -1270,30 +1328,42 @@ describe('updateRaidRunStatus', () => {
     });
 
     expect(result).toEqual({ status: 'recruiting' });
-    expect(updateById).toHaveBeenCalledWith(raidRunId, {
-      status: 'recruiting',
-    });
+    expect(updateStatus).toHaveBeenCalledWith(
+      raidRunId,
+      'recruiting',
+      undefined,
+    );
     expect(logger.info).toHaveBeenCalled();
   });
 
-  it('allows recruiting to ongoing', async () => {
+  it('allows recruiting to ongoing and confirms signups', async () => {
     findById.mockResolvedValue({ id: raidRunId, status: 'recruiting' });
-    updateById.mockResolvedValue({ status: 'ongoing' });
+    updateStatus.mockResolvedValue({ status: 'ongoing' });
 
     const result = await updateRaidRunStatus(raidRunId, { status: 'ongoing' });
 
     expect(result).toEqual({ status: 'ongoing' });
+    expect(updateStatus).toHaveBeenCalledWith(
+      raidRunId,
+      'ongoing',
+      'confirmed',
+    );
   });
 
   it('allows ongoing to completed', async () => {
     findById.mockResolvedValue({ id: raidRunId, status: 'ongoing' });
-    updateById.mockResolvedValue({ status: 'completed' });
+    updateStatus.mockResolvedValue({ status: 'completed' });
 
     const result = await updateRaidRunStatus(raidRunId, {
       status: 'completed',
     });
 
     expect(result).toEqual({ status: 'completed' });
+    expect(updateStatus).toHaveBeenCalledWith(
+      raidRunId,
+      'completed',
+      undefined,
+    );
   });
 
   it('rejects an illegal transition', async () => {
@@ -1305,7 +1375,7 @@ describe('updateRaidRunStatus', () => {
       expect((error as BadRequestException).code).toBe(
         ERROR_CODES.RAID_RUN_STATUS_TRANSITION_INVALID,
       );
-      expect(updateById).not.toHaveBeenCalled();
+      expect(updateStatus).not.toHaveBeenCalled();
     }
   });
 
@@ -1349,7 +1419,7 @@ describe('updateRaidRunStatus', () => {
   });
 
   it('throws when the update returns no row', async () => {
-    updateById.mockResolvedValue(null);
+    updateStatus.mockResolvedValue(null);
 
     try {
       await updateRaidRunStatus(raidRunId, { status: 'recruiting' });
@@ -1361,10 +1431,278 @@ describe('updateRaidRunStatus', () => {
 
   it('logs and rethrows repository failures', async () => {
     const failure = new Error('db down');
-    updateById.mockRejectedValue(failure);
+    updateStatus.mockRejectedValue(failure);
 
     try {
       await updateRaidRunStatus(raidRunId, { status: 'recruiting' });
+      throw new Error('expected repository error');
+    } catch (error) {
+      expect(error).toBe(failure);
+      expect(logger.error).toHaveBeenCalled();
+    }
+  });
+});
+
+const listRow = (overrides: Partial<RaidRunListRow> = {}): RaidRunListRow => ({
+  id: 'raid-run-1',
+  name: '周六团',
+  status: 'pending',
+  gameRaidId: 'game-1',
+  dungeonId,
+  dungeonName: '25人英雄',
+  startTime,
+  endTime,
+  reservedTank: 1,
+  reservedHealer: 2,
+  reservedDps: 20,
+  reservedBoss: 2,
+  totalIncome: '15000',
+  wagePerPerson: '1300.9',
+  subsidyAmount: '2000',
+  signupCount: 25,
+  ...overrides,
+});
+
+describe('listAdminRaidRuns', () => {
+  beforeEach(() => {
+    buildWhereClause.mockReset();
+    listPagination.mockReset();
+    count.mockReset();
+    formatDateTimeToMinute.mockClear();
+    buildWhereClause.mockReturnValue(undefined);
+    listPagination.mockResolvedValue([]);
+    count.mockResolvedValue([{ total: 0 }]);
+  });
+
+  it('lists raid runs and maps rows', async () => {
+    listPagination.mockResolvedValue([listRow()]);
+    count.mockResolvedValue([{ total: 1 }]);
+
+    const result = await listAdminRaidRuns({
+      page: 2,
+      pageSize: 10,
+      name: '周六',
+      status: 'pending',
+    });
+
+    expect(listPagination).toHaveBeenCalledWith(undefined, 10, 10);
+    expect(result).toEqual({
+      items: [
+        {
+          id: 'raid-run-1',
+          name: '周六团',
+          status: 'pending',
+          gameRaidId: 'game-1',
+          dungeonId,
+          dungeonName: '25人英雄',
+          startTime: 'min:2026-08-22T13:00:00.000Z',
+          endTime: 'min:2026-08-22T16:00:00.000Z',
+          reservedTank: 1,
+          reservedHealer: 2,
+          reservedDps: 20,
+          reservedBoss: 2,
+          totalIncome: 15000,
+          wagePerPerson: 1300,
+          subsidyAmount: 2000,
+          signupCount: 25,
+        },
+      ],
+      total: 1,
+      page: 2,
+      pageSize: 10,
+    });
+  });
+
+  it('defaults list total to 0 and maps nullable fields', async () => {
+    listPagination.mockResolvedValue([
+      listRow({
+        gameRaidId: null,
+        dungeonName: null,
+        endTime: null,
+        totalIncome: null,
+        wagePerPerson: '',
+        subsidyAmount: 'not-a-number',
+      }),
+    ]);
+    count.mockResolvedValue([]);
+
+    const result = await listAdminRaidRuns({ page: 1, pageSize: 20 });
+
+    expect(result.total).toBe(0);
+    expect(result.items[0]).toMatchObject({
+      gameRaidId: null,
+      dungeonName: null,
+      endTime: null,
+      totalIncome: 0,
+      wagePerPerson: 0,
+      subsidyAmount: 0,
+    });
+  });
+});
+
+describe('deleteAdminRaidRun', () => {
+  beforeEach(() => {
+    findById.mockReset();
+    deleteWithChildren.mockReset();
+    logger.info.mockReset();
+    logger.error.mockReset();
+    findById.mockResolvedValue({ id: 'raid-run-1', status: 'pending' });
+    deleteWithChildren.mockResolvedValue(undefined);
+  });
+
+  it('deletes a raid run and related rows', async () => {
+    await deleteAdminRaidRun('raid-run-1');
+
+    expect(deleteWithChildren).toHaveBeenCalledWith('raid-run-1');
+    expect(logger.info).toHaveBeenCalled();
+  });
+
+  it('throws when the raid run is missing', async () => {
+    findById.mockResolvedValue(null);
+
+    await expect(deleteAdminRaidRun('missing')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+    expect(deleteWithChildren).not.toHaveBeenCalled();
+  });
+
+  it('logs and rethrows repository failures', async () => {
+    const failure = new Error('db down');
+    deleteWithChildren.mockRejectedValue(failure);
+
+    try {
+      await deleteAdminRaidRun('raid-run-1');
+      throw new Error('expected repository error');
+    } catch (error) {
+      expect(error).toBe(failure);
+      expect(logger.error).toHaveBeenCalled();
+    }
+  });
+});
+
+describe('copyRaidRun', () => {
+  const copierId = 'copier-1';
+  const copiedId = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+
+  beforeEach(() => {
+    findDetailById.mockReset();
+    createWithSignups.mockReset();
+    shiftToTodayKeepingTime.mockReset();
+    logger.info.mockReset();
+    logger.error.mockReset();
+    shiftToTodayKeepingTime.mockImplementation((value: Date | null) => value);
+    findDetailById.mockResolvedValue(
+      detailRow({
+        run: {
+          ...defaultDetailRun,
+          description: '周六开团',
+          gameRaidId: 'game-1',
+          remark: '原团备注',
+          totalIncome: '15000',
+          subsidyAmount: '2000',
+          wagePerPerson: '1300',
+        },
+      }),
+    );
+    createWithSignups.mockResolvedValue({ id: copiedId });
+  });
+
+  it('copies a raid run and signups with reset fields', async () => {
+    const result = await copyRaidRun(raidRunId, copierId);
+
+    expect(result).toEqual({ id: copiedId });
+    expect(shiftToTodayKeepingTime).toHaveBeenCalledWith(gatherTime);
+    expect(shiftToTodayKeepingTime).toHaveBeenCalledWith(startTime);
+    expect(shiftToTodayKeepingTime).toHaveBeenCalledWith(endTime);
+    expect(createWithSignups).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: '周六团',
+        description: '周六开团',
+        dungeonId,
+        gameRaidId: null,
+        createdBy: copierId,
+        status: 'pending',
+        gatherTime,
+        startTime,
+        endTime,
+        reservedTank: 1,
+        reservedHealer: 0,
+        reservedDps: 0,
+        reservedBoss: 0,
+        remark: null,
+        signups: [
+          expect.objectContaining({
+            groupNumber: 1,
+            positionNumber: 1,
+            role: 'tank',
+            status: 'pending',
+            isReserved: true,
+            isLeader: true,
+            isDarkRun: true,
+            isFormationCore: true,
+            characterName: '团长',
+            userId: 'signup-user-1',
+            createdBy: copierId,
+            remark: null,
+          }),
+        ],
+      }),
+    );
+    const payload = createWithSignups.mock.calls[0]?.[0] as {
+      totalIncome?: string;
+      wagePerPerson?: string;
+      subsidyAmount?: string;
+    };
+    expect(payload.totalIncome).toBeUndefined();
+    expect(payload.wagePerPerson).toBeUndefined();
+    expect(payload.subsidyAmount).toBeUndefined();
+    expect(logger.info).toHaveBeenCalled();
+  });
+
+  it('keeps null gather and end times', async () => {
+    findDetailById.mockResolvedValue(
+      detailRow({
+        run: {
+          ...defaultDetailRun,
+          gatherTime: null,
+          endTime: null,
+        },
+      }),
+    );
+
+    await copyRaidRun(raidRunId, copierId);
+
+    expect(shiftToTodayKeepingTime).toHaveBeenCalledWith(null);
+    expect(createWithSignups).toHaveBeenCalledWith(
+      expect.objectContaining({
+        gatherTime: null,
+        endTime: null,
+        startTime,
+      }),
+    );
+  });
+
+  it('throws when the raid run is missing', async () => {
+    findDetailById.mockResolvedValue(null);
+
+    try {
+      await copyRaidRun(raidRunId, copierId);
+      throw new Error('expected NotFoundException');
+    } catch (error) {
+      expect(error).toBeInstanceOf(NotFoundException);
+      expect((error as NotFoundException).code).toBe(
+        ERROR_CODES.RAID_RUN_NOT_FOUND,
+      );
+    }
+    expect(createWithSignups).not.toHaveBeenCalled();
+  });
+
+  it('logs and rethrows repository failures', async () => {
+    const failure = new Error('db down');
+    createWithSignups.mockRejectedValue(failure);
+
+    try {
+      await copyRaidRun(raidRunId, copierId);
       throw new Error('expected repository error');
     } catch (error) {
       expect(error).toBe(failure);

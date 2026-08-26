@@ -1,4 +1,5 @@
 import { type Static, t } from 'elysia';
+import { paginationQuerySchema, paginationResponseSchema } from './common';
 import { dungeonDifficultySchema } from './game-dungeon-schema';
 
 const remarkSchema = t.String({
@@ -202,6 +203,10 @@ export const raidRunIdParamsSchema = t.Object({
   }),
 });
 
+export const copyRaidRunResponseSchema = t.Object({
+  id: t.String(),
+});
+
 export const updateRaidRunGameRaidIdBodySchema = t.Object({
   gameRaidId: t.String({
     minLength: 1,
@@ -251,3 +256,41 @@ export type UpdateRaidRunStatusBody = Static<
 export const updateRaidRunStatusResponseSchema = t.Object({
   status: raidRunStatusSchema,
 });
+
+export const raidRunListItemSchema = t.Object({
+  id: t.String(),
+  name: t.String(),
+  status: raidRunStatusSchema,
+  gameRaidId: nullableString,
+  dungeonId: t.String(),
+  dungeonName: nullableString,
+  startTime: t.String(),
+  endTime: nullableString,
+  reservedTank: t.Integer(),
+  reservedHealer: t.Integer(),
+  reservedDps: t.Integer(),
+  reservedBoss: t.Integer(),
+  totalIncome: t.Integer(),
+  wagePerPerson: t.Integer(),
+  subsidyAmount: t.Integer(),
+  signupCount: t.Integer(),
+});
+
+export type RaidRunListItem = Static<typeof raidRunListItemSchema>;
+
+export const listRaidRunsQuerySchema = t.Composite([
+  paginationQuerySchema,
+  t.Object({
+    name: t.Optional(t.String()),
+    status: t.Optional(raidRunStatusSchema),
+  }),
+]);
+
+export type ListRaidRunsQuery = Static<typeof listRaidRunsQuerySchema>;
+
+export const listRaidRunsResponseSchema = t.Composite([
+  paginationResponseSchema,
+  t.Object({
+    items: t.Array(raidRunListItemSchema),
+  }),
+]);
