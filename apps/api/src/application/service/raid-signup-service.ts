@@ -1,10 +1,39 @@
 import { raidSignupRepository } from '@api/infrastructure/repository/raid-signup-repository';
-import type { RaidSignupSearchItem } from '@api/interface/schema/raid-signup-schema';
+import type { DungeonDifficulty } from '@api/interface/schema/game-dungeon-schema';
+import type {
+  ListRaidSignupsQuery,
+  RaidSignupFlag,
+  RaidSignupListItem,
+  RaidSignupSearchItem,
+} from '@api/interface/schema/raid-signup-schema';
+import { formatDateTimeToMinute } from '@api/shared/util/date';
+
+const DUNGEON_DIFFICULTY_LABEL: Record<DungeonDifficulty, string> = {
+  normal: '普通',
+  heroic: '英雄',
+  challenge: '挑战',
+};
+
+const formatDungeonDisplayName = (
+  name: string | null,
+  playerLimit: number | null,
+  difficulty: DungeonDifficulty | null,
+): string | null => {
+  if (!name || playerLimit === null || !difficulty) {
+    return null;
+  }
+
+  return `${playerLimit}人${DUNGEON_DIFFICULTY_LABEL[difficulty]}${name}`;
+};
 
 const RAID_SIGNUP_SEARCH_LIMIT = 10;
 
 type RaidSignupSearchRow = Awaited<
   ReturnType<typeof raidSignupRepository.searchByCharacterName>
+>[number];
+
+type RaidSignupListRow = Awaited<
+  ReturnType<typeof raidSignupRepository.listPagination>
 >[number];
 
 const toRaidSignupSearchItem = (
@@ -43,4 +72,66 @@ export const searchRaidSignups = async (
     const item = toRaidSignupSearchItem(row);
     return item ? [item] : [];
   });
+};
+
+export const normalizeRaidSignupFlags = (
+  flags: ListRaidSignupsQuery['flags'],
+): RaidSignupFlag[] | undefined => {
+  if (flags === undefined) {
+    return undefined;
+  }
+
+  const list = Array.isArray(flags) ? flags : [flags];
+  const unique = [...new Set(list)];
+  return unique.length === 0 ? undefined : unique;
+};
+
+const toRaidSignupListItem = (row: RaidSignupListRow): RaidSignupListItem => ({
+  id: row.id,
+  raidRunId: row.raidRunId,
+  raidRunName: row.raidRunName,
+  startTime: row.startTime ? formatDateTimeToMinute(row.startTime) : null,
+  dungeonName: formatDungeonDisplayName(
+    row.dungeonName,
+    row.dungeonPlayerLimit,
+    row.dungeonDifficulty,
+  ),
+  role: row.role,
+  status: row.status,
+  isReserved: row.isReserved,
+  isLeader: row.isLeader,
+  isDarkRun: row.isDarkRun,
+  isFormationCore: row.isFormationCore,
+  characterName: row.characterName ?? '',
+  serverName: row.serverName,
+  kungfuName: row.kungfuName,
+  createdAt: formatDateTimeToMinute(row.createdAt),
+});
+
+export const listAdminRaidSignups = async (
+  query: ListRaidSignupsQuery,
+): Promise<{
+  items: RaidSignupListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}> => {
+  const normalizedQuery = {
+    ...query,
+    flags: normalizeRaidSignupFlags(query.flags),
+  };
+  const where = raidSignupRepository.buildWhereClause(normalizedQuery);
+  const offset = (query.page - 1) * query.pageSize;
+
+  const [rows, totalRows] = await Promise.all([
+    raidSignupRepository.listPagination(where, query.pageSize, offset),
+    raidSignupRepository.count(where),
+  ]);
+
+  return {
+    items: rows.map(toRaidSignupListItem),
+    total: totalRows[0]?.total ?? 0,
+    page: query.page,
+    pageSize: query.pageSize,
+  };
 };

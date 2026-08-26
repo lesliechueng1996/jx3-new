@@ -23,6 +23,7 @@ import { Route as AuthenticatedAdminGameServersIndexRouteImport } from './routes
 import { Route as AuthenticatedAdminIdiomsIndexRouteImport } from './routes/_authenticated/admin/idioms/index'
 import { Route as AuthenticatedAdminKungfusIndexRouteImport } from './routes/_authenticated/admin/kungfus/index'
 import { Route as AuthenticatedAdminRaidRunsIndexRouteImport } from './routes/_authenticated/admin/raid-runs/index'
+import { Route as AuthenticatedAdminRaidSignupsIndexRouteImport } from './routes/_authenticated/admin/raid-signups/index'
 import { Route as AuthenticatedAdminSchoolsIndexRouteImport } from './routes/_authenticated/admin/schools/index'
 import { Route as AuthenticatedAdminUsersIndexRouteImport } from './routes/_authenticated/admin/users/index'
 import { Route as AuthenticatedGameAssistGuessIdiomIndexRouteImport } from './routes/_authenticated/game-assist/guess-idiom/index'
@@ -105,6 +106,12 @@ const AuthenticatedAdminRaidRunsIndexRoute =
     path: '/raid-runs/',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminRaidSignupsIndexRoute =
+  AuthenticatedAdminRaidSignupsIndexRouteImport.update({
+    id: '/raid-signups/',
+    path: '/raid-signups/',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminSchoolsIndexRoute =
   AuthenticatedAdminSchoolsIndexRouteImport.update({
     id: '/schools/',
@@ -144,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/admin/idioms/': typeof AuthenticatedAdminIdiomsIndexRoute
   '/admin/kungfus/': typeof AuthenticatedAdminKungfusIndexRoute
   '/admin/raid-runs/': typeof AuthenticatedAdminRaidRunsIndexRoute
+  '/admin/raid-signups/': typeof AuthenticatedAdminRaidSignupsIndexRoute
   '/admin/schools/': typeof AuthenticatedAdminSchoolsIndexRoute
   '/admin/users/': typeof AuthenticatedAdminUsersIndexRoute
   '/game-assist/guess-idiom/': typeof AuthenticatedGameAssistGuessIdiomIndexRoute
@@ -163,6 +171,7 @@ export interface FileRoutesByTo {
   '/admin/idioms': typeof AuthenticatedAdminIdiomsIndexRoute
   '/admin/kungfus': typeof AuthenticatedAdminKungfusIndexRoute
   '/admin/raid-runs': typeof AuthenticatedAdminRaidRunsIndexRoute
+  '/admin/raid-signups': typeof AuthenticatedAdminRaidSignupsIndexRoute
   '/admin/schools': typeof AuthenticatedAdminSchoolsIndexRoute
   '/admin/users': typeof AuthenticatedAdminUsersIndexRoute
   '/game-assist/guess-idiom': typeof AuthenticatedGameAssistGuessIdiomIndexRoute
@@ -184,6 +193,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/idioms/': typeof AuthenticatedAdminIdiomsIndexRoute
   '/_authenticated/admin/kungfus/': typeof AuthenticatedAdminKungfusIndexRoute
   '/_authenticated/admin/raid-runs/': typeof AuthenticatedAdminRaidRunsIndexRoute
+  '/_authenticated/admin/raid-signups/': typeof AuthenticatedAdminRaidSignupsIndexRoute
   '/_authenticated/admin/schools/': typeof AuthenticatedAdminSchoolsIndexRoute
   '/_authenticated/admin/users/': typeof AuthenticatedAdminUsersIndexRoute
   '/_authenticated/game-assist/guess-idiom/': typeof AuthenticatedGameAssistGuessIdiomIndexRoute
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
     | '/admin/idioms/'
     | '/admin/kungfus/'
     | '/admin/raid-runs/'
+    | '/admin/raid-signups/'
     | '/admin/schools/'
     | '/admin/users/'
     | '/game-assist/guess-idiom/'
@@ -224,6 +235,7 @@ export interface FileRouteTypes {
     | '/admin/idioms'
     | '/admin/kungfus'
     | '/admin/raid-runs'
+    | '/admin/raid-signups'
     | '/admin/schools'
     | '/admin/users'
     | '/game-assist/guess-idiom'
@@ -244,6 +256,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/idioms/'
     | '/_authenticated/admin/kungfus/'
     | '/_authenticated/admin/raid-runs/'
+    | '/_authenticated/admin/raid-signups/'
     | '/_authenticated/admin/schools/'
     | '/_authenticated/admin/users/'
     | '/_authenticated/game-assist/guess-idiom/'
@@ -356,6 +369,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRaidRunsIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/raid-signups/': {
+      id: '/_authenticated/admin/raid-signups/'
+      path: '/raid-signups'
+      fullPath: '/admin/raid-signups/'
+      preLoaderRoute: typeof AuthenticatedAdminRaidSignupsIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/schools/': {
       id: '/_authenticated/admin/schools/'
       path: '/schools'
@@ -395,6 +415,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminIdiomsIndexRoute: typeof AuthenticatedAdminIdiomsIndexRoute
   AuthenticatedAdminKungfusIndexRoute: typeof AuthenticatedAdminKungfusIndexRoute
   AuthenticatedAdminRaidRunsIndexRoute: typeof AuthenticatedAdminRaidRunsIndexRoute
+  AuthenticatedAdminRaidSignupsIndexRoute: typeof AuthenticatedAdminRaidSignupsIndexRoute
   AuthenticatedAdminSchoolsIndexRoute: typeof AuthenticatedAdminSchoolsIndexRoute
   AuthenticatedAdminUsersIndexRoute: typeof AuthenticatedAdminUsersIndexRoute
 }
@@ -412,6 +433,8 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminIdiomsIndexRoute: AuthenticatedAdminIdiomsIndexRoute,
     AuthenticatedAdminKungfusIndexRoute: AuthenticatedAdminKungfusIndexRoute,
     AuthenticatedAdminRaidRunsIndexRoute: AuthenticatedAdminRaidRunsIndexRoute,
+    AuthenticatedAdminRaidSignupsIndexRoute:
+      AuthenticatedAdminRaidSignupsIndexRoute,
     AuthenticatedAdminSchoolsIndexRoute: AuthenticatedAdminSchoolsIndexRoute,
     AuthenticatedAdminUsersIndexRoute: AuthenticatedAdminUsersIndexRoute,
   }
