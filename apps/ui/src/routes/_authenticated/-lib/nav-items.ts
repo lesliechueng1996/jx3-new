@@ -107,7 +107,14 @@ function normalizePath(path: string): string {
 }
 
 export function isNavPathActive(pathname: string, to: string): boolean {
-  return normalizePath(pathname) === normalizePath(to);
+  const current = normalizePath(pathname);
+  const target = normalizePath(to);
+
+  if (target === '/') {
+    return current === '/';
+  }
+
+  return current === target || current.startsWith(`${target}/`);
 }
 
 export function isNavItemActive(pathname: string, item: NavItem): boolean {

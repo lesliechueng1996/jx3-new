@@ -57,7 +57,9 @@ export function KungfuSearchSelectComponent({
     if (isFocusedRef.current) {
       return;
     }
-    setInputValue(kungfuInputLabel(value, kungfus));
+    const next = kungfuInputLabel(value, kungfus);
+    inputValueRef.current = next;
+    setInputValue(next);
   }, [kungfus, value]);
 
   let emptyMessage = '未找到心法';

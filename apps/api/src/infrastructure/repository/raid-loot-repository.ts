@@ -1,4 +1,4 @@
-import { db, desc, eq, gameItem, raidLoot } from '@api/shared/util/db';
+import { asc, db, eq, gameItem, raidLoot } from '@api/shared/util/db';
 
 type RaidLootInsert = typeof raidLoot.$inferInsert;
 
@@ -52,7 +52,7 @@ export class RaidLootRepository {
       .from(raidLoot)
       .leftJoin(gameItem, eq(raidLoot.itemId, gameItem.id))
       .where(eq(raidLoot.raidRunId, raidRunId))
-      .orderBy(desc(raidLoot.createdAt));
+      .orderBy(asc(raidLoot.createdAt));
   }
 
   async findById(id: string) {

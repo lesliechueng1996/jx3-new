@@ -83,7 +83,10 @@ const RaidTeamLayout = ({ className }: Props) => {
                 </div>
                 {group.map((signup) => (
                   <RaidSignupSlotCell
-                    key={signup.id}
+                    key={raidSignupSlotId(
+                      signup.groupNumber,
+                      signup.positionNumber,
+                    )}
                     signup={signup}
                     selected={
                       selectedSlot?.groupNumber === signup.groupNumber &&

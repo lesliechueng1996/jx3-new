@@ -60,7 +60,9 @@ export function GameServerSearchSelectComponent({
     if (isFocusedRef.current) {
       return;
     }
-    setInputValue(gameServerInputLabel(value, servers));
+    const next = gameServerInputLabel(value, servers);
+    inputValueRef.current = next;
+    setInputValue(next);
   }, [servers, value]);
 
   let emptyMessage = '未找到服务器';

@@ -46,11 +46,11 @@ const signupWriteFields = (signup: SaveRaidRunBody['signups'][number]) => {
     isLeader: signup.isLeader,
     isDarkRun: signup.isDarkRun,
     isFormationCore: signup.isFormationCore,
-    serverId: signup.serverId,
+    serverId: signup.serverId ?? null,
     characterName,
-    schoolId: signup.schoolId,
-    kungfuId: signup.kungfuId,
-    remark: signup.remark,
+    schoolId: signup.schoolId ?? null,
+    kungfuId: signup.kungfuId ?? null,
+    remark: signup.remark ?? null,
   };
 };
 

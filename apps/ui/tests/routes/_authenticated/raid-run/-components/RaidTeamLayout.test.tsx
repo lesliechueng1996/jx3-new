@@ -241,4 +241,33 @@ describe('RaidTeamLayout', () => {
       'true',
     );
   });
+
+  it('keeps slot buttons in place after a swap', async () => {
+    const run = useRaidRun.getState().raidRun;
+    run.signups[1][2] = setRaidSignupCharacterName(
+      setRaidSignupRole(run.signups[1][2], 'healer'),
+      '少侠乙',
+    );
+    useRaidRun.setState({ raidRun: run, selectedSlot: null });
+    renderWithQueryClient(<RaidTeamLayout />);
+
+    const source = screen.getByRole('button', { name: '第1队第1位' });
+    const target = screen.getByRole('button', { name: '第2队第3位' });
+
+    dndKit.onDragEnd?.({
+      canceled: false,
+      operation: {
+        source: { id: '1:1' },
+        target: { id: '2:3' },
+      },
+    });
+
+    await waitFor(() => {
+      expect(useRaidRun.getState().raidRun.signups[0][0].characterName).toBe(
+        '少侠乙',
+      );
+    });
+    expect(screen.getByRole('button', { name: '第1队第1位' })).toBe(source);
+    expect(screen.getByRole('button', { name: '第2队第3位' })).toBe(target);
+  });
 });

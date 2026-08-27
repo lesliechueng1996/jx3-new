@@ -1179,6 +1179,40 @@ describe('saveRaidRun', () => {
     expect(logger.info).toHaveBeenCalled();
   });
 
+  it('clears omitted signup kungfu, server, school, and remark', async () => {
+    await saveRaidRun(
+      raidRunId,
+      validBody({
+        signups: [
+          signup({
+            id: signupId,
+            characterName: undefined,
+            serverId: undefined,
+            schoolId: undefined,
+            kungfuId: undefined,
+            remark: undefined,
+          }),
+        ],
+      }),
+      userId,
+    );
+
+    expect(updateWithSignups.mock.calls[0]?.[2]).toEqual(
+      expect.objectContaining({
+        toUpdate: [
+          expect.objectContaining({
+            id: signupId,
+            characterName: null,
+            serverId: null,
+            schoolId: null,
+            kungfuId: null,
+            remark: null,
+          }),
+        ],
+      }),
+    );
+  });
+
   it('inserts unknown ids and deletes missing current signups', async () => {
     await saveRaidRun(raidRunId, validBody(), userId);
 

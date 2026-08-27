@@ -13,6 +13,8 @@ describe('nav-items', () => {
     expect(isNavPathActive('/admin/idioms/', '/admin/idioms')).toBe(true);
     expect(isNavPathActive('/', '/')).toBe(true);
     expect(isNavPathActive('/login', '/')).toBe(false);
+    expect(isNavPathActive('/raid-run/run-1', '/raid-run')).toBe(true);
+    expect(isNavPathActive('/admin/raid-runs', '/raid-run')).toBe(false);
   });
 
   it('treats a branch as active when a child matches', () => {
@@ -31,6 +33,14 @@ describe('nav-items', () => {
     }
     expect(isNavItemActive('/', home)).toBe(true);
     expect(isNavItemActive('/admin/idioms', home)).toBe(false);
+
+    const raidRun = navItems.find((item) => item.to === '/raid-run');
+    if (!raidRun) {
+      throw new Error('missing 开团 nav item');
+    }
+    expect(isNavItemActive('/raid-run', raidRun)).toBe(true);
+    expect(isNavItemActive('/raid-run/run-1', raidRun)).toBe(true);
+    expect(isNavItemActive('/admin/raid-runs', raidRun)).toBe(false);
   });
 
   it('returns false when a leaf has no path', () => {
@@ -42,6 +52,7 @@ describe('nav-items', () => {
   it('resolves the active leaf title from the pathname', () => {
     expect(getActiveNavTitle('/')).toBe('概览');
     expect(getActiveNavTitle('/raid-run/')).toBe('开团');
+    expect(getActiveNavTitle('/raid-run/run-1')).toBe('开团');
     expect(getActiveNavTitle('/game-assist/guess-idiom')).toBe('猜成语');
     expect(getActiveNavTitle('/game-assist/minesweeper')).toBe('扫雷');
     expect(getActiveNavTitle('/admin/idioms')).toBe('成语管理');
@@ -52,6 +63,9 @@ describe('nav-items', () => {
 
   it('builds the document title from the active nav item', () => {
     expect(getDocumentTitle('/raid-run')).toBe(`开团 · ${APP_DOCUMENT_TITLE}`);
+    expect(getDocumentTitle('/raid-run/run-1')).toBe(
+      `开团 · ${APP_DOCUMENT_TITLE}`,
+    );
     expect(getDocumentTitle('/unknown')).toBe(APP_DOCUMENT_TITLE);
   });
 });
