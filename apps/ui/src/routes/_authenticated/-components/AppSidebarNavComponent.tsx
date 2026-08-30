@@ -24,7 +24,7 @@ import {
   isNavItemActive,
   isNavPathActive,
   type NavItem,
-  navItems,
+  visibleNavItems,
 } from '../-lib/nav-items';
 
 const activeLeafClassName =
@@ -114,8 +114,11 @@ function NavBranchItem({ item }: { item: NavItem }) {
 }
 
 export function AppSidebarNavComponent({
+  userRole,
   ...props
-}: ComponentProps<typeof Sidebar>) {
+}: ComponentProps<typeof Sidebar> & { userRole?: string | null }) {
+  const items = visibleNavItems(userRole);
+
   return (
     <Sidebar
       collapsible="icon"
@@ -126,7 +129,7 @@ export function AppSidebarNavComponent({
         <SidebarGroup>
           <SidebarGroupLabel>导航</SidebarGroupLabel>
           <SidebarMenu>
-            {navItems.map((item) =>
+            {items.map((item) =>
               item.children?.length ? (
                 <NavBranchItem key={item.title} item={item} />
               ) : (

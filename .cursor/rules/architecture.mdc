@@ -35,6 +35,6 @@ Do not skip those layers: route handlers stay thin; pages never call Eden/`fetch
 7. UI wrappers in `lib/api/` (admin CRUD vs user feature)
 8. Admin CRUD under `routes/_authenticated/admin/`
 9. User page under `routes/_authenticated/<area>/`
-10. Nav entry in `routes/_authenticated/-lib/nav-items.ts`
+10. Nav entry in `routes/_authenticated/-lib/nav-items.ts` (`requiredRole` for role-gated items)
 
 Reference: `idiom-route.ts`, `admin/idioms/`, `game-assist/guess-idiom/`.

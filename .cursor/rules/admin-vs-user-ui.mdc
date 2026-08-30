@@ -26,4 +26,4 @@ Interactive tool, not a resource table. Keep game state local. Reuse an admin mu
 
 ## Nav
 
-Add entries in `routes/_authenticated/-lib/nav-items.ts`. Sidebar lists all items; **access control is `beforeLoad`**, not the nav. Do not add a second app or a public CRUD page.
+Add entries in `routes/_authenticated/-lib/nav-items.ts`. Set `requiredRole` (a role string or list) on items that are not for every signed-in user. The sidebar filters by the current user's role; regular users see 概览, 开团, and 游戏辅助. Route access control is still `beforeLoad`. Do not add a second app or a public CRUD page.

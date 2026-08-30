@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { authClient } from '@/lib/auth-client';
 import { renderApp } from '../../../helpers/render';
-import { adminSession } from '../../../helpers/session';
+import { adminSession, userSession } from '../../../helpers/session';
 
 describe('AppSidebarNavComponent', () => {
   it('renders navigation links and expands game assist', async () => {
@@ -56,6 +56,33 @@ describe('AppSidebarNavComponent', () => {
     await renderApp('/game-assist/minesweeper');
     expect(
       await screen.findByRole('link', { name: '扫雷' }),
+    ).toBeInTheDocument();
+  });
+
+  it('hides admin links for a regular user', async () => {
+    vi.mocked(authClient.getSession).mockResolvedValue({
+      data: userSession,
+    } as never);
+    const user = userEvent.setup();
+    await renderApp('/');
+
+    expect(
+      await screen.findByRole('link', { name: '概览' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '开团' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: '用户管理' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: '区服管理' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: '成语管理' }),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByText('游戏辅助'));
+    expect(
+      await screen.findByRole('link', { name: '猜成语' }),
     ).toBeInTheDocument();
   });
 });

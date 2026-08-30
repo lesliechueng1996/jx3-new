@@ -47,7 +47,7 @@ function RouteComponent() {
       <SidebarProvider className="flex-col!">
         <AppHeaderComponent user={user} />
         <div className="flex min-h-0 w-full flex-1">
-          <AppSidebarNavComponent />
+          <AppSidebarNavComponent userRole={user.role} />
           <SidebarInset className="overflow-auto">
             <div className="relative isolate min-h-full">
               <div

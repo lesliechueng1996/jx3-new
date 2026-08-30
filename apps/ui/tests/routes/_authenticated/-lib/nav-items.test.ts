@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import { ROLE_ADMIN, ROLE_USER } from '@/lib/auth-client';
 import {
   APP_DOCUMENT_TITLE,
   getActiveNavTitle,
   getDocumentTitle,
   isNavItemActive,
+  isNavItemVisible,
   isNavPathActive,
   navItems,
+  visibleNavItems,
 } from '@/routes/_authenticated/-lib/nav-items';
 
 describe('nav-items', () => {
@@ -59,6 +62,54 @@ describe('nav-items', () => {
     expect(getActiveNavTitle('/admin/raid-runs')).toBe('开团管理');
     expect(getActiveNavTitle('/admin/raid-signups')).toBe('报名管理');
     expect(getActiveNavTitle('/login')).toBeUndefined();
+  });
+
+  it('filters items by requiredRole', () => {
+    expect(visibleNavItems(ROLE_USER).map((item) => item.title)).toEqual([
+      '概览',
+      '开团',
+      '游戏辅助',
+    ]);
+    expect(visibleNavItems(ROLE_ADMIN).map((item) => item.title)).toEqual(
+      navItems.map((item) => item.title),
+    );
+    expect(visibleNavItems(undefined).map((item) => item.title)).toEqual([
+      '概览',
+      '开团',
+      '游戏辅助',
+    ]);
+  });
+
+  it('matches a single requiredRole or a list', () => {
+    const icon = navItems[0].icon;
+    expect(isNavItemVisible({ title: '公开', icon }, ROLE_USER)).toBe(true);
+    expect(
+      isNavItemVisible(
+        { title: '管理', icon, requiredRole: ROLE_ADMIN },
+        ROLE_USER,
+      ),
+    ).toBe(false);
+    expect(
+      isNavItemVisible(
+        { title: '管理', icon, requiredRole: ROLE_ADMIN },
+        ROLE_ADMIN,
+      ),
+    ).toBe(true);
+    expect(
+      isNavItemVisible(
+        { title: '多人', icon, requiredRole: [ROLE_ADMIN, ROLE_USER] },
+        ROLE_USER,
+      ),
+    ).toBe(true);
+    expect(
+      isNavItemVisible(
+        { title: '多人', icon, requiredRole: [ROLE_ADMIN] },
+        ROLE_USER,
+      ),
+    ).toBe(false);
+    expect(
+      isNavItemVisible({ title: '管理', icon, requiredRole: ROLE_ADMIN }, null),
+    ).toBe(false);
   });
 
   it('builds the document title from the active nav item', () => {
