@@ -21,7 +21,9 @@ export type RaidCalendarMappedEvent = CalendarEvent & {
   dungeonName: string | null;
 };
 
-const isRaidCalendarStatus = (status: string): status is RaidCalendarStatus =>
+export const isRaidCalendarStatus = (
+  status: string,
+): status is RaidCalendarStatus =>
   raidCalendarStatuses.some((value) => value === status);
 
 export const toShanghaiZonedDateTime = (iso: string) =>
@@ -36,18 +38,98 @@ export const formatRaidClock = (iso: string | null): string => {
   return `${String(zoned.hour).padStart(2, '0')}:${String(zoned.minute).padStart(2, '0')}`;
 };
 
+export const formatRaidDateTime = (iso: string): string => {
+  const zoned = toShanghaiZonedDateTime(iso);
+  return `${zoned.month}月${zoned.day}日 ${formatRaidClock(iso)}`;
+};
+
+export const UPCOMING_RAID_LOOKAHEAD_DAYS = 13;
+export const UPCOMING_RAID_LIMIT = 5;
+
+export const toUpcomingQueryRange = (
+  now: Temporal.ZonedDateTime = Temporal.Now.zonedDateTimeISO(
+    RAID_CALENDAR_TIMEZONE,
+  ),
+): { from: string; to: string } => {
+  const from = now.toPlainDate();
+  const to = from.add({ days: UPCOMING_RAID_LOOKAHEAD_DAYS });
+  return { from: from.toString(), to: to.toString() };
+};
+
+const upcomingStatuses = new Set<RaidCalendarStatus>(['recruiting', 'ongoing']);
+
+export const selectUpcomingRaids = (
+  items: RaidRunCalendarItem[],
+  now: Temporal.Instant = Temporal.Now.instant(),
+  limit = UPCOMING_RAID_LIMIT,
+): RaidRunCalendarItem[] =>
+  items
+    .filter(
+      (item) =>
+        isRaidCalendarStatus(item.status) && upcomingStatuses.has(item.status),
+    )
+    .filter((item) => {
+      const start = Temporal.Instant.from(item.gatherTime ?? item.startTime);
+      return Temporal.Instant.compare(start, now) >= 0;
+    })
+    .slice()
+    .sort((a, b) =>
+      Temporal.Instant.compare(
+        Temporal.Instant.from(a.gatherTime ?? a.startTime),
+        Temporal.Instant.from(b.gatherTime ?? b.startTime),
+      ),
+    )
+    .slice(0, limit);
+
+const startOfWeek = (
+  date: Temporal.PlainDate,
+  firstDayOfWeek: number,
+): Temporal.PlainDate => {
+  const delta = (date.dayOfWeek - firstDayOfWeek + 7) % 7;
+  return date.subtract({ days: delta });
+};
+
+export const toVisibleMonthQueryRange = (
+  now: Temporal.ZonedDateTime = Temporal.Now.zonedDateTimeISO(
+    RAID_CALENDAR_TIMEZONE,
+  ),
+  firstDayOfWeek = 1,
+): { from: string; to: string } => {
+  const monthStart = now
+    .withTimeZone(RAID_CALENDAR_TIMEZONE)
+    .toPlainDate()
+    .with({
+      day: 1,
+    });
+  const monthEnd = monthStart.add({ months: 1 }).subtract({ days: 1 });
+  const from = startOfWeek(monthStart, firstDayOfWeek);
+  const to = startOfWeek(monthEnd, firstDayOfWeek).add({ days: 6 });
+
+  return { from: from.toString(), to: to.toString() };
+};
+
+const isExclusiveMidnight = (zoned: Temporal.ZonedDateTime) =>
+  zoned.hour === 0 &&
+  zoned.minute === 0 &&
+  zoned.second === 0 &&
+  zoned.millisecond === 0;
+
 export const toCalendarQueryRange = (range: {
   start: Temporal.ZonedDateTime;
   end: Temporal.ZonedDateTime;
 }): { from: string; to: string } => {
-  const from = range.start.toPlainDate().toString();
-  const to = range.end.subtract({ seconds: 1 }).toPlainDate().toString();
+  const start = range.start.withTimeZone(RAID_CALENDAR_TIMEZONE);
+  const end = range.end.withTimeZone(RAID_CALENDAR_TIMEZONE);
+  const from = start.toPlainDate();
+  const to = isExclusiveMidnight(end)
+    ? end.toPlainDate().subtract({ days: 1 })
+    : end.toPlainDate();
 
-  if (from > to) {
-    return { from, to: from };
+  if (Temporal.PlainDate.compare(from, to) > 0) {
+    return { from: from.toString(), to: from.toString() };
   }
 
-  return { from, to };
+  return { from: from.toString(), to: to.toString() };
 };
 
 const eventEnd = (
@@ -147,3 +229,32 @@ export const raidCalendarColorMap = {
     },
   },
 } as const;
+
+export const raidCalendarStatusLabel = (status: string): string =>
+  isRaidCalendarStatus(status) ? raidCalendarColorMap[status].label : status;
+
+export const applyMonthGridEventHostLayout = (host: HTMLElement) => {
+  host.style.setProperty('box-sizing', 'border-box', 'important');
+  host.style.setProperty('width', 'calc(100% - 8px)', 'important');
+  host.style.setProperty('margin-inline', '4px', 'important');
+};
+
+export const raidCalendarEventClassName = (status: string): string => {
+  if (status === 'recruiting') {
+    return 'border-[#b4533a] bg-[#f6ddd4] text-[#4a1f14] dark:border-[#f0b3a2] dark:bg-[#7a3426] dark:text-[#fde8e0]';
+  }
+
+  if (status === 'ongoing') {
+    return 'border-[#2563eb] bg-[#dbeafe] text-[#1e3a8a] dark:border-[#93c5fd] dark:bg-[#1e40af] dark:text-[#dbeafe]';
+  }
+
+  if (status === 'completed') {
+    return 'border-[#16a34a] bg-[#dcfce7] text-[#14532d] dark:border-[#86efac] dark:bg-[#166534] dark:text-[#dcfce7]';
+  }
+
+  if (status === 'cancelled') {
+    return 'border-[#9f1239] bg-[#ffe4e6] text-[#4c0519] dark:border-[#fda4af] dark:bg-[#881337] dark:text-[#ffe4e6]';
+  }
+
+  return '';
+};

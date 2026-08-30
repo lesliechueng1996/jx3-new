@@ -17,5 +17,6 @@ describe('home route', () => {
       await screen.findByRole('heading', { name: '概览' }),
     ).toBeInTheDocument();
     expect(screen.getByText('开团日历')).toBeInTheDocument();
+    expect(screen.getByText('即将开团')).toBeInTheDocument();
   });
 });

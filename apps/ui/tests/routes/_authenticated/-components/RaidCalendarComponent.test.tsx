@@ -133,8 +133,22 @@ describe('RaidCalendarComponent', () => {
       dungeonName: '25人英雄河阳之战',
     };
 
-    render(<RaidMonthGridEventComponent calendarEvent={calendarEvent} />);
+    const monthView = render(
+      <RaidMonthGridEventComponent calendarEvent={calendarEvent} />,
+    );
     expect(screen.getByText('周六团')).toBeInTheDocument();
+    monthView.unmount();
+
+    render(
+      <RaidMonthGridEventComponent
+        calendarEvent={{
+          ...calendarEvent,
+          title: '已收团',
+          calendarId: 'completed',
+        }}
+      />,
+    );
+    expect(screen.getByText('已收团')).toBeInTheDocument();
 
     render(<RaidWeekTimeGridEventComponent calendarEvent={calendarEvent} />);
     expect(screen.getByText('集合 20:00')).toBeInTheDocument();

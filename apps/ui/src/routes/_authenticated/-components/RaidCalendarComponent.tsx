@@ -19,12 +19,15 @@ import {
 } from '@/lib/api/raid-runs-api';
 import { cn } from '@/lib/utils';
 import {
+  applyMonthGridEventHostLayout,
   formatRaidClock,
   RAID_CALENDAR_TIMEZONE,
   type RaidCalendarMappedEvent,
   raidCalendarColorMap,
+  raidCalendarEventClassName,
   toCalendarEvents,
   toCalendarQueryRange,
+  toVisibleMonthQueryRange,
 } from '../-lib/raid-calendar';
 
 type CalendarEventProps = {
@@ -34,7 +37,18 @@ type CalendarEventProps = {
 export const RaidMonthGridEventComponent = ({
   calendarEvent,
 }: CalendarEventProps) => (
-  <div className="truncate px-1 text-xs" title={calendarEvent.title}>
+  <div
+    className={cn(
+      'block h-full w-full min-w-0 truncate rounded-sm border-l-2 px-1 text-xs',
+      raidCalendarEventClassName(calendarEvent.calendarId),
+    )}
+    ref={(element) => {
+      if (element?.parentElement) {
+        applyMonthGridEventHostLayout(element.parentElement);
+      }
+    }}
+    title={calendarEvent.title}
+  >
     {calendarEvent.title}
   </div>
 );
@@ -42,7 +56,12 @@ export const RaidMonthGridEventComponent = ({
 export const RaidWeekTimeGridEventComponent = ({
   calendarEvent,
 }: CalendarEventProps) => (
-  <div className="flex h-full min-h-0 flex-col gap-0.5 overflow-hidden px-1 py-0.5 text-xs">
+  <div
+    className={cn(
+      'flex h-full min-h-0 flex-col gap-0.5 overflow-hidden rounded-sm border-l-2 px-1 py-0.5 text-xs',
+      raidCalendarEventClassName(calendarEvent.calendarId),
+    )}
+  >
     <div className="truncate font-medium">{calendarEvent.title}</div>
     <div className="truncate text-[10px] opacity-80">
       集合 {formatRaidClock(calendarEvent.raidGatherTime)}
@@ -57,21 +76,14 @@ export const RaidWeekTimeGridEventComponent = ({
 );
 
 const RaidCalendarComponent = () => {
-  const [range, setRange] = useState<{ from: string; to: string } | null>(null);
+  const [range, setRange] = useState(toVisibleMonthQueryRange);
   const [eventsService] = useState(() => createEventsServicePlugin());
   const [monthView] = useState(() => createViewMonthGrid());
   const [weekView] = useState(() => createViewWeek());
 
   const calendarQuery = useQuery({
-    queryKey: raidRunCalendarQueryKey(range?.from ?? '', range?.to ?? ''),
-    queryFn: () => {
-      if (range == null) {
-        throw new Error('日历区间不能为空');
-      }
-
-      return listRaidRunCalendar(range);
-    },
-    enabled: range != null,
+    queryKey: raidRunCalendarQueryKey(range.from, range.to),
+    queryFn: () => listRaidRunCalendar(range),
   });
 
   const calendar = useCalendarApp({
@@ -91,7 +103,7 @@ const RaidCalendarComponent = () => {
       eventOverlap: true,
     },
     monthGridOptions: {
-      nEventsPerDay: 4,
+      nEventsPerDay: 2,
     },
     calendars: raidCalendarColorMap,
     plugins: [eventsService],
@@ -115,9 +127,7 @@ const RaidCalendarComponent = () => {
       <CardHeader>
         <CardTitle>开团日历</CardTitle>
         <CardDescription>
-          {calendarQuery.isPending && range != null
-            ? '加载中…'
-            : '按月或按周查看已发布的开团'}
+          {calendarQuery.isPending ? '加载中…' : '按月或按周查看已发布的开团'}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
@@ -129,8 +139,12 @@ const RaidCalendarComponent = () => {
         ) : null}
         <div
           className={cn(
-            'h-[min(42rem,calc(100dvh-14rem))] min-h-96 w-full',
+            'h-120 w-full overflow-hidden',
             '[&_.sx-react-calendar-wrapper]:h-full [&_.sx-react-calendar-wrapper]:w-full',
+            '[&_.sx__view-container]:min-h-0 [&_.sx__view-container]:overflow-hidden',
+            '[&_.sx__month-grid-wrapper]:min-h-0',
+            '[&_.sx__month-grid-week]:min-h-0',
+            '[&_.sx__month-grid-cell]:h-4',
           )}
         >
           <ScheduleXCalendar

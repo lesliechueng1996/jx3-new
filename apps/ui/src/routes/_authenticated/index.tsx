@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import RaidCalendarComponent from './-components/RaidCalendarComponent';
+import UpcomingRaidsComponent from './-components/UpcomingRaidsComponent';
 
 export const Route = createFileRoute('/_authenticated/')({
   component: HomeComponent,
@@ -11,7 +12,10 @@ function HomeComponent() {
       <h1 className="font-heading text-3xl font-medium tracking-tight text-foreground">
         概览
       </h1>
-      <RaidCalendarComponent />
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <RaidCalendarComponent />
+        <UpcomingRaidsComponent />
+      </div>
     </section>
   );
 }
