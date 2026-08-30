@@ -60,5 +60,20 @@ describe('GuessRoundListComponent', () => {
         cells: [expect.objectContaining({ charColor: 'orange' })],
       }),
     );
+    await user.click(screen.getByRole('button', { name: '重置本轮颜色' }));
+    expect(onChangeRound).toHaveBeenCalledWith(
+      'r1',
+      expect.objectContaining({
+        cells: [
+          expect.objectContaining({
+            charColor: 'black',
+            initialColor: 'black',
+            finalColor: 'black',
+            toneColor: 'black',
+            syllableLink: 'black',
+          }),
+        ],
+      }),
+    );
   });
 });

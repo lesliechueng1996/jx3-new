@@ -1,7 +1,10 @@
-import { Trash2Icon } from 'lucide-react';
+import { RotateCcwIcon, Trash2Icon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import type { GuessRoundState } from '../-lib/idiom-guess-schema';
+import {
+  type GuessRoundState,
+  resetRoundColors,
+} from '../-lib/idiom-guess-schema';
 import GuessCellComponent from './GuessCellComponent';
 
 type GuessRoundRowComponentProps = {
@@ -27,10 +30,26 @@ const GuessRoundRowComponent = ({
             {round.inDatabase ? '词库' : '自动拼音'}
           </Badge>
         </div>
-        <Button type="button" variant="ghost" size="icon-sm" onClick={onRemove}>
-          <Trash2Icon className="size-4" />
-          <span className="sr-only">删除本轮</span>
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => onChange(resetRoundColors(round))}
+          >
+            <RotateCcwIcon className="size-4" />
+            <span className="sr-only">重置本轮颜色</span>
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={onRemove}
+          >
+            <Trash2Icon className="size-4" />
+            <span className="sr-only">删除本轮</span>
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">

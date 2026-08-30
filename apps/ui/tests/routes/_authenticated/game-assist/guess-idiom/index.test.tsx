@@ -104,6 +104,16 @@ describe('guess-idiom route', () => {
       await screen.findByPlaceholderText('输入 4 个汉字'),
     ).toBeInTheDocument();
 
+    await user.click(screen.getByRole('button', { name: '填入 漏网之鱼' }));
+    expect(screen.getByPlaceholderText('输入 4 个汉字')).toHaveValue(
+      '漏网之鱼',
+    );
+    await user.click(screen.getByRole('button', { name: '填入 卧薪尝胆' }));
+    expect(screen.getByPlaceholderText('输入 4 个汉字')).toHaveValue(
+      '卧薪尝胆',
+    );
+
+    await user.clear(screen.getByPlaceholderText('输入 4 个汉字'));
     await user.type(screen.getByPlaceholderText('输入 4 个汉字'), 'abc');
     await user.click(screen.getByRole('button', { name: '提交猜测' }));
     expect(toast.add).toHaveBeenCalledWith(
@@ -190,6 +200,8 @@ describe('guess-idiom route', () => {
     await user.click(
       screen.getAllByRole('button', { name: '切换音节关联线' })[0],
     );
+    await user.click(screen.getByRole('button', { name: '重置本轮颜色' }));
+    expect(screen.getByRole('button', { name: '心' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: '检索成语' }));
     await waitFor(() => {

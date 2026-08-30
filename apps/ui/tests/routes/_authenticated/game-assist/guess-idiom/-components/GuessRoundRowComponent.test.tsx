@@ -42,4 +42,44 @@ describe('GuessRoundRowComponent', () => {
     await user.click(screen.getByRole('button', { name: '删除本轮' }));
     expect(onRemove).toHaveBeenCalled();
   });
+
+  it('resets every cell color on the round', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <GuessRoundRowComponent
+        round={{
+          ...round,
+          cells: [
+            {
+              ...round.cells[0],
+              charColor: 'green',
+              initialColor: 'orange',
+              finalColor: 'green',
+              toneColor: 'orange',
+              syllableLink: 'green',
+            },
+          ],
+        }}
+        index={0}
+        onChange={onChange}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: '重置本轮颜色' }));
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cells: [
+          expect.objectContaining({
+            charColor: 'black',
+            initialColor: 'black',
+            finalColor: 'black',
+            toneColor: 'black',
+            syllableLink: 'black',
+          }),
+        ],
+      }),
+    );
+  });
 });

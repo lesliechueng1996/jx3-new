@@ -13,6 +13,7 @@ import { handleApiError, MAX_ROUNDS } from '@/lib/api-client';
 import GuessInputBarComponent from './-components/GuessInputBarComponent';
 import GuessRoundListComponent from './-components/GuessRoundListComponent';
 import IdiomQuickAddDialogComponent from './-components/IdiomQuickAddDialogComponent';
+import RecommendedGuessesComponent from './-components/RecommendedGuessesComponent';
 import SearchResultPanelComponent from './-components/SearchResultPanelComponent';
 import {
   DEFAULT_CELL_COLOR,
@@ -148,6 +149,8 @@ function GuessIdiomComponent() {
       />
 
       <div className="space-y-3 rounded-lg border bg-card p-4">
+        <RecommendedGuessesComponent onSelectIdiom={setInputText} />
+
         <GuessInputBarComponent
           value={inputText}
           disabled={resolveMutation.isPending}
