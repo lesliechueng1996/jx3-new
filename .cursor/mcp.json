@@ -6,6 +6,10 @@
         "shadcn@latest",
         "mcp"
       ]
+    },
+    "schedule-x": {
+      "command": "npx",
+      "args": ["-y", "@schedule-x/mcp"]
     }
   }
 }

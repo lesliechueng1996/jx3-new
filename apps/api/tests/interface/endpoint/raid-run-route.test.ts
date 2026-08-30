@@ -133,6 +133,19 @@ const listAdminRaidRuns = mock(async () => ({
   page: 1,
   pageSize: 20,
 }));
+const listCalendarRaidRuns = mock(async () => ({
+  items: [
+    {
+      id: raidRunId,
+      name: '周六团',
+      status: 'recruiting' as const,
+      gatherTime: '2026-08-22T12:00:00.000Z',
+      startTime: '2026-08-22T13:00:00.000Z',
+      endTime: '2026-08-22T16:00:00.000Z',
+      dungeonName: '25人英雄河阳之战',
+    },
+  ],
+}));
 const deleteAdminRaidRun = mock(async () => undefined);
 
 mock.module('@api/application/service/raid-run-service', () => ({
@@ -141,6 +154,7 @@ mock.module('@api/application/service/raid-run-service', () => ({
   deleteAdminRaidRun,
   getRaidRun,
   listAdminRaidRuns,
+  listCalendarRaidRuns,
   saveRaidRun,
   updateRaidRunStatus,
   updateRaidRunGameRaidId,
@@ -260,6 +274,20 @@ describe('raidRunRoute', () => {
       total: 1,
       page: 1,
       pageSize: 20,
+    });
+    listCalendarRaidRuns.mockReset();
+    listCalendarRaidRuns.mockResolvedValue({
+      items: [
+        {
+          id: raidRunId,
+          name: '周六团',
+          status: 'recruiting' as const,
+          gatherTime: '2026-08-22T12:00:00.000Z',
+          startTime: '2026-08-22T13:00:00.000Z',
+          endTime: '2026-08-22T16:00:00.000Z',
+          dungeonName: '25人英雄河阳之战',
+        },
+      ],
     });
     deleteAdminRaidRun.mockReset();
     deleteAdminRaidRun.mockResolvedValue(undefined);
@@ -562,6 +590,28 @@ describe('raidRunRoute', () => {
     });
     expect(body.data.total).toBe(1);
     expect(body.data.items[0].id).toBe(raidRunId);
+  });
+
+  it('lists calendar raid runs for a date range', async () => {
+    const response = await jsonRequest(
+      '/calendar?from=2026-08-01&to=2026-08-31',
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(listCalendarRaidRuns).toHaveBeenCalledWith({
+      from: '2026-08-01',
+      to: '2026-08-31',
+    });
+    expect(body.data.items[0].id).toBe(raidRunId);
+    expect(body.data.items[0].status).toBe('recruiting');
+  });
+
+  it('rejects an invalid calendar date', async () => {
+    const response = await jsonRequest('/calendar?from=08-01&to=2026-08-31');
+
+    expect(response.status).toBe(422);
+    expect(listCalendarRaidRuns).not.toHaveBeenCalled();
   });
 
   it('rejects an invalid list status', async () => {

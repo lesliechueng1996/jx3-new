@@ -10,6 +10,7 @@ import {
   deleteAdminRaidRun,
   getRaidRun,
   listAdminRaidRuns,
+  listCalendarRaidRuns,
   saveRaidRun,
   updateRaidRunGameRaidId,
   updateRaidRunStatus,
@@ -29,6 +30,8 @@ import {
   upsertRaidLootBodySchema,
 } from '../schema/raid-loot-schema';
 import {
+  calendarRaidRunsQuerySchema,
+  calendarRaidRunsResponseSchema,
   copyRaidRunResponseSchema,
   createRaidRunBodySchema,
   createRaidRunResponseSchema,
@@ -79,6 +82,29 @@ export const raidRunRoute = apiRoute.group('/raid-run', (app) =>
           tags: [raidRunTag.name],
           summary: 'Create a raid run',
           description: 'Creates a raid run. Requires user role.',
+        },
+      },
+    )
+    .get(
+      '/calendar',
+      async ({ query, status }) => {
+        const result = await listCalendarRaidRuns(query);
+        return status(200, AppResponse.success(result).toJson());
+      },
+      {
+        auth: roleUser,
+        query: calendarRaidRunsQuerySchema,
+        response: {
+          200: createSuccessResponseSchema(calendarRaidRunsResponseSchema),
+          400: errorResponseSchema,
+          401: errorResponseSchema,
+          500: errorResponseSchema,
+        },
+        detail: {
+          tags: [raidRunTag.name],
+          summary: 'List raid runs for the calendar',
+          description:
+            'Returns published raid runs overlapping a date range. Requires user role.',
         },
       },
     )

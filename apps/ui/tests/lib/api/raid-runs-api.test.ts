@@ -7,6 +7,7 @@ const {
   statusPatch,
   gameRaidIdPatch,
   wagesPatch,
+  calendarGet,
 } = vi.hoisted(() => ({
   raidRunPost: vi.fn(),
   raidRunGet: vi.fn(),
@@ -14,6 +15,7 @@ const {
   statusPatch: vi.fn(),
   gameRaidIdPatch: vi.fn(),
   wagesPatch: vi.fn(),
+  calendarGet: vi.fn(),
 }));
 
 const raidRun = Object.assign(
@@ -32,6 +34,9 @@ const raidRun = Object.assign(
   }),
   {
     post: raidRunPost,
+    calendar: {
+      get: calendarGet,
+    },
   },
 );
 
@@ -53,6 +58,7 @@ describe('raid-runs-api', () => {
     statusPatch.mockReset();
     gameRaidIdPatch.mockReset();
     wagesPatch.mockReset();
+    calendarGet.mockReset();
   });
 
   it('creates a raid run and unwraps the envelope', async () => {
@@ -333,5 +339,50 @@ describe('raid-runs-api', () => {
         wagePerPerson: 0,
       }),
     ).rejects.toThrow('记录工资失败');
+  });
+
+  it('lists calendar raid runs and unwraps the envelope', async () => {
+    const payload = { items: [{ id: 'run-1', name: '周六团' }] };
+    calendarGet.mockResolvedValue({
+      data: { data: payload },
+      error: null,
+    });
+    const { listRaidRunCalendar, raidRunCalendarQueryKey } = await import(
+      '@/lib/api/raid-runs-api'
+    );
+
+    await expect(
+      listRaidRunCalendar({ from: '2026-08-01', to: '2026-08-31' }),
+    ).resolves.toEqual(payload);
+    expect(calendarGet).toHaveBeenCalledWith({
+      query: { from: '2026-08-01', to: '2026-08-31' },
+    });
+    expect(raidRunCalendarQueryKey('2026-08-01', '2026-08-31')).toEqual([
+      'raid-run-calendar',
+      '2026-08-01',
+      '2026-08-31',
+    ]);
+  });
+
+  it('throws the API message when listing calendar raid runs fails', async () => {
+    calendarGet.mockResolvedValue({
+      data: null,
+      error: { value: { message: '日历失败' } },
+    });
+    const { listRaidRunCalendar } = await import('@/lib/api/raid-runs-api');
+    await expect(
+      listRaidRunCalendar({ from: '2026-08-01', to: '2026-08-31' }),
+    ).rejects.toThrow('日历失败');
+  });
+
+  it('uses a fallback message when the calendar API omits one', async () => {
+    calendarGet.mockResolvedValue({
+      data: null,
+      error: { value: {} },
+    });
+    const { listRaidRunCalendar } = await import('@/lib/api/raid-runs-api');
+    await expect(
+      listRaidRunCalendar({ from: '2026-08-01', to: '2026-08-31' }),
+    ).rejects.toThrow('获取开团日历失败');
   });
 });

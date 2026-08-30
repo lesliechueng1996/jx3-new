@@ -11,8 +11,11 @@ describe('home route', () => {
     } as never);
   });
 
-  it('shows the overview copy', async () => {
+  it('shows the overview dashboard', async () => {
     await renderApp('/');
-    expect(await screen.findByText('欢迎回来')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: '概览' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('开团日历')).toBeInTheDocument();
   });
 });

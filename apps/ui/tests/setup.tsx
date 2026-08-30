@@ -101,3 +101,19 @@ vi.mock('@tanstack/react-devtools', () => ({
 vi.mock('@tanstack/react-router-devtools', () => ({
   TanStackRouterDevtoolsPanel: () => null,
 }));
+
+vi.mock('@schedule-x/react', () => ({
+  useCalendarApp: () => ({}),
+  ScheduleXCalendar: () => <div data-testid="schedule-x-calendar" />,
+}));
+
+vi.mock('@schedule-x/calendar', () => ({
+  createViewMonthGrid: () => ({ name: 'month-grid' }),
+  createViewWeek: () => ({ name: 'week' }),
+}));
+
+vi.mock('@schedule-x/events-service', () => ({
+  createEventsServicePlugin: () => ({ set: vi.fn() }),
+}));
+
+vi.mock('@schedule-x/theme-default/dist/index.css', () => ({}));

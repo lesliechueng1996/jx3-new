@@ -116,3 +116,25 @@ export const updateRaidRunWages = async (
 
   return data.data;
 };
+
+export const raidRunCalendarQueryKey = (from: string, to: string) =>
+  ['raid-run-calendar', from, to] as const;
+
+export const listRaidRunCalendar = async (range: {
+  from: string;
+  to: string;
+}) => {
+  const { data, error } = await apiClient.api.v1['raid-run'].calendar.get({
+    query: range,
+  });
+
+  if (error) {
+    throw new Error(error.value.message ?? '获取开团日历失败');
+  }
+
+  return data.data;
+};
+
+export type RaidRunCalendarItem = Awaited<
+  ReturnType<typeof listRaidRunCalendar>
+>['items'][number];

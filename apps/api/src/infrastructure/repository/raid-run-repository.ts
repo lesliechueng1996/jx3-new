@@ -9,6 +9,7 @@ import {
   gameDungeon,
   ilike,
   inArray,
+  ne,
   raidLoot,
   raidRun,
   raidSignup,
@@ -136,6 +137,31 @@ export class RaidRunRepository {
 
   count(where: SQL | undefined) {
     return db.select({ total: count() }).from(raidRun).where(where);
+  }
+
+  listByTimeRange(from: string, to: string) {
+    return db
+      .select({
+        id: raidRun.id,
+        name: raidRun.name,
+        status: raidRun.status,
+        gatherTime: raidRun.gatherTime,
+        startTime: raidRun.startTime,
+        endTime: raidRun.endTime,
+        dungeonName: gameDungeon.name,
+        dungeonPlayerLimit: gameDungeon.playerLimit,
+        dungeonDifficulty: gameDungeon.difficulty,
+      })
+      .from(raidRun)
+      .leftJoin(gameDungeon, eq(raidRun.dungeonId, gameDungeon.id))
+      .where(
+        and(
+          ne(raidRun.status, 'pending'),
+          sql`coalesce(${raidRun.gatherTime}, ${raidRun.startTime}) < ((${to}::date + 1) AT TIME ZONE 'Asia/Shanghai')`,
+          sql`coalesce(${raidRun.endTime}, ${raidRun.startTime}) >= (${from}::date AT TIME ZONE 'Asia/Shanghai')`,
+        ),
+      )
+      .orderBy(asc(raidRun.startTime));
   }
 
   async findById(id: string) {

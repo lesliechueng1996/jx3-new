@@ -306,3 +306,31 @@ export const listRaidRunsResponseSchema = t.Composite([
     items: t.Array(raidRunListItemSchema),
   }),
 ]);
+
+const calendarDateQuerySchema = t.String({
+  pattern: '^\\d{4}-\\d{2}-\\d{2}$',
+  error: () => '日期格式须为 YYYY-MM-DD',
+});
+
+export const calendarRaidRunsQuerySchema = t.Object({
+  from: calendarDateQuerySchema,
+  to: calendarDateQuerySchema,
+});
+
+export type CalendarRaidRunsQuery = Static<typeof calendarRaidRunsQuerySchema>;
+
+export const calendarRaidRunItemSchema = t.Object({
+  id: t.String(),
+  name: t.String(),
+  status: raidRunStatusSchema,
+  gatherTime: nullableString,
+  startTime: t.String(),
+  endTime: nullableString,
+  dungeonName: nullableString,
+});
+
+export type CalendarRaidRunItem = Static<typeof calendarRaidRunItemSchema>;
+
+export const calendarRaidRunsResponseSchema = t.Object({
+  items: t.Array(calendarRaidRunItemSchema),
+});

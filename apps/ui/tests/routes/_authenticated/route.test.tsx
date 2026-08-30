@@ -27,7 +27,7 @@ describe('authenticated layout', () => {
 
   it('renders the shell for a signed-in user', async () => {
     await renderApp('/');
-    expect(await screen.findByText('欢迎回来')).toBeInTheDocument();
+    expect(await screen.findByText('开团日历')).toBeInTheDocument();
     expect(screen.getByText('控制台')).toBeInTheDocument();
     expect(document.title).toBe('概览 · 四堆专用');
   });

@@ -54,6 +54,9 @@ const count = mock(
       total: number;
     }>,
 );
+const listByTimeRange = mock(
+  async (_from: string, _to: string) => [] as CalendarRaidRunRow[],
+);
 const deleteWithChildren = mock(async (_id: string) => undefined);
 const formatDateTimeToMinute = mock(
   (date: Date) => `min:${date.toISOString()}`,
@@ -135,6 +138,18 @@ type RaidRunListRow = {
   wagePerPerson: string | null;
   subsidyAmount: string | null;
   signupCount: number;
+};
+
+type CalendarRaidRunRow = {
+  id: string;
+  name: string;
+  status: 'pending' | 'recruiting' | 'ongoing' | 'completed' | 'cancelled';
+  gatherTime: Date | null;
+  startTime: Date;
+  endTime: Date | null;
+  dungeonName: string | null;
+  dungeonPlayerLimit: number | null;
+  dungeonDifficulty: 'normal' | 'heroic' | 'challenge' | null;
 };
 
 type DungeonRow = {
@@ -272,6 +287,7 @@ mock.module('@api/infrastructure/repository/raid-run-repository', () => ({
     listPagination,
     count,
     deleteWithChildren,
+    listByTimeRange,
   },
 }));
 
@@ -293,6 +309,7 @@ const {
   deleteAdminRaidRun,
   getRaidRun,
   listAdminRaidRuns,
+  listCalendarRaidRuns,
   saveRaidRun,
   updateRaidRunGameRaidId,
   updateRaidRunStatus,
@@ -1588,6 +1605,115 @@ describe('listAdminRaidRuns', () => {
       wagePerPerson: 0,
       subsidyAmount: 0,
     });
+  });
+});
+
+const calendarRow = (
+  overrides: Partial<CalendarRaidRunRow> = {},
+): CalendarRaidRunRow => ({
+  id: 'raid-run-1',
+  name: '周六团',
+  status: 'recruiting',
+  gatherTime,
+  startTime,
+  endTime,
+  dungeonName: '河阳之战',
+  dungeonPlayerLimit: 25,
+  dungeonDifficulty: 'heroic',
+  ...overrides,
+});
+
+describe('listCalendarRaidRuns', () => {
+  beforeEach(() => {
+    listByTimeRange.mockReset();
+    listByTimeRange.mockResolvedValue([]);
+  });
+
+  it('lists overlapping raid runs as ISO calendar items', async () => {
+    listByTimeRange.mockResolvedValue([calendarRow()]);
+
+    const result = await listCalendarRaidRuns({
+      from: '2026-08-01',
+      to: '2026-08-31',
+    });
+
+    expect(listByTimeRange).toHaveBeenCalledWith('2026-08-01', '2026-08-31');
+    expect(result).toEqual({
+      items: [
+        {
+          id: 'raid-run-1',
+          name: '周六团',
+          status: 'recruiting',
+          gatherTime: gatherTime.toISOString(),
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
+          dungeonName: '25人英雄河阳之战',
+        },
+      ],
+    });
+  });
+
+  it('maps nullable calendar fields', async () => {
+    listByTimeRange.mockResolvedValue([
+      calendarRow({
+        gatherTime: null,
+        endTime: null,
+        dungeonName: null,
+        dungeonPlayerLimit: null,
+        dungeonDifficulty: null,
+      }),
+    ]);
+
+    const result = await listCalendarRaidRuns({
+      from: '2026-08-01',
+      to: '2026-08-01',
+    });
+
+    expect(result.items[0]).toMatchObject({
+      gatherTime: null,
+      endTime: null,
+      dungeonName: null,
+    });
+  });
+
+  it('rejects a range whose start is after its end', async () => {
+    try {
+      await listCalendarRaidRuns({ from: '2026-08-31', to: '2026-08-01' });
+      throw new Error('expected BadRequestException');
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect((error as BadRequestException).code).toBe(
+        ERROR_CODES.RAID_RUN_CALENDAR_RANGE_INVALID,
+      );
+      expect((error as BadRequestException).message).toBe(
+        '开始日期不能晚于结束日期',
+      );
+    }
+
+    expect(listByTimeRange).not.toHaveBeenCalled();
+  });
+
+  it('rejects a range longer than 62 days', async () => {
+    try {
+      await listCalendarRaidRuns({ from: '2026-01-01', to: '2026-03-04' });
+      throw new Error('expected BadRequestException');
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect((error as BadRequestException).code).toBe(
+        ERROR_CODES.RAID_RUN_CALENDAR_RANGE_INVALID,
+      );
+      expect((error as BadRequestException).message).toBe(
+        '查询区间不能超过 62 天',
+      );
+    }
+
+    expect(listByTimeRange).not.toHaveBeenCalled();
+  });
+
+  it('accepts a 62-day inclusive range', async () => {
+    await listCalendarRaidRuns({ from: '2026-01-01', to: '2026-03-03' });
+
+    expect(listByTimeRange).toHaveBeenCalledWith('2026-01-01', '2026-03-03');
   });
 });
 

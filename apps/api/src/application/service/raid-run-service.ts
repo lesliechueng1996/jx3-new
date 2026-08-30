@@ -6,6 +6,8 @@ import { raidRunRepository } from '@api/infrastructure/repository/raid-run-repos
 import { raidSignupRepository } from '@api/infrastructure/repository/raid-signup-repository';
 import { schoolRepository } from '@api/infrastructure/repository/school-repository';
 import type {
+  CalendarRaidRunItem,
+  CalendarRaidRunsQuery,
   CreateRaidRunBody,
   ListRaidRunsQuery,
   RaidRunDetail,
@@ -458,6 +460,61 @@ export const listAdminRaidRuns = async (
     total: totalRows[0]?.total ?? 0,
     page: query.page,
     pageSize: query.pageSize,
+  };
+};
+
+const CALENDAR_RANGE_MAX_DAYS = 62;
+const MS_PER_DAY = 86_400_000;
+
+const assertCalendarRange = (from: string, to: string) => {
+  const fromMs = Date.parse(`${from}T00:00:00.000Z`);
+  const toMs = Date.parse(`${to}T00:00:00.000Z`);
+
+  if (fromMs > toMs) {
+    throw new BadRequestException(
+      '开始日期不能晚于结束日期',
+      ERROR_CODES.RAID_RUN_CALENDAR_RANGE_INVALID,
+    );
+  }
+
+  const days = (toMs - fromMs) / MS_PER_DAY + 1;
+  if (days > CALENDAR_RANGE_MAX_DAYS) {
+    throw new BadRequestException(
+      '查询区间不能超过 62 天',
+      ERROR_CODES.RAID_RUN_CALENDAR_RANGE_INVALID,
+    );
+  }
+};
+
+type CalendarRaidRunRow = Awaited<
+  ReturnType<typeof raidRunRepository.listByTimeRange>
+>[number];
+
+const toCalendarRaidRunItem = (
+  row: CalendarRaidRunRow,
+): CalendarRaidRunItem => ({
+  id: row.id,
+  name: row.name,
+  status: row.status,
+  gatherTime: toIsoString(row.gatherTime),
+  startTime: row.startTime.toISOString(),
+  endTime: toIsoString(row.endTime),
+  dungeonName: formatDungeonDisplayName(
+    row.dungeonName,
+    row.dungeonPlayerLimit,
+    row.dungeonDifficulty,
+  ),
+});
+
+export const listCalendarRaidRuns = async (
+  query: CalendarRaidRunsQuery,
+): Promise<{ items: CalendarRaidRunItem[] }> => {
+  assertCalendarRange(query.from, query.to);
+
+  const rows = await raidRunRepository.listByTimeRange(query.from, query.to);
+
+  return {
+    items: rows.map(toCalendarRaidRunItem),
   };
 };
 
