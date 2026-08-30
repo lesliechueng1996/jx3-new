@@ -134,6 +134,53 @@ describe('IdiomGameCell', () => {
     ]);
   });
 
+  it('omits a black empty initial from SQL constraints', () => {
+    const cell = new IdiomGameCell(
+      base({
+        char: '鹅',
+        initial: '',
+        final: 'e',
+        tone: 2,
+      }),
+    );
+
+    expect(cell.extractSqlNecessaryCondition()).toEqual([
+      { kind: 'black', field: 'char', value: '鹅' },
+      { kind: 'black', field: 'final', value: 'e' },
+      { kind: 'black', field: 'tone', value: 2 },
+    ]);
+  });
+
+  it('omits a black empty final from SQL constraints', () => {
+    const cell = new IdiomGameCell(
+      base({
+        final: '',
+      }),
+    );
+
+    expect(cell.extractSqlNecessaryCondition()).toEqual([
+      { kind: 'black', field: 'char', value: '风' },
+      { kind: 'black', field: 'initial', value: 'f' },
+      { kind: 'black', field: 'tone', value: 1 },
+    ]);
+  });
+
+  it('keeps a green empty initial as a SQL lock', () => {
+    const cell = new IdiomGameCell(
+      base({
+        initial: '',
+        initialColor: IdiomGameCellColor.GREEN,
+      }),
+    );
+
+    expect(cell.extractSqlNecessaryCondition()).toContainEqual({
+      kind: 'green',
+      field: 'initial',
+      position: 1,
+      value: '',
+    });
+  });
+
   it('logs and skips an unknown char color', () => {
     const cell = new IdiomGameCell(
       base({

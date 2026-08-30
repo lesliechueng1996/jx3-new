@@ -159,11 +159,13 @@ export class IdiomGameCell {
         });
         break;
       case IdiomGameCellColor.BLACK:
-        sqlNecessaryConditions.push({
-          kind: 'black',
-          field: 'initial',
-          value: this.initial,
-        });
+        if (this.initial !== '') {
+          sqlNecessaryConditions.push({
+            kind: 'black',
+            field: 'initial',
+            value: this.initial,
+          });
+        }
         break;
       case IdiomGameCellColor.ORANGE:
         sqlNecessaryConditions.push({
@@ -185,11 +187,13 @@ export class IdiomGameCell {
         });
         break;
       case IdiomGameCellColor.BLACK:
-        sqlNecessaryConditions.push({
-          kind: 'black',
-          field: 'final',
-          value: this.final,
-        });
+        if (this.final !== '') {
+          sqlNecessaryConditions.push({
+            kind: 'black',
+            field: 'final',
+            value: this.final,
+          });
+        }
         break;
       case IdiomGameCellColor.ORANGE:
         sqlNecessaryConditions.push({

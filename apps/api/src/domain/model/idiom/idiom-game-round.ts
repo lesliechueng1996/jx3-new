@@ -201,6 +201,9 @@ export class IdiomGameRound {
         continue;
       }
       const value = getGuessValue(cell);
+      if (value === '') {
+        continue;
+      }
       const remainingCount = remaining.get(value) ?? 0;
       if (remainingCount > 0) {
         return `${field}:black-still-present@${cell.position} value=${value} left=${remainingCount}`;
@@ -305,7 +308,14 @@ export class IdiomGameRound {
         continue;
       }
 
-      const remainingCount = remaining.get(getGuessValue(cell)) ?? 0;
+      const value = getGuessValue(cell);
+      // Zero-initial (empty 声母) has no tile in the source game, so the UI
+      // default black must not mean "no zero-initial glyphs remain".
+      if (value === '') {
+        continue;
+      }
+
+      const remainingCount = remaining.get(value) ?? 0;
       if (remainingCount > 0) {
         return false;
       }

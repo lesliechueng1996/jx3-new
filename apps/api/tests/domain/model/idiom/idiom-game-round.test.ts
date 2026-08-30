@@ -334,6 +334,27 @@ describe('IdiomGameRound', () => {
     );
   });
 
+  it('skips a black empty initial when diagnosing another black remainder', () => {
+    const round = makeRound(
+      [0, 1, 2, 3].map((position) =>
+        makeCell(position, {
+          char: '春',
+          charColor: BLACK,
+          initial: position === 0 ? '' : position === 1 ? 'f' : 'x',
+          initialColor: BLACK,
+          final: 'x',
+          finalColor: BLACK,
+          tone: 3,
+          toneColor: BLACK,
+        }),
+      ),
+    );
+
+    expect(round.explainFeedbackRejection(answer)).toContain(
+      'initial:black-still-present@1',
+    );
+  });
+
   it('rejects an orange initial that is missing from remaining counts', () => {
     const round = makeRound(
       [0, 1, 2, 3].map((position) =>
@@ -408,6 +429,53 @@ describe('IdiomGameRound', () => {
     ]);
 
     expect(round.validateFeedback(answer)).toBe(true);
+  });
+
+  it('ignores a black empty initial so another zero-initial glyph can remain', () => {
+    const candidate = {
+      chars: [
+        makeChar(0, { char: '震', initial: 'zh', final: 'en', tone: 4 }),
+        makeChar(1, { char: '耳', initial: '', final: 'er', tone: 3 }),
+        makeChar(2, { char: '欲', initial: 'y', final: 'u', tone: 4 }),
+        makeChar(3, { char: '聋', initial: 'l', final: 'ong', tone: 2 }),
+      ],
+    } as Idiom;
+
+    const round = makeRound(
+      [
+        makeCell(0, {
+          char: '鹅',
+          initial: '',
+          final: 'e',
+          tone: 2,
+          toneColor: ORANGE,
+        }),
+        makeCell(1, {
+          char: '行',
+          initial: 'x',
+          final: 'ing',
+          tone: 2,
+        }),
+        makeCell(2, {
+          char: '鸭',
+          initial: 'y',
+          initialColor: GREEN,
+          final: 'a',
+          tone: 1,
+        }),
+        makeCell(3, {
+          char: '步',
+          initial: 'b',
+          final: 'u',
+          finalColor: ORANGE,
+          tone: 4,
+          toneColor: ORANGE,
+        }),
+      ],
+      '鹅行鸭步',
+    );
+
+    expect(round.explainFeedbackRejection(candidate)).toBeNull();
   });
 
   it('extracts SQL constraints from every cell', () => {
