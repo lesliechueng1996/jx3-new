@@ -67,6 +67,10 @@ describe('RaidLootDialogComponent', () => {
       />,
     );
 
+    expect(
+      screen.getByRole('button', { name: '点击 · 即可复制到剪切板' }),
+    ).toBeInTheDocument();
+
     await user.click(screen.getByRole('button', { name: '保存' }));
     expect(screen.getByText('请选择物品')).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
@@ -127,6 +131,9 @@ describe('RaidLootDialogComponent', () => {
     expect(screen.getByRole('combobox', { name: '品质' })).toHaveTextContent(
       '紫',
     );
+    expect(
+      screen.getByRole('button', { name: '点击 · 即可复制到剪切板' }),
+    ).toBeInTheDocument();
 
     await chooseSelectOption(user, '类型', '特殊');
     await chooseSelectOption(user, '品质', '橙');
@@ -214,9 +221,6 @@ describe('RaidLootDialogComponent', () => {
     );
 
     const panel = await openCreatePanel(user);
-    expect(
-      within(panel).getByRole('button', { name: '点击 · 即可复制到剪切板' }),
-    ).toBeInTheDocument();
     await user.click(within(panel).getByRole('button', { name: '取消' }));
     expect(
       screen.queryByRole('group', { name: '创建新物品' }),

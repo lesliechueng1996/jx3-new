@@ -40,6 +40,7 @@ type GameItemQuickCreateFormComponentProps = {
   initialQuality?: ItemQuality;
   onSubmit: (values: GameItemQuickCreateValues) => void;
   onValuesChange?: (values: GameItemQuickCreateValues) => void;
+  showCopyHint?: boolean;
 };
 
 export function GameItemQuickCreateFormComponent({
@@ -50,6 +51,7 @@ export function GameItemQuickCreateFormComponent({
   initialQuality = DEFAULT_QUICK_CREATE_ITEM_QUALITY,
   onSubmit,
   onValuesChange,
+  showCopyHint = true,
 }: GameItemQuickCreateFormComponentProps) {
   const [name, setName] = useState(initialName);
   const [type, setType] = useState<ItemType>(initialType);
@@ -163,7 +165,7 @@ export function GameItemQuickCreateFormComponent({
           </Field>
         </FieldGroup>
       </FieldGroup>
-      <CopyMiddleDotHintComponent />
+      {showCopyHint ? <CopyMiddleDotHintComponent /> : null}
     </form>
   );
 }

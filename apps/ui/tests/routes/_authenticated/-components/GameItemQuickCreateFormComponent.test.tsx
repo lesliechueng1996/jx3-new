@@ -194,4 +194,18 @@ describe('GameItemQuickCreateFormComponent', () => {
       screen.getByRole('button', { name: '点击 · 即可复制到剪切板' }),
     ).toBeInTheDocument();
   });
+
+  it('hides the copy hint when requested', () => {
+    render(
+      <GameItemQuickCreateFormComponent
+        formId="quick-create-form"
+        showCopyHint={false}
+        onSubmit={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByRole('button', { name: '点击 · 即可复制到剪切板' }),
+    ).not.toBeInTheDocument();
+  });
 });

@@ -27,6 +27,7 @@ import {
   type ItemQuality,
   type ItemType,
 } from '@/lib/game-item-labels';
+import { CopyMiddleDotHintComponent } from '@/routes/_authenticated/-components/CopyMiddleDotHintComponent';
 import { GameItemQuickCreateFormComponent } from '@/routes/_authenticated/-components/GameItemQuickCreateFormComponent';
 import {
   type BrickGoldInputValues,
@@ -210,6 +211,7 @@ export const RaidLootDialogComponent = ({
                     initialName={creatingName}
                     initialType={createType}
                     initialQuality={createQuality}
+                    showCopyHint={false}
                     onValuesChange={(next) => {
                       setCreatingName(next.name);
                       setCreateType(next.type);
@@ -297,6 +299,7 @@ export const RaidLootDialogComponent = ({
           </Field>
           {error ? <FieldError>{error}</FieldError> : null}
         </FieldGroup>
+        <CopyMiddleDotHintComponent />
         <DialogFooter>
           <Button
             type="button"
