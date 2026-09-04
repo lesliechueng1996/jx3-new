@@ -3,6 +3,7 @@ import {
   formatReservedSlots,
   raidRunStatusBadgeClassName,
   raidRunStatusLabel,
+  weekdayFromStartTime,
 } from '@/routes/_authenticated/admin/raid-runs/-lib/raid-runs-helpers';
 
 describe('raidRunStatusLabel', () => {
@@ -48,5 +49,17 @@ describe('formatReservedSlots', () => {
         reservedBoss: 2,
       }),
     ).toBe('T1 / H2 / D20 / B2');
+  });
+});
+
+describe('weekdayFromStartTime', () => {
+  it('maps each weekday from an admin list start time', () => {
+    expect(weekdayFromStartTime('2026-08-17 21:00')).toBe('周一');
+    expect(weekdayFromStartTime('2026-08-18 21:00')).toBe('周二');
+    expect(weekdayFromStartTime('2026-08-19 21:00')).toBe('周三');
+    expect(weekdayFromStartTime('2026-08-20 21:00')).toBe('周四');
+    expect(weekdayFromStartTime('2026-08-21 21:00')).toBe('周五');
+    expect(weekdayFromStartTime('2026-08-22 21:00')).toBe('周六');
+    expect(weekdayFromStartTime('2026-08-23 21:00')).toBe('周日');
   });
 });

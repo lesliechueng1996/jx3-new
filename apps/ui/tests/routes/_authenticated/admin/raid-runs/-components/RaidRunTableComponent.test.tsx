@@ -73,6 +73,7 @@ describe('RaidRunTableComponent', () => {
     expect(screen.getByText('T1 / H2 / D20 / B2')).toBeInTheDocument();
     expect(screen.getByText('25人英雄河阳之战')).toBeInTheDocument();
     expect(screen.getAllByText('2026-08-22 21:00').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('周六').length).toBe(2);
     expect(screen.getAllByText('-').length).toBeGreaterThan(0);
 
     await user.click(screen.getAllByRole('button', { name: '编辑' })[0]);

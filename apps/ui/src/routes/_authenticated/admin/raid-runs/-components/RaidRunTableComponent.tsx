@@ -14,6 +14,7 @@ import {
   formatReservedSlots,
   raidRunStatusBadgeClassName,
   raidRunStatusLabel,
+  weekdayFromStartTime,
 } from '../-lib/raid-runs-helpers';
 
 type RaidRunTableComponentProps = {
@@ -32,7 +33,7 @@ const emptyValue = (value: string | number | null | undefined) =>
     value
   );
 
-const COLUMN_COUNT = 12;
+const COLUMN_COUNT = 13;
 
 export function RaidRunTableComponent({
   items,
@@ -53,6 +54,7 @@ export function RaidRunTableComponent({
             <TableHead>状态</TableHead>
             <TableHead>游戏开团 ID</TableHead>
             <TableHead>开团时间</TableHead>
+            <TableHead>星期</TableHead>
             <TableHead>结束时间</TableHead>
             <TableHead>预留</TableHead>
             <TableHead>报名数</TableHead>
@@ -86,6 +88,7 @@ export function RaidRunTableComponent({
                 </TableCell>
                 <TableCell>{emptyValue(raidRun.gameRaidId)}</TableCell>
                 <TableCell>{raidRun.startTime}</TableCell>
+                <TableCell>{weekdayFromStartTime(raidRun.startTime)}</TableCell>
                 <TableCell>{emptyValue(raidRun.endTime)}</TableCell>
                 <TableCell>
                   {emptyValue(formatReservedSlots(raidRun))}

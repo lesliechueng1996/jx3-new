@@ -1,7 +1,18 @@
+import { Temporal } from 'temporal-polyfill';
 import type {
   AdminRaidRunListItem,
   RaidRunStatus,
 } from '@/lib/api/admin/admin-raid-runs-api';
+
+const WEEKDAY_LABELS = [
+  '周一',
+  '周二',
+  '周三',
+  '周四',
+  '周五',
+  '周六',
+  '周日',
+] as const;
 
 export const raidRunStatusLabel = (status: RaidRunStatus): string => {
   if (status === 'recruiting') {
@@ -51,4 +62,10 @@ export const formatReservedSlots = (
   }
 
   return `T${raidRun.reservedTank} / H${raidRun.reservedHealer} / D${raidRun.reservedDps} / B${raidRun.reservedBoss}`;
+};
+
+export const weekdayFromStartTime = (startTime: string): string => {
+  const datePart = startTime.slice(0, 10);
+  const dayOfWeek = Temporal.PlainDate.from(datePart).dayOfWeek;
+  return WEEKDAY_LABELS[dayOfWeek - 1];
 };
